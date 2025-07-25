@@ -1,0 +1,85 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D70833FB-3C8C-4AEF-A193-3801618D7FA8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerOrchestrator.Domain", "src\PowerOrchestrator.Domain\PowerOrchestrator.Domain.csproj", "{37B863D3-5E16-4BBA-BB08-95FFB374AB31}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerOrchestrator.Application", "src\PowerOrchestrator.Application\PowerOrchestrator.Application.csproj", "{F3E24C83-5F01-4F7D-B1D8-9835E77BC269}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerOrchestrator.Infrastructure", "src\PowerOrchestrator.Infrastructure\PowerOrchestrator.Infrastructure.csproj", "{DD269014-EFCF-4920-8720-992DACCB3E5B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerOrchestrator.Identity", "src\PowerOrchestrator.Identity\PowerOrchestrator.Identity.csproj", "{7B2F103A-C7E2-40C9-B996-DE4985869FB0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerOrchestrator.API", "src\PowerOrchestrator.API\PowerOrchestrator.API.csproj", "{2B39CC6B-12B3-4E92-BFED-8110AB684651}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerOrchestrator.MAUI", "src\PowerOrchestrator.MAUI\PowerOrchestrator.MAUI.csproj", "{18407020-153E-440D-A53E-7BF195A0E776}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{ED82CB48-55D4-4CB3-A30C-74D54822BF96}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerOrchestrator.UnitTests", "tests\PowerOrchestrator.UnitTests\PowerOrchestrator.UnitTests.csproj", "{D675244F-9575-4462-BBAE-464F9CC11521}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerOrchestrator.IntegrationTests", "tests\PowerOrchestrator.IntegrationTests\PowerOrchestrator.IntegrationTests.csproj", "{4142B56B-63EB-436B-8B71-897D9350BC98}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerOrchestrator.LoadTests", "tests\PowerOrchestrator.LoadTests\PowerOrchestrator.LoadTests.csproj", "{F990099E-597F-4676-BE25-350DD03CE45F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{37B863D3-5E16-4BBA-BB08-95FFB374AB31}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37B863D3-5E16-4BBA-BB08-95FFB374AB31}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37B863D3-5E16-4BBA-BB08-95FFB374AB31}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37B863D3-5E16-4BBA-BB08-95FFB374AB31}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F3E24C83-5F01-4F7D-B1D8-9835E77BC269}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F3E24C83-5F01-4F7D-B1D8-9835E77BC269}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F3E24C83-5F01-4F7D-B1D8-9835E77BC269}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3E24C83-5F01-4F7D-B1D8-9835E77BC269}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD269014-EFCF-4920-8720-992DACCB3E5B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD269014-EFCF-4920-8720-992DACCB3E5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD269014-EFCF-4920-8720-992DACCB3E5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD269014-EFCF-4920-8720-992DACCB3E5B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B2F103A-C7E2-40C9-B996-DE4985869FB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B2F103A-C7E2-40C9-B996-DE4985869FB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B2F103A-C7E2-40C9-B996-DE4985869FB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B2F103A-C7E2-40C9-B996-DE4985869FB0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B39CC6B-12B3-4E92-BFED-8110AB684651}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B39CC6B-12B3-4E92-BFED-8110AB684651}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B39CC6B-12B3-4E92-BFED-8110AB684651}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B39CC6B-12B3-4E92-BFED-8110AB684651}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18407020-153E-440D-A53E-7BF195A0E776}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18407020-153E-440D-A53E-7BF195A0E776}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18407020-153E-440D-A53E-7BF195A0E776}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18407020-153E-440D-A53E-7BF195A0E776}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D675244F-9575-4462-BBAE-464F9CC11521}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D675244F-9575-4462-BBAE-464F9CC11521}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D675244F-9575-4462-BBAE-464F9CC11521}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D675244F-9575-4462-BBAE-464F9CC11521}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4142B56B-63EB-436B-8B71-897D9350BC98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4142B56B-63EB-436B-8B71-897D9350BC98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4142B56B-63EB-436B-8B71-897D9350BC98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4142B56B-63EB-436B-8B71-897D9350BC98}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F990099E-597F-4676-BE25-350DD03CE45F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F990099E-597F-4676-BE25-350DD03CE45F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F990099E-597F-4676-BE25-350DD03CE45F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F990099E-597F-4676-BE25-350DD03CE45F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{37B863D3-5E16-4BBA-BB08-95FFB374AB31} = {D70833FB-3C8C-4AEF-A193-3801618D7FA8}
+		{F3E24C83-5F01-4F7D-B1D8-9835E77BC269} = {D70833FB-3C8C-4AEF-A193-3801618D7FA8}
+		{DD269014-EFCF-4920-8720-992DACCB3E5B} = {D70833FB-3C8C-4AEF-A193-3801618D7FA8}
+		{7B2F103A-C7E2-40C9-B996-DE4985869FB0} = {D70833FB-3C8C-4AEF-A193-3801618D7FA8}
+		{2B39CC6B-12B3-4E92-BFED-8110AB684651} = {D70833FB-3C8C-4AEF-A193-3801618D7FA8}
+		{18407020-153E-440D-A53E-7BF195A0E776} = {D70833FB-3C8C-4AEF-A193-3801618D7FA8}
+		{D675244F-9575-4462-BBAE-464F9CC11521} = {ED82CB48-55D4-4CB3-A30C-74D54822BF96}
+		{4142B56B-63EB-436B-8B71-897D9350BC98} = {ED82CB48-55D4-4CB3-A30C-74D54822BF96}
+		{F990099E-597F-4676-BE25-350DD03CE45F} = {ED82CB48-55D4-4CB3-A30C-74D54822BF96}
+	EndGlobalSection
+EndGlobal
