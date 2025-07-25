@@ -1,0 +1,217 @@
+name: PowerOrchestrator CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  SOLUTION_PATH: './PowerOrchestrator.sln'
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:17.5-alpine
+        env:
+          POSTGRES_DB: powerorchestrator_test
+          POSTGRES_USER: powerorch
+          POSTGRES_PASSWORD: PowerOrch2025!
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:8.0.3-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 3s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+    - name: Build solution
+      run: dotnet build ${{ env.SOLUTION_PATH }} --no-restore --configuration Release
+
+    - name: Run unit tests
+      run: dotnet test tests/PowerOrchestrator.UnitTests --no-build --configuration Release --logger trx --collect:"XPlat Code Coverage"
+
+    - name: Run integration tests
+      run: dotnet test tests/PowerOrchestrator.IntegrationTests --no-build --configuration Release --logger trx --collect:"XPlat Code Coverage"
+      env:
+        ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=powerorchestrator_test;Username=powerorch;Password=PowerOrch2025!"
+        ConnectionStrings__Redis: "localhost:6379"
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: '**/TestResults/*.trx'
+
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-reports
+        path: '**/TestResults/*/coverage.cobertura.xml'
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+    - name: Run security scan
+      run: |
+        dotnet list package --vulnerable --include-transitive 2>&1 | tee security-scan.log
+        if grep -q "has the following vulnerable packages" security-scan.log; then
+          echo "::error::Vulnerable packages detected"
+          exit 1
+        fi
+
+  build-docker:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    if: github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build API Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./deployment/docker/Dockerfile.api
+        tags: powerorchestrator-api:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  foundation-validation:
+    name: Foundation Validation
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Validate project structure
+      run: |
+        echo "Validating PowerOrchestrator Phase 0 foundation..."
+        
+        # Check required directories
+        required_dirs=("src" "tests" "docs" "scripts" "deployment")
+        for dir in "${required_dirs[@]}"; do
+          if [ ! -d "$dir" ]; then
+            echo "::error::Missing required directory: $dir"
+            exit 1
+          fi
+        done
+        
+        # Check required projects
+        required_projects=(
+          "src/PowerOrchestrator.Domain"
+          "src/PowerOrchestrator.Application" 
+          "src/PowerOrchestrator.Infrastructure"
+          "src/PowerOrchestrator.Identity"
+          "src/PowerOrchestrator.API"
+          "src/PowerOrchestrator.MAUI"
+        )
+        
+        for project in "${required_projects[@]}"; do
+          if [ ! -f "$project/${project##*/}.csproj" ]; then
+            echo "::error::Missing required project: $project"
+            exit 1
+          fi
+        done
+        
+        # Check configuration files
+        required_files=(
+          "global.json"
+          "Directory.Packages.props"
+          "docker-compose.dev.yml"
+          "scripts/database/init.sql"
+        )
+        
+        for file in "${required_files[@]}"; do
+          if [ ! -f "$file" ]; then
+            echo "::error::Missing required file: $file"
+            exit 1
+          fi
+        done
+        
+        echo "✅ All foundation requirements validated successfully!"
+
+    - name: Test Docker environment
+      run: |
+        echo "Testing Docker development environment..."
+        docker compose -f docker-compose.dev.yml up -d
+        sleep 15
+        
+        # Test PostgreSQL
+        if ! docker exec powerorchestrator-postgres-1 pg_isready -U powerorch -d powerorchestrator_dev; then
+          echo "::error::PostgreSQL health check failed"
+          exit 1
+        fi
+        
+        # Test Redis
+        if ! docker exec powerorchestrator-redis-1 redis-cli --raw incr ping; then
+          echo "::error::Redis health check failed"  
+          exit 1
+        fi
+        
+        docker compose -f docker-compose.dev.yml down
+        echo "✅ Docker environment validated successfully!"
