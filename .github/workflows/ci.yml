@@ -59,6 +59,21 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nuget-
 
+    - name: Wait for PostgreSQL to be ready
+      run: |
+        for i in {1..30}; do
+          pg_isready -h localhost -p 5432 && break
+          sleep 1
+        done
+
+    - name: Create test database and role
+      run: |
+        psql -U powerorch -h localhost -d powerorchestrator_test -c "CREATE DATABASE powerorchestrator_dev;"
+        psql -U powerorch -h localhost -d powerorchestrator_test -c "CREATE ROLE root WITH LOGIN PASSWORD 'password';"
+        psql -U powerorch -h localhost -d powerorchestrator_dev -f scripts/database/init.sql
+      env:
+        PGPASSWORD: PowerOrch2025!
+
     - name: Restore dependencies
       run: dotnet restore ${{ env.SOLUTION_PATH }}
 
