@@ -1,0 +1,229 @@
+name: 🐛 Bug Report
+description: Report a bug or issue with PowerOrchestrator
+title: "[BUG] "
+labels: ["bug", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # 🐛 Bug Report
+        
+        Thank you for reporting a bug in PowerOrchestrator! Please provide detailed information to help us identify and fix the issue.
+        
+        **Before submitting:**
+        - Search existing issues to avoid duplicates
+        - Ensure you're using the latest version of PowerOrchestrator
+        - Check if the issue occurs in a clean environment
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: Describe the bug in detail...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Steps to Reproduce
+      description: Step-by-step instructions to reproduce the issue
+      placeholder: |
+        1. Navigate to...
+        2. Click on...
+        3. Execute PowerShell script...
+        4. See error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen
+      placeholder: Describe what should have happened...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: What actually happened
+      placeholder: Describe what actually happened...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which PowerOrchestrator component is affected?
+      options:
+        - MAUI Application (UI)
+        - PowerShell Script Execution
+        - GitHub Integration
+        - Database (PostgreSQL)
+        - Caching (Redis)
+        - Authentication/Security
+        - API (REST)
+        - Infrastructure
+        - Documentation
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Details
+      description: |
+        Please provide your environment information
+      value: |
+        **Operating System:** 
+        **PowerOrchestrator Version:** 
+        **.NET Version:** 
+        **PowerShell Version:** 
+        **Database Version:** PostgreSQL 
+        **Cache Version:** Redis 
+        **Docker:** Yes/No
+        **Browser (if UI issue):** 
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: powershell-context
+    attributes:
+      label: PowerShell Script Context
+      description: If related to PowerShell execution, provide script details
+      placeholder: |
+        **Script Type:** (Function, Workflow, Module)
+        **Execution Mode:** (Local, Remote, Background)
+        **Script Size:** (LOC/File count)
+        **Dependencies:** (Modules, External tools)
+        **Scope:** (User, System, Enterprise)
+    validations:
+      required: false
+
+  - type: textarea
+    id: github-integration
+    attributes:
+      label: GitHub Integration Details
+      description: If related to GitHub integration, provide repository details
+      placeholder: |
+        **Repository Type:** (Public, Private, Enterprise)
+        **Authentication Method:** (Token, OAuth, App)
+        **Permissions:** (Read, Write, Admin)
+        **Organization:** (Personal, Enterprise)
+        **Rate Limiting:** (Yes/No, Current usage)
+    validations:
+      required: false
+
+  - type: textarea
+    id: error-logs
+    attributes:
+      label: Error Messages and Logs
+      description: Include relevant error messages, stack traces, and log entries
+      placeholder: |
+        ```
+        Paste error messages, stack traces, and relevant logs here
+        ```
+      render: text
+    validations:
+      required: false
+
+  - type: textarea
+    id: database-details
+    attributes:
+      label: Database Details (if applicable)
+      description: Database-related error information
+      placeholder: |
+        **Connection String:** (sanitized)
+        **Query:** (if applicable)
+        **Transaction:** (if applicable)
+        **Performance:** (execution time, locks)
+        **Error Code:** (PostgreSQL error code)
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: ui-components
+    attributes:
+      label: Material Design UI Components (if UI issue)
+      description: Which UI components are affected?
+      options:
+        - label: Navigation/Menu
+        - label: Forms/Input Controls
+        - label: Data Tables/Lists
+        - label: Charts/Visualizations
+        - label: Dialogs/Modals
+        - label: Buttons/Actions
+        - label: Theme/Styling
+        - label: Responsive Layout
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is this bug?
+      options:
+        - Critical - System unusable/data loss
+        - High - Major functionality broken
+        - Medium - Some functionality impacted
+        - Low - Minor issue/cosmetic
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Frequency
+      description: How often does this issue occur?
+      options:
+        - Always - 100% of the time
+        - Often - More than 50% of the time
+        - Sometimes - Less than 50% of the time
+        - Rarely - Very infrequent
+        - Once - Happened only once
+    validations:
+      required: true
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Workaround
+      description: Any temporary workarounds you've found
+      placeholder: Describe any workarounds or temporary solutions...
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Screenshots, configuration files, or other context
+      placeholder: |
+        Add any other context about the problem here.
+        
+        Screenshots can be pasted directly into this text area.
+        
+        Configuration files should be sanitized to remove sensitive information.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Submission Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true
+        - label: I have provided all required environment information
+          required: true
+        - label: I have removed or sanitized any sensitive information (passwords, tokens, etc.)
+          required: true
+        - label: I am using the latest version of PowerOrchestrator or have specified my version
+          required: true

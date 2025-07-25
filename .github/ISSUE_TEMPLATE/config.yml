@@ -1,0 +1,20 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔒 Security Vulnerabilities (Critical)
+    url: mailto:security@valhallatech.com
+    about: Report critical security vulnerabilities privately via email (24hr response SLA)
+  - name: 💬 General Discussion & Questions
+    url: https://github.com/ValhallaTech/PowerOrchestrator/discussions
+    about: Ask questions, share ideas, and discuss PowerOrchestrator with the community
+  - name: 📖 Documentation & Wiki
+    url: https://github.com/ValhallaTech/PowerOrchestrator/wiki
+    about: Browse comprehensive documentation, guides, and technical specifications
+  - name: 🚀 Feature Roadmap & Planning
+    url: https://github.com/ValhallaTech/PowerOrchestrator/projects
+    about: View development roadmap, planned features, and project milestones
+  - name: 💼 Enterprise Support
+    url: mailto:enterprise@valhallatech.com
+    about: Enterprise customers can contact our dedicated support team for priority assistance
+  - name: 🏗️ Developer Resources
+    url: https://github.com/ValhallaTech/PowerOrchestrator/blob/main/CONTRIBUTING.md
+    about: Contributing guidelines, development setup, and architectural decision records
