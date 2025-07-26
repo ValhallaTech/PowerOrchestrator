@@ -1,0 +1,359 @@
+name: ⚡ Performance Issue
+description: Report performance problems or optimization opportunities in PowerOrchestrator
+title: "[PERFORMANCE] "
+labels: ["performance", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # ⚡ Performance Issue
+        
+        Thank you for reporting a performance issue with PowerOrchestrator! Performance is critical for enterprise PowerShell orchestration.
+        
+        **Before submitting:**
+        - Verify the issue exists across multiple runs
+        - Check if the issue occurs in different environments
+        - Gather performance metrics where possible
+        - Consider if this might be related to infrastructure or configuration
+
+  - type: textarea
+    id: performance-summary
+    attributes:
+      label: Performance Issue Summary
+      description: Brief description of the performance problem
+      placeholder: Summarize the performance issue you're experiencing...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: performance-category
+    attributes:
+      label: Performance Category
+      description: Which area is experiencing performance issues?
+      options:
+        - PowerShell Script Execution
+        - Database Queries & Operations
+        - Redis Caching & Memory
+        - UI Responsiveness & Rendering
+        - API Response Times
+        - GitHub Integration & API Calls
+        - Authentication & Security
+        - Memory Usage & Leaks
+        - Startup & Initialization
+        - File I/O & Storage
+        - Network & Connectivity
+        - Background Processing
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-performance
+    attributes:
+      label: Current Performance Metrics
+      description: Provide specific performance measurements
+      placeholder: |
+        **Response Time:** X seconds/milliseconds
+        **Throughput:** X operations per second
+        **Memory Usage:** X MB/GB
+        **CPU Usage:** X%
+        **Database Query Time:** X ms
+        **Script Execution Time:** X seconds
+        **UI Load Time:** X seconds
+        **API Call Duration:** X ms
+        
+        Use specific numbers where available.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-performance
+    attributes:
+      label: Expected Performance
+      description: What performance level do you expect?
+      placeholder: |
+        **Expected Response Time:** X seconds/milliseconds
+        **Expected Throughput:** X operations per second
+        **Acceptable Memory Usage:** X MB/GB
+        **Target CPU Usage:** X%
+        
+        Include justification for these expectations (industry standards, previous versions, similar tools).
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Steps to Reproduce Performance Issue
+      description: How can we reproduce this performance problem?
+      placeholder: |
+        1. Set up environment with...
+        2. Execute PowerShell script/operation...
+        3. Monitor performance using...
+        4. Observe degraded performance when...
+        
+        Include specific scripts, data sizes, or configuration that triggers the issue.
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment-details
+    attributes:
+      label: Environment Details
+      description: Detailed environment information for performance analysis
+      value: |
+        **Hardware:**
+        - CPU: (Model, cores, speed)
+        - RAM: (Total amount, type)
+        - Storage: (Type: SSD/HDD, available space)
+        - Network: (Bandwidth, latency to services)
+        
+        **Software:**
+        - Operating System: (Version, architecture)
+        - PowerOrchestrator Version: 
+        - .NET Version: 
+        - PowerShell Version: 
+        - PostgreSQL Version: 
+        - Redis Version: 
+        - Docker: (Yes/No, version)
+        
+        **Infrastructure:**
+        - Deployment Type: (Local, Cloud, Container)
+        - Database Location: (Local, Remote, Cloud)
+        - Redis Location: (Local, Remote, Cloud)
+        - Network Configuration: (Local, VPN, Cloud)
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: powershell-performance
+    attributes:
+      label: PowerShell Script Performance Details
+      description: If related to PowerShell execution performance
+      placeholder: |
+        **Script Characteristics:**
+        - Script Size: (Lines of code, file size)
+        - Script Type: (Function, Workflow, Module, DSC)
+        - Execution Mode: (Local, Remote, Background, Parallel)
+        - Dependencies: (Modules, external tools, APIs)
+        - Data Processing: (Input size, output size, transformations)
+        
+        **Performance Patterns:**
+        - Execution Time Trend: (Increasing, stable, sporadic)
+        - Memory Pattern: (Growing, stable, spikes)
+        - Resource Bottleneck: (CPU, Memory, I/O, Network)
+        
+        **Script Complexity:**
+        - Loops: (Nested, data size, iterations)
+        - Pipeline Usage: (Heavy pipeline operations)
+        - Object Creation: (Large objects, many objects)
+        - External Calls: (APIs, databases, file system)
+    validations:
+      required: false
+
+  - type: textarea
+    id: database-performance
+    attributes:
+      label: Database Performance Details
+      description: If related to PostgreSQL database performance
+      placeholder: |
+        **Query Characteristics:**
+        - Query Type: (SELECT, INSERT, UPDATE, DELETE, Complex JOIN)
+        - Data Volume: (Table size, result set size)
+        - Query Complexity: (Joins, subqueries, aggregations)
+        - Frequency: (How often executed)
+        
+        **Performance Metrics:**
+        - Query Execution Time: X ms
+        - Connection Pool Usage: X%
+        - Lock Wait Time: X ms
+        - Index Usage: (Utilized, missing, unused)
+        
+        **Database State:**
+        - Database Size: X GB
+        - Active Connections: X
+        - Recent Maintenance: (VACUUM, ANALYZE, REINDEX)
+        - Configuration: (Memory settings, connection limits)
+    validations:
+      required: false
+
+  - type: textarea
+    id: redis-performance
+    attributes:
+      label: Redis Cache Performance Details
+      description: If related to Redis caching performance
+      placeholder: |
+        **Cache Operations:**
+        - Operation Type: (GET, SET, DEL, Complex operations)
+        - Key Patterns: (Size, complexity, TTL settings)
+        - Data Size: (Individual values, total cache size)
+        - Hit Rate: X%
+        
+        **Performance Metrics:**
+        - Operation Latency: X ms
+        - Memory Usage: X MB (X% of allocated)
+        - Eviction Rate: X keys/second
+        - Connection Pool: (Active, idle connections)
+        
+        **Cache Configuration:**
+        - Max Memory: X MB
+        - Eviction Policy: (allkeys-lru, volatile-lru, etc.)
+        - Persistence: (RDB, AOF settings)
+        - Network: (Local, remote latency)
+    validations:
+      required: false
+
+  - type: textarea
+    id: ui-performance
+    attributes:
+      label: UI Performance Details
+      description: If related to MAUI Material Design UI performance
+      placeholder: |
+        **UI Performance Issues:**
+        - Component Type: (DataGrid, Charts, Forms, Navigation)
+        - Data Volume: (Number of items, data size)
+        - User Interaction: (Scrolling, filtering, sorting)
+        - Rendering Issues: (Layout, drawing, animations)
+        
+        **Performance Symptoms:**
+        - UI Freezing: Duration and frequency
+        - Slow Rendering: Specific components or scenarios
+        - Memory Growth: UI-related memory increases
+        - Animation Issues: Choppy or slow animations
+        
+        **Device/Platform:**
+        - Platform: (Windows, macOS, Mobile)
+        - Screen Resolution: 
+        - GPU: (Type, memory if known)
+        - Browser: (If web components involved)
+    validations:
+      required: false
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Performance Impact Severity
+      description: How severely does this impact your usage?
+      options:
+        - Critical - System unusable/timeouts
+        - High - Significant workflow disruption
+        - Medium - Noticeable but manageable delays
+        - Low - Minor performance degradation
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Issue Frequency
+      description: How often does this performance issue occur?
+      options:
+        - Always - Every operation affected
+        - Often - Most operations affected
+        - Sometimes - Intermittent performance issues
+        - Rare - Occasional performance problems
+        - Load-dependent - Only under specific load conditions
+    validations:
+      required: true
+
+  - type: textarea
+    id: performance-analysis
+    attributes:
+      label: Performance Analysis & Profiling
+      description: Any performance analysis or profiling data you've collected
+      placeholder: |
+        **Tools Used:**
+        - Performance Monitor (if Windows)
+        - dotTrace/dotMemory (if .NET profiling)
+        - PowerShell Measure-Command results
+        - Database query plans
+        - Redis performance stats
+        - Browser dev tools (if UI)
+        
+        **Key Findings:**
+        - Bottleneck identification
+        - Resource utilization patterns
+        - Performance trends over time
+        - Comparison with expected performance
+        
+        Paste specific profiling data, execution plans, or performance logs here.
+    validations:
+      required: false
+
+  - type: textarea
+    id: attempted-optimizations
+    attributes:
+      label: Attempted Optimizations
+      description: What have you tried to improve performance?
+      placeholder: |
+        List any optimization attempts and their results:
+        
+        **Configuration Changes:**
+        - Database connection pool adjustments
+        - Redis memory configuration
+        - PowerShell execution policy changes
+        - Application settings modifications
+        
+        **Code Changes:**
+        - Script optimization attempts
+        - Query optimization
+        - Caching strategy changes
+        - Algorithm improvements
+        
+        **Infrastructure Changes:**
+        - Hardware upgrades
+        - Network improvements
+        - Database tuning
+        - Container resource allocation
+    validations:
+      required: false
+
+  - type: textarea
+    id: workarounds
+    attributes:
+      label: Current Workarounds
+      description: Any temporary solutions you're using
+      placeholder: |
+        Describe any workarounds that partially mitigate the performance issue:
+        
+        - Reduced data set sizes
+        - Batch processing instead of real-time
+        - Alternative approaches or algorithms
+        - Infrastructure workarounds
+        - User behavior modifications
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Performance logs, screenshots, or other relevant information
+      placeholder: |
+        Include any additional context that might help diagnose the performance issue:
+        
+        - Performance monitoring screenshots
+        - Log files with performance data
+        - Comparison with previous versions
+        - Similar issues in other environments
+        - Performance requirements or SLAs
+        
+        You can paste images and log files directly into this area.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Submission Checklist
+      description: Please confirm the following
+      options:
+        - label: I have provided specific performance metrics and measurements
+          required: true
+        - label: I have verified this issue occurs consistently across multiple runs
+          required: true
+        - label: I have included detailed environment and configuration information
+          required: true
+        - label: I have searched for existing performance issues that might be related
+          required: true

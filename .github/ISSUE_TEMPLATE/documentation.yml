@@ -1,0 +1,397 @@
+name: 📚 Documentation Request
+description: Request improvements to PowerOrchestrator documentation
+title: "[DOCS] "
+labels: ["documentation", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # 📚 Documentation Request
+        
+        Thank you for helping improve PowerOrchestrator documentation! Clear, comprehensive documentation is essential for enterprise adoption and developer success.
+        
+        **Documentation Areas:**
+        - **User Guides** - End-user documentation for PowerShell orchestration
+        - **Developer Guides** - Technical documentation for developers and integrators
+        - **API Documentation** - REST API reference and examples
+        - **Architecture Documentation** - System design and technical architecture
+        - **Security Documentation** - Security guidelines and best practices
+        - **Deployment Guides** - Installation, configuration, and deployment
+
+  - type: dropdown
+    id: documentation-type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation improvement is needed?
+      options:
+        - New Documentation - Create missing documentation
+        - Update Existing - Improve or correct existing documentation  
+        - API Reference - REST API documentation improvements
+        - Code Examples - Add or improve code samples
+        - Tutorials/Guides - Step-by-step instructional content
+        - Architecture/Design - Technical architecture documentation
+        - Security Guidelines - Security and compliance documentation
+        - Deployment/Operations - Installation and operational guides
+        - Troubleshooting - Problem resolution guides
+        - FAQ/Knowledge Base - Frequently asked questions
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target-audience
+    attributes:
+      label: Target Audience
+      description: Who is the primary audience for this documentation?
+      options:
+        - End Users - PowerShell orchestration users
+        - System Administrators - IT operations and deployment teams
+        - Developers - Application developers and integrators
+        - DevOps Engineers - CI/CD and automation professionals
+        - Security Teams - Security and compliance professionals
+        - Enterprise Architects - Solution design and architecture
+        - Support Teams - Customer support and troubleshooting
+        - Contributors - Open source contributors and maintainers
+    validations:
+      required: true
+
+  - type: textarea
+    id: documentation-summary
+    attributes:
+      label: Documentation Request Summary
+      description: Brief description of the documentation needed
+      placeholder: Describe what documentation is missing, unclear, or needs improvement...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: content-area
+    attributes:
+      label: Content Area
+      description: Which PowerOrchestrator area does this documentation cover?
+      options:
+        - PowerShell Script Orchestration
+        - GitHub Integration & Repository Management
+        - Authentication & Security
+        - MAUI User Interface
+        - REST API & Integration
+        - Database Operations (PostgreSQL)
+        - Caching Operations (Redis)
+        - Performance & Optimization
+        - Deployment & Configuration
+        - Monitoring & Logging
+        - Enterprise Features
+        - Troubleshooting & Support
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-state
+    attributes:
+      label: Current Documentation State
+      description: What documentation currently exists and what are its limitations?
+      placeholder: |
+        **Existing Documentation:**
+        - Location: (URL, file path, or "None exists")
+        - Current Content: (Brief description of what's there)
+        - Format: (Markdown, Wiki, API docs, etc.)
+        - Last Updated: (If known)
+        
+        **Current Limitations:**
+        - Missing Information: (What's not covered)
+        - Outdated Content: (What needs updating)
+        - Clarity Issues: (What's confusing or unclear)
+        - Technical Accuracy: (Any errors or inaccuracies)
+        - Accessibility: (Hard to find, poor organization)
+    validations:
+      required: true
+
+  - type: textarea
+    id: desired-content
+    attributes:
+      label: Desired Documentation Content
+      description: Detailed description of what documentation should be created or improved
+      placeholder: |
+        **Content Requirements:**
+        - Key Topics: (Main subjects to cover)
+        - Detail Level: (Overview, detailed, comprehensive)
+        - Examples Needed: (Code samples, configurations, use cases)
+        - Diagrams/Visuals: (Architecture diagrams, screenshots, flowcharts)
+        - Prerequisites: (Required knowledge, setup, dependencies)
+        
+        **Structure Suggestions:**
+        - Logical organization and flow
+        - Section headings and subsections
+        - Cross-references to related documentation
+        - Integration with existing documentation
+        
+        **Special Requirements:**
+        - Interactive elements (if applicable)
+        - Multi-format delivery (web, PDF, mobile)
+        - Internationalization needs
+        - Accessibility requirements
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: content-categories
+    attributes:
+      label: Content Categories
+      description: What types of content should be included? (Select all applicable)
+      options:
+        - label: Conceptual Overview - High-level explanation of concepts
+        - label: Step-by-Step Tutorials - Hands-on guided exercises
+        - label: How-To Guides - Task-oriented instructions
+        - label: Reference Material - Detailed technical specifications
+        - label: Code Examples - Working code samples and snippets
+        - label: Configuration Examples - Sample configurations and settings
+        - label: Best Practices - Recommended approaches and patterns
+        - label: Troubleshooting - Problem identification and resolution
+        - label: Architecture Diagrams - Visual system representations
+        - label: API Reference - Endpoint documentation and examples
+        - label: Security Guidelines - Security implementation guidance
+        - label: Performance Optimization - Performance tuning guidance
+
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: Use Cases & Scenarios
+      description: Specific scenarios where this documentation would be valuable
+      placeholder: |
+        **Primary Use Cases:**
+        1. **Scenario:** [Description of when users would need this documentation]
+           **Context:** [User situation, environment, goals]
+           **Current Gap:** [What makes this difficult without proper documentation]
+           **Success Criteria:** [What users should achieve after reading]
+        
+        2. **Scenario:** [Another specific use case]
+           **Context:** [Different user situation]
+           **Current Gap:** [Documentation gap impact]
+           **Success Criteria:** [Desired outcome]
+        
+        **User Journey:**
+        - Where users are coming from (previous task, documentation section)
+        - What they're trying to accomplish
+        - Where they should go next (logical next steps)
+        - Related tasks or documentation they might need
+    validations:
+      required: true
+
+  - type: textarea
+    id: powershell-examples
+    attributes:
+      label: PowerShell Examples Needed
+      description: If requesting PowerShell-related documentation, specify examples needed
+      placeholder: |
+        **Script Examples:**
+        - Basic script orchestration patterns
+        - Advanced PowerShell integration techniques
+        - Error handling and retry logic
+        - Performance optimization examples
+        - Security best practices in scripts
+        
+        **Integration Examples:**
+        - GitHub repository integration
+        - Database operations from PowerShell
+        - API calls and authentication
+        - Logging and monitoring integration
+        - Enterprise authentication scenarios
+        
+        **Workflow Examples:**
+        - End-to-end orchestration workflows
+        - Multi-step automation processes
+        - Conditional execution patterns
+        - Parallel processing scenarios
+        - Background job management
+    validations:
+      required: false
+
+  - type: textarea
+    id: api-documentation
+    attributes:
+      label: API Documentation Requirements
+      description: If requesting API documentation, specify requirements
+      placeholder: |
+        **API Endpoints:**
+        - Specific endpoints needing documentation
+        - HTTP methods and request/response formats
+        - Authentication and authorization requirements
+        - Error codes and error handling
+        - Rate limiting and usage guidelines
+        
+        **Example Requests:**
+        - cURL examples for each endpoint
+        - Request body examples (JSON, form data)
+        - Query parameter documentation
+        - Header requirements and optional headers
+        
+        **Response Documentation:**
+        - Success response formats and examples
+        - Error response formats and codes
+        - Pagination patterns (if applicable)
+        - Data type specifications and constraints
+        - Versioning information
+        
+        **Integration Guidance:**
+        - SDK usage examples (if available)
+        - Common integration patterns
+        - Authentication flow examples
+        - Best practices for API consumers
+    validations:
+      required: false
+
+  - type: textarea
+    id: architecture-documentation
+    attributes:
+      label: Architecture Documentation Needs
+      description: If requesting architecture documentation, specify requirements
+      placeholder: |
+        **System Architecture:**
+        - High-level system overview and components
+        - Component interaction patterns and data flow
+        - Technology stack and rationale
+        - Scalability and performance considerations
+        - Security architecture and controls
+        
+        **Technical Architecture:**
+        - Detailed component specifications
+        - Database schema and relationships
+        - API design patterns and conventions
+        - Caching strategies and implementation
+        - Authentication and authorization flows
+        
+        **Deployment Architecture:**
+        - Infrastructure requirements and recommendations
+        - Container deployment patterns
+        - Network configuration and security
+        - Monitoring and logging architecture
+        - Backup and disaster recovery design
+        
+        **Visual Requirements:**
+        - System diagrams and flowcharts
+        - Component relationship diagrams
+        - Sequence diagrams for key workflows
+        - Deployment topology diagrams
+    validations:
+      required: false
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Documentation Priority
+      description: How urgent is this documentation need?
+      options:
+        - Critical - Blocking user adoption or major workflows
+        - High - Significantly impacting user experience
+        - Medium - Important but workarounds exist
+        - Low - Nice to have improvement
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact-assessment
+    attributes:
+      label: Impact Assessment
+      description: How would this documentation improvement benefit users and the project?
+      placeholder: |
+        **User Benefits:**
+        - Improved user onboarding and time-to-value
+        - Reduced support requests and confusion
+        - Enhanced productivity and efficiency
+        - Better understanding of capabilities and limitations
+        - Increased user confidence and adoption
+        
+        **Project Benefits:**
+        - Reduced support burden on maintainers
+        - Improved community engagement and contributions
+        - Enhanced project reputation and professionalism
+        - Better enterprise adoption and credibility
+        - Compliance with enterprise documentation standards
+        
+        **Quantifiable Impact:**
+        - Estimated users affected (number, percentage)
+        - Support ticket reduction potential
+        - Time savings per user/task
+        - Adoption rate improvement potential
+    validations:
+      required: false
+
+  - type: textarea
+    id: similar-examples
+    attributes:
+      label: Reference Examples
+      description: Examples of similar documentation done well in other projects
+      placeholder: |
+        **Good Documentation Examples:**
+        - Project/Tool Name: [URL or description]
+          What makes it good: [Specific qualities]
+          Applicable aspects: [What we could adapt]
+        
+        - Project/Tool Name: [URL or description]
+          What makes it good: [Specific qualities]
+          Applicable aspects: [What we could adapt]
+        
+        **Style and Format Preferences:**
+        - Documentation style preferences
+        - Format preferences (markdown, interactive, video)
+        - Integration preferences (wiki, repo docs, dedicated site)
+        - Navigation and organization preferences
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribution-interest
+    attributes:
+      label: Contribution Interest
+      description: How would you like to contribute to this documentation?
+      options:
+        - label: I can write the initial draft
+        - label: I can provide content review and feedback
+        - label: I can provide technical accuracy review
+        - label: I can help with examples and code samples
+        - label: I can help with testing and validation
+        - label: I can provide subject matter expertise
+        - label: I would prefer someone else create this documentation
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other information that would help with this documentation request
+      placeholder: |
+        **Related Issues:**
+        - Links to related GitHub issues
+        - User feedback or support requests
+        - Community discussions or questions
+        - Feature requests that need documentation
+        
+        **Resources Available:**
+        - Existing content that could be referenced
+        - Subject matter experts who could help
+        - Related documentation in other projects
+        - User research or feedback data
+        
+        **Constraints and Considerations:**
+        - Timeline constraints or deadlines
+        - Format or platform requirements
+        - Approval processes or stakeholders involved
+        - Translation or localization needs
+        
+        You can attach files, screenshots, or mockups to help illustrate your documentation request.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Submission Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing documentation and issues to avoid duplicates
+          required: true
+        - label: I have clearly described the documentation gap and desired outcome
+          required: true
+        - label: I have identified the target audience and use cases for this documentation
+          required: true
+        - label: I understand that documentation contributions follow the same quality standards as code contributions
+          required: true
