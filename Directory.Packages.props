@@ -14,7 +14,7 @@
     <PackageVersion Include="UraniumUI.Icons.MaterialIcons" Version="2.12.1" />
     <PackageVersion Include="UraniumUI.Validations.DataAnnotations" Version="2.12.1" />
 
-    <!-- Database & Performance (PostgreSQL, Dapper) -->
+    <!-- Database & Performance (PostgreSQL, EF Core 8, Dapper) -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.11" />
@@ -64,6 +64,7 @@
     <!-- Configuration & Options -->
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
@@ -88,6 +89,7 @@
 
     <!-- Build & Analyzers -->
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="4.9.2" />
     <PackageVersion Include="StyleCop.Analyzers" Version="1.1.118" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="8.0.11" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.6.2" />
