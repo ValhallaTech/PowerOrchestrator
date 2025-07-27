@@ -1,0 +1,337 @@
+name: 📋 Phase Tracking
+description: Track progress and deliverables for PowerOrchestrator development methodology
+title: "[PHASE] "
+labels: ["phase-tracking", "project-management", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # 📋 Phase Tracking
+
+        Track progress, deliverables, and milestones for PowerOrchestrator's structured 6-phase development methodology.
+
+        **Before submitting:**
+        - Review the Master Development Plan for phase requirements
+        - Ensure all prerequisites from previous phases are complete
+        - Validate readiness criteria before starting new phases
+
+  - type: dropdown
+    id: phase-selection
+    attributes:
+      label: Phase Selection
+      description: Which phase is this tracking issue for?
+      options:
+        - Phase 0 - Project Foundation & Setup
+        - Phase 1 - Core Infrastructure & Database Design
+        - Phase 2 - GitHub Integration & Repository Management
+        - Phase 2.5 - Identity Management & Security
+        - Phase 3 - MAUI Application & Material Design UI
+        - Phase 4 - Script Execution Engine
+        - Phase 5 - Comprehensive Logging & Monitoring
+        - Phase 6 - Final Integration & Deployment
+        - Buffer Phase - Additional development time
+    validations:
+      required: true
+
+  - type: dropdown
+    id: phase-status
+    attributes:
+      label: Phase Status
+      description: Current status of this phase
+      options:
+        - Ready to Start - All prerequisites met
+        - In Progress - Active development underway
+        - Blocked - Waiting for dependencies or resolution
+        - Completed - All deliverables finished and validated
+        - On Hold - Temporarily paused
+    validations:
+      required: true
+
+  - type: textarea
+    id: timeline-info
+    attributes:
+      label: Timeline & Milestones
+      description: Timeline information for this phase
+      placeholder: |
+        **Start Date:** YYYY-MM-DD
+        **End Date:** YYYY-MM-DD
+        **Duration:** X weeks
+        **Key Milestones:**
+        - Milestone 1 (Date)
+        - Milestone 2 (Date)
+        - Milestone 3 (Date)
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: core-infrastructure-deliverables
+    attributes:
+      label: Phase 1 - Core Infrastructure & Database Deliverables
+      description: Check completed deliverables for Phase 1 (if applicable)
+      options:
+        - label: Database schema design and implementation
+        - label: PostgreSQL 17.5 configuration and optimization
+        - label: Entity Framework Core 8 setup
+        - label: Domain entities and value objects
+        - label: Repository pattern implementation
+        - label: Unit of Work pattern
+        - label: Database migrations
+        - label: Seed data setup
+        - label: Connection string management
+        - label: Database health checks
+
+  - type: checkboxes
+    id: github-integration-deliverables
+    attributes:
+      label: Phase 2 - GitHub Integration & Repository Management Deliverables
+      description: Check completed deliverables for Phase 2 (if applicable)
+      options:
+        - label: Octokit 14.0.0 integration
+        - label: GitHub API authentication
+        - label: Repository discovery and scanning
+        - label: Branch and tag operations
+        - label: File and content operations
+        - label: Webhook integration
+        - label: GitHub Actions integration
+        - label: Enterprise GitHub support
+        - label: Rate limiting implementation
+        - label: Version management system
+
+  - type: checkboxes
+    id: identity-security-deliverables
+    attributes:
+      label: Phase 2.5 - Identity Management & Security Deliverables
+      description: Check completed deliverables for Phase 2.5 (if applicable)
+      options:
+        - label: JWT Bearer authentication
+        - label: Identity Framework setup
+        - label: Role-based authorization
+        - label: Multi-factor authentication
+        - label: User management system
+        - label: Security audit logging
+        - label: Data protection implementation
+        - label: Security policies and validation
+        - label: Password policies
+        - label: Session management
+
+  - type: checkboxes
+    id: maui-ui-deliverables
+    attributes:
+      label: Phase 3 - MAUI Application & Material Design UI Deliverables
+      description: Check completed deliverables for Phase 3 (if applicable)
+      options:
+        - label: MAUI project setup and configuration
+        - label: UraniumUI 2.12.1 integration
+        - label: Material Design component library
+        - label: Navigation and menu systems
+        - label: Data display and tables
+        - label: Forms and input controls
+        - label: Charts and visualizations
+        - label: Real-time updates and notifications
+        - label: Theme and customization
+        - label: Mobile and responsive design
+        - label: Accessibility features
+        - label: Cross-platform deployment
+
+  - type: checkboxes
+    id: script-execution-deliverables
+    attributes:
+      label: Phase 4 - Script Execution Engine Deliverables
+      description: Check completed deliverables for Phase 4 (if applicable)
+      options:
+        - label: PowerShell SDK 7.4.6 integration
+        - label: Script execution framework
+        - label: Module and dependency handling
+        - label: Remote execution and PSRemoting
+        - label: Workflow and pipeline management
+        - label: Error handling and retry logic
+        - label: PowerShell Core compatibility
+        - label: Script validation and security scanning
+        - label: Performance monitoring and profiling
+        - label: Execution history and logging
+
+  - type: checkboxes
+    id: logging-monitoring-deliverables
+    attributes:
+      label: Phase 5 - Comprehensive Logging & Monitoring Deliverables
+      description: Check completed deliverables for Phase 5 (if applicable)
+      options:
+        - label: Serilog 4.3.0 structured logging
+        - label: Seq log aggregation setup
+        - label: Performance counters implementation
+        - label: Health check endpoints
+        - label: Metrics collection and monitoring
+        - label: Alert and notification system
+        - label: Log retention policies
+        - label: Diagnostic and troubleshooting tools
+        - label: Monitoring dashboards
+        - label: Service monitoring setup
+
+  - type: checkboxes
+    id: integration-deployment-deliverables
+    attributes:
+      label: Phase 6 - Final Integration & Deployment Deliverables
+      description: Check completed deliverables for Phase 6 (if applicable)
+      options:
+        - label: End-to-end integration testing
+        - label: Production deployment pipeline
+        - label: Docker containerization
+        - label: Load testing and performance validation
+        - label: Security audit and penetration testing
+        - label: Documentation completion
+        - label: User training materials
+        - label: Production monitoring setup
+        - label: Backup and disaster recovery
+        - label: Go-live readiness checklist
+
+  - type: checkboxes
+    id: foundation-setup-deliverables
+    attributes:
+      label: Phase 0 - Project Foundation & Setup Deliverables
+      description: Check completed deliverables for Phase 0 (if applicable)
+      options:
+        - label: Solution structure and project setup
+        - label: Clean architecture implementation
+        - label: NuGet package management (Directory.Packages.props)
+        - label: Global.json configuration
+        - label: Docker development environment
+        - label: CI/CD pipeline setup
+        - label: Git repository structure
+        - label: Contributing guidelines
+        - label: Issue templates
+        - label: Development documentation
+
+  - type: textarea
+    id: dependency-validation
+    attributes:
+      label: Dependency Validation
+      description: Prerequisites and dependencies for this phase
+      placeholder: |
+        **Previous Phase Dependencies:**
+        - [ ] Dependency 1 from previous phase
+        - [ ] Dependency 2 from previous phase
+
+        **External Dependencies:**
+        - [ ] Third-party service setup
+        - [ ] Infrastructure requirements
+
+        **Team Dependencies:**
+        - [ ] Resource availability
+        - [ ] Skills and training requirements
+    validations:
+      required: false
+
+  - type: textarea
+    id: success-criteria
+    attributes:
+      label: Success Criteria & Performance Metrics
+      description: Define what success looks like for this phase
+      placeholder: |
+        **Functional Requirements:**
+        - All deliverables completed and tested
+        - Code coverage >= 80%
+        - Performance benchmarks met
+
+        **Quality Gates:**
+        - All unit tests passing
+        - Integration tests passing
+        - Security scan results clean
+        - Documentation updated
+
+        **Performance Metrics:**
+        - Response time < X ms
+        - Throughput > Y requests/second
+        - Memory usage < Z MB
+    validations:
+      required: true
+
+  - type: textarea
+    id: risk-assessment
+    attributes:
+      label: Risk Assessment & Blockers
+      description: Identify potential risks and current blockers
+      placeholder: |
+        **Current Blockers:**
+        - [ ] Blocker 1 - Description and resolution plan
+        - [ ] Blocker 2 - Description and resolution plan
+
+        **Timeline Risks:**
+        - Risk 1: Description and mitigation strategy
+        - Risk 2: Description and mitigation strategy
+
+        **Technical Risks:**
+        - Technical challenge 1 and approach
+        - Technical challenge 2 and approach
+
+        **Resource Risks:**
+        - Resource constraint 1 and plan
+        - Resource constraint 2 and plan
+    validations:
+      required: false
+
+  - type: textarea
+    id: next-phase-preparation
+    attributes:
+      label: Next Phase Preparation
+      description: Readiness check for the upcoming phase
+      placeholder: |
+        **Next Phase:** Phase X - Name
+
+        **Readiness Checklist:**
+        - [ ] All current phase deliverables complete
+        - [ ] Quality gates passed
+        - [ ] Documentation updated
+        - [ ] Team trained on next phase requirements
+        - [ ] Infrastructure ready for next phase
+
+        **Handover Items:**
+        - Item 1: Description
+        - Item 2: Description
+
+        **Known Issues for Next Phase:**
+        - Issue 1: Description and plan
+        - Issue 2: Description and plan
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-notes
+    attributes:
+      label: Additional Notes & Context
+      description: Any other information relevant to this phase
+      placeholder: |
+        Add any additional context, lessons learned, or important notes for this phase.
+
+        Include links to relevant documentation, PRs, or external resources.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution & Assignment
+      description: Who is working on this phase?
+      options:
+        - label: Phase Lead assigned and confirmed
+        - label: Development team members identified
+        - label: QA resources allocated
+        - label: Documentation resources assigned
+        - label: Review and approval process defined
+
+  - type: checkboxes
+    id: validation-checklist
+    attributes:
+      label: Phase Tracking Checklist
+      description: Please confirm the following
+      options:
+        - label: I have reviewed the Master Development Plan for this phase
+          required: true
+        - label: All prerequisites from previous phases are validated
+          required: true
+        - label: Timeline and milestones are realistic and achievable
+          required: true
+        - label: Success criteria are clearly defined and measurable
+          required: true
+        - label: This phase tracking aligns with PowerOrchestrator's development methodology
+          required: true
