@@ -202,8 +202,8 @@ public class MaterializedViewPerformanceTests : PerformanceTestBase
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
-                    CreatedBy = "RefreshTest",
-                    UpdatedBy = "RefreshTest"
+                    CreatedBy = Guid.NewGuid(),
+                    UpdatedBy = Guid.NewGuid()
                 });
         }
 
@@ -410,9 +410,9 @@ public class MaterializedViewPerformanceTests : PerformanceTestBase
                 REFRESH MATERIALIZED VIEW powerorchestrator.mv_script_performance;
                 
                 -- Log refresh completion (optional)
-                INSERT INTO powerorchestrator.audit_logs (id, entity_type, entity_id, action, details, created_at, created_by)
+                INSERT INTO powerorchestrator.audit_logs (id, entity_type, entity_id, action, old_values, user_id, timestamp)
                 VALUES (gen_random_uuid(), 'MaterializedView', gen_random_uuid(), 'Refresh', 
-                       'Automated materialized view refresh completed', NOW(), 'System');
+                       '{""details"": ""Automated materialized view refresh completed""}'::jsonb, gen_random_uuid(), NOW());
             END;
             $$");
     }

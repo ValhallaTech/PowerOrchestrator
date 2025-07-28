@@ -57,19 +57,22 @@ public class DatabaseSeeder
     /// </summary>
     private async Task ClearTestDataAsync(NpgsqlConnection connection, NpgsqlTransaction transaction)
     {
-        // Delete executions first due to foreign key constraint
+        // Remove all executions referencing test scripts (expanded patterns)
         await connection.ExecuteAsync(
-            "DELETE FROM powerorchestrator.executions WHERE script_id IN (SELECT id FROM powerorchestrator.scripts WHERE name LIKE 'PerfTest_%')",
+            @"DELETE FROM powerorchestrator.executions 
+              WHERE script_id IN (SELECT id FROM powerorchestrator.scripts WHERE name LIKE 'PerfTest_%' OR name LIKE 'RefreshTest_%')",
             transaction: transaction);
 
-        // Also ensure any orphaned executions referencing non-existent scripts are removed
+        // Remove orphaned executions
         await connection.ExecuteAsync(
-            "DELETE FROM powerorchestrator.executions WHERE script_id NOT IN (SELECT id FROM powerorchestrator.scripts)",
+            @"DELETE FROM powerorchestrator.executions 
+              WHERE script_id NOT IN (SELECT id FROM powerorchestrator.scripts)",
             transaction: transaction);
 
-        // Then delete scripts
+        // Now remove scripts (expanded patterns)
         await connection.ExecuteAsync(
-            "DELETE FROM powerorchestrator.scripts WHERE name LIKE 'PerfTest_%'",
+            @"DELETE FROM powerorchestrator.scripts 
+              WHERE name LIKE 'PerfTest_%' OR name LIKE 'RefreshTest_%'",
             transaction: transaction);
     }
 
@@ -82,12 +85,22 @@ public class DatabaseSeeder
         var scripts = new List<object>();
         var usedNameVersions = new HashSet<string>();
 
+        // Fetch existing name-version pairs to avoid conflicts
+        var existingPairs = await connection.QueryAsync<string>(
+            @"SELECT name || ':' || version FROM powerorchestrator.scripts WHERE name LIKE 'PerfTest_%'",
+            transaction: transaction);
+        foreach (var pair in existingPairs)
+            usedNameVersions.Add(pair);
+
+        // Generate a unique run identifier to ensure global uniqueness
+        var runId = Guid.NewGuid().ToString("N").Substring(0, 8);
+
         for (int i = 0; i < count; i++)
         {
             string name, version, nameVersionKey;
             do
             {
-                name = $"PerfTest_Script_{i:D6}";
+                name = $"PerfTest_Script_{runId}_{i:D6}";
                 version = $"1.{_random.Next(0, 10)}.{_random.Next(0, 100)}";
                 nameVersionKey = $"{name}:{version}";
             }
