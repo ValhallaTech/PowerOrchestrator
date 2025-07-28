@@ -62,6 +62,11 @@ public class DatabaseSeeder
             "DELETE FROM powerorchestrator.executions WHERE script_id IN (SELECT id FROM powerorchestrator.scripts WHERE name LIKE 'PerfTest_%')",
             transaction: transaction);
 
+        // Also ensure any orphaned executions referencing non-existent scripts are removed
+        await connection.ExecuteAsync(
+            "DELETE FROM powerorchestrator.executions WHERE script_id NOT IN (SELECT id FROM powerorchestrator.scripts)",
+            transaction: transaction);
+
         // Then delete scripts
         await connection.ExecuteAsync(
             "DELETE FROM powerorchestrator.scripts WHERE name LIKE 'PerfTest_%'",
@@ -75,19 +80,29 @@ public class DatabaseSeeder
     {
         var scriptIds = new List<Guid>();
         var scripts = new List<object>();
+        var usedNameVersions = new HashSet<string>();
 
         for (int i = 0; i < count; i++)
         {
+            string name, version, nameVersionKey;
+            do
+            {
+                name = $"PerfTest_Script_{i:D6}";
+                version = $"1.{_random.Next(0, 10)}.{_random.Next(0, 100)}";
+                nameVersionKey = $"{name}:{version}";
+            }
+            while (!usedNameVersions.Add(nameVersionKey));
+
             var scriptId = Guid.NewGuid();
             scriptIds.Add(scriptId);
 
             var script = new
             {
                 Id = scriptId,
-                Name = $"PerfTest_Script_{i:D6}",
+                Name = name,
                 Description = $"Performance test script {i} - {GenerateRandomDescription()}",
                 Content = GenerateRandomPowerShellScript(i),
-                Version = $"1.{_random.Next(0, 10)}.{_random.Next(0, 100)}",
+                Version = version,
                 Tags = GenerateRandomTags(),
                 IsActive = _random.NextDouble() > 0.1, // 90% active
                 TimeoutSeconds = _random.Next(60, 3600),
