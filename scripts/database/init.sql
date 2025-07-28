@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS powerorchestrator.scripts (
     content TEXT NOT NULL,
     version VARCHAR(50) NOT NULL DEFAULT '1.0.0',
     status powerorchestrator.script_status NOT NULL DEFAULT 'draft',
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    timeout_seconds INTEGER NOT NULL DEFAULT 300,
     tags JSONB,
     metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -87,16 +89,54 @@ CREATE TABLE IF NOT EXISTS powerorchestrator.health_checks (
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_scripts_status ON powerorchestrator.scripts(status);
+CREATE INDEX IF NOT EXISTS idx_scripts_is_active ON powerorchestrator.scripts(is_active);
 CREATE INDEX IF NOT EXISTS idx_scripts_created_at ON powerorchestrator.scripts(created_at);
 CREATE INDEX IF NOT EXISTS idx_scripts_tags ON powerorchestrator.scripts USING gin(tags);
 
 CREATE INDEX IF NOT EXISTS idx_executions_script_id ON powerorchestrator.executions(script_id);
 CREATE INDEX IF NOT EXISTS idx_executions_status ON powerorchestrator.executions(status);
 CREATE INDEX IF NOT EXISTS idx_executions_created_at ON powerorchestrator.executions(created_at);
+CREATE INDEX IF NOT EXISTS idx_executions_completed_at ON powerorchestrator.executions(completed_at);
 
 CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON powerorchestrator.audit_logs(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON powerorchestrator.audit_logs(timestamp);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON powerorchestrator.audit_logs(user_id);
+
+-- Create materialized views for performance testing
+CREATE MATERIALIZED VIEW IF NOT EXISTS powerorchestrator.mv_execution_statistics AS
+SELECT 
+    e.script_id,
+    s.name as script_name,
+    COUNT(*) as total_executions,
+    COUNT(CASE WHEN e.status = 'completed' THEN 1 END) as successful_executions,
+    COUNT(CASE WHEN e.status = 'failed' THEN 1 END) as failed_executions,
+    AVG(EXTRACT(EPOCH FROM (e.completed_at - e.started_at))) as avg_duration_seconds,
+    MAX(e.completed_at) as last_execution,
+    MIN(e.created_at) as first_execution
+FROM powerorchestrator.executions e
+JOIN powerorchestrator.scripts s ON e.script_id = s.id
+WHERE e.completed_at IS NOT NULL AND e.started_at IS NOT NULL
+GROUP BY e.script_id, s.name;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS powerorchestrator.mv_script_performance AS
+SELECT 
+    s.id,
+    s.name,
+    s.description,
+    s.tags,
+    s.is_active,
+    COUNT(e.id) as execution_count,
+    MAX(e.completed_at) as last_execution,
+    AVG(EXTRACT(EPOCH FROM (e.completed_at - e.started_at))) as avg_duration_seconds
+FROM powerorchestrator.scripts s
+LEFT JOIN powerorchestrator.executions e ON s.id = e.script_id 
+    AND e.completed_at IS NOT NULL AND e.started_at IS NOT NULL
+WHERE s.is_active = true
+GROUP BY s.id, s.name, s.description, s.tags, s.is_active;
+
+-- Create indexes on materialized views
+CREATE INDEX IF NOT EXISTS idx_mv_execution_statistics_script_id ON powerorchestrator.mv_execution_statistics(script_id);
+CREATE INDEX IF NOT EXISTS idx_mv_script_performance_id ON powerorchestrator.mv_script_performance(id);
 
 -- Insert initial health check data
 INSERT INTO powerorchestrator.health_checks (service_name, status, message) 
@@ -106,10 +146,10 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- Insert sample development data
-INSERT INTO powerorchestrator.scripts (name, description, content, created_by, updated_by)
+INSERT INTO powerorchestrator.scripts (name, description, content, is_active, timeout_seconds, created_by, updated_by)
 VALUES 
-    ('hello-world', 'Basic PowerShell Hello World script', 'Write-Host "Hello, PowerOrchestrator!"', uuid_generate_v4(), uuid_generate_v4()),
-    ('system-info', 'Get system information', 'Get-ComputerInfo | Select-Object WindowsProductName, TotalPhysicalMemory, CsProcessors', uuid_generate_v4(), uuid_generate_v4())
+    ('hello-world', 'Basic PowerShell Hello World script', 'Write-Host "Hello, PowerOrchestrator!"', true, 30, uuid_generate_v4(), uuid_generate_v4()),
+    ('system-info', 'Get system information', 'Get-ComputerInfo | Select-Object WindowsProductName, TotalPhysicalMemory, CsProcessors', true, 60, uuid_generate_v4(), uuid_generate_v4())
 ON CONFLICT (name, version) DO NOTHING;
 
 -- Grant permissions

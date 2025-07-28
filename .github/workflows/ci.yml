@@ -159,7 +159,8 @@ jobs:
 
     - name: Create performance test database
       run: |
-        psql -U powerorch -h localhost -d postgres -c "CREATE DATABASE powerorchestrator_dev;"
+        # Try to create database, ignore error if it already exists
+        psql -U powerorch -h localhost -d postgres -c "CREATE DATABASE powerorchestrator_dev;" || echo "Database already exists"
         psql -U powerorch -h localhost -d powerorchestrator_dev -f scripts/database/init.sql
       env:
         PGPASSWORD: PowerOrch2025!

@@ -89,12 +89,10 @@ public class DatabaseSeeder
                 Tags = GenerateRandomTags(),
                 IsActive = _random.NextDouble() > 0.1, // 90% active
                 TimeoutSeconds = _random.Next(60, 3600),
-                RequiredPowerShellVersion = _random.NextDouble() > 0.5 ? "5.1" : "7.0",
-                ParametersSchema = GenerateRandomParametersSchema(),
                 CreatedAt = DateTime.UtcNow.AddDays(-_random.Next(0, 365)),
                 UpdatedAt = DateTime.UtcNow.AddDays(-_random.Next(0, 30)),
-                CreatedBy = $"TestUser_{_random.Next(1, 100)}",
-                UpdatedBy = $"TestUser_{_random.Next(1, 100)}"
+                CreatedBy = Guid.NewGuid(),
+                UpdatedBy = Guid.NewGuid()
             };
 
             scripts.Add(script);
@@ -123,11 +121,9 @@ public class DatabaseSeeder
     {
         const string sql = @"
             INSERT INTO powerorchestrator.scripts 
-            (id, name, description, content, version, tags, is_active, timeout_seconds, 
-             required_powershell_version, parameters_schema, created_at, updated_at, created_by, updated_by)
+            (id, name, description, content, version, tags, is_active, timeout_seconds, created_at, updated_at, created_by, updated_by)
             VALUES 
-            (@Id, @Name, @Description, @Content, @Version, @Tags, @IsActive, @TimeoutSeconds,
-             @RequiredPowerShellVersion, @ParametersSchema, @CreatedAt, @UpdatedAt, @CreatedBy, @UpdatedBy)";
+            (@Id, @Name, @Description, @Content, @Version, @Tags, @IsActive, @TimeoutSeconds, @CreatedAt, @UpdatedAt, @CreatedBy, @UpdatedBy)";
 
         await connection.ExecuteAsync(sql, scripts, transaction: transaction);
     }
