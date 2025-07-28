@@ -2,6 +2,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using PowerOrchestrator.API.Middleware;
 using PowerOrchestrator.Application.Interfaces;
 using PowerOrchestrator.Application.Interfaces.Repositories;
 using PowerOrchestrator.Infrastructure;
@@ -124,6 +125,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+
+// Add global exception handling
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Add logging middleware
 app.UseSerilogRequestLogging();
