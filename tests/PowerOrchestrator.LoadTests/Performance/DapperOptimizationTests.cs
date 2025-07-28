@@ -39,6 +39,18 @@ public class DapperOptimizationTests : PerformanceTestBase
             WHERE name LIKE 'PerfTest_%' 
             LIMIT 100")).ToList();
 
+        // Ensure we have enough scripts for the test
+        if (scriptIds.Count < 10)
+        {
+            await _seeder.SeedPerformanceDataAsync(500, 2);
+            scriptIds = (await connection.QueryAsync<Guid>(@"
+                SELECT id FROM powerorchestrator.scripts 
+                WHERE name LIKE 'PerfTest_%' 
+                LIMIT 100")).ToList();
+        }
+
+        scriptIds.Should().NotBeEmpty("Should have test scripts for bulk operations test");
+
         var individualQueryResult = await MeasureAsync(async () =>
         {
             var results = new List<object>();
@@ -121,6 +133,16 @@ public class DapperOptimizationTests : PerformanceTestBase
 
         using var connection = await GetPostgreSqlConnectionAsync();
 
+        // Verify we have test data before proceeding
+        var testDataCount = await connection.QueryFirstOrDefaultAsync<int>(
+            "SELECT COUNT(*) FROM powerorchestrator.scripts WHERE name LIKE 'PerfTest_%'");
+        
+        if (testDataCount < 100)
+        {
+            // Seed additional data if needed
+            await _seeder.SeedPerformanceDataAsync(2000, 3);
+        }
+
         // Test 1: Index usage for script name searches
         const string indexedNameQuery = @"
             SELECT s.id, s.name, s.description, s.is_active, s.created_at
@@ -130,7 +152,15 @@ public class DapperOptimizationTests : PerformanceTestBase
             LIMIT 50";
 
         var (nameSearchResults, nameSearchDuration) = await MeasureAsync(async () =>
-            await connection.QueryAsync(indexedNameQuery, new { NamePattern = "PerfTest_Script_00%" }));
+            await connection.QueryAsync(indexedNameQuery, new { NamePattern = "PerfTest_Script_%" }));
+
+        // Ensure we have test data - if not, seed more
+        if (!nameSearchResults.Any())
+        {
+            await _seeder.SeedPerformanceDataAsync(1000, 2);
+            (nameSearchResults, nameSearchDuration) = await MeasureAsync(async () =>
+                await connection.QueryAsync(indexedNameQuery, new { NamePattern = "PerfTest_Script_%" }));
+        }
 
         // Test 2: Index usage for tag-based searches
         const string tagSearchQuery = @"
@@ -198,10 +228,10 @@ public class DapperOptimizationTests : PerformanceTestBase
         joinDuration.Should().BeLessThan(TimeSpan.FromMilliseconds(200),
             $"Complex join took {joinDuration.TotalMilliseconds:F2}ms, should be < 200ms");
 
-        // Verify query results
-        nameSearchResults.Should().NotBeEmpty();
-        tagSearchResults.Should().NotBeEmpty();
-        joinResults.Should().NotBeEmpty();
+        // Verify query results with better error messages
+        nameSearchResults.Should().NotBeEmpty($"Name search should return results. Pattern: 'PerfTest_Script_%', Count in DB: {testDataCount}");
+        tagSearchResults.Should().NotBeEmpty("Tag search should return results for 'automation' tag");
+        joinResults.Should().NotBeEmpty("Complex join should return results for recent scripts");
 
         Console.WriteLine($"Query Optimization Performance Results:");
         Console.WriteLine($"  Name Search: {nameSearchDuration.TotalMilliseconds:F2}ms");

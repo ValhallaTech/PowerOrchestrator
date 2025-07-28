@@ -22,7 +22,7 @@ public abstract class PerformanceTestBase : IDisposable
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Port=5432;Database=powerorchestrator_dev;Username=powerorch;Password=PowerOrch2025!",
-                ["ConnectionStrings:Redis"] = "localhost:6379"
+                ["ConnectionStrings:Redis"] = "localhost:6379,allowAdmin=true"
             })
             .AddEnvironmentVariables()
             .Build();

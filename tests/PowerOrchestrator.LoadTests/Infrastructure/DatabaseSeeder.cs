@@ -57,19 +57,29 @@ public class DatabaseSeeder
     /// </summary>
     private async Task ClearTestDataAsync(NpgsqlConnection connection, NpgsqlTransaction transaction)
     {
-        // Remove all executions referencing test scripts (expanded patterns)
+        // First, remove all executions referencing test scripts (expanded patterns)
         await connection.ExecuteAsync(
             @"DELETE FROM powerorchestrator.executions 
               WHERE script_id IN (SELECT id FROM powerorchestrator.scripts WHERE name LIKE 'PerfTest_%' OR name LIKE 'RefreshTest_%')",
             transaction: transaction);
 
-        // Remove orphaned executions
+        // Remove any remaining orphaned executions to prevent constraint violations
         await connection.ExecuteAsync(
             @"DELETE FROM powerorchestrator.executions 
               WHERE script_id NOT IN (SELECT id FROM powerorchestrator.scripts)",
             transaction: transaction);
 
-        // Now remove scripts (expanded patterns)
+        // Remove any executions that might reference scripts about to be deleted
+        await connection.ExecuteAsync(
+            @"DELETE FROM powerorchestrator.executions e
+              WHERE EXISTS (
+                  SELECT 1 FROM powerorchestrator.scripts s 
+                  WHERE s.id = e.script_id 
+                  AND (s.name LIKE 'PerfTest_%' OR s.name LIKE 'RefreshTest_%')
+              )",
+            transaction: transaction);
+
+        // Now safely remove test scripts
         await connection.ExecuteAsync(
             @"DELETE FROM powerorchestrator.scripts 
               WHERE name LIKE 'PerfTest_%' OR name LIKE 'RefreshTest_%'",
