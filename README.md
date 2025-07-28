@@ -4,8 +4,7 @@ Enterprise-grade PowerShell script orchestration platform with secure execution,
 
 ![.NET 8](https://img.shields.io/badge/.NET-8-purple) 
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17.5-blue) 
-![Redis](https://img.shields.io/badge/Redis-8.0.3-red) 
-![License](https://img.shields.io/badge/license-MIT-green)
+![Redis](https://img.shields.io/badge/Redis-8.0.3-red)
 
 ## 🌟 Features
 
@@ -36,53 +35,28 @@ src/
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - [Docker](https://www.docker.com/) and Docker Compose
-- [PostgreSQL 17.5](https://www.postgresql.org/) (or use Docker)
-- [Redis 8.0.3](https://redis.io/) (or use Docker)
 
-### Development Setup
+### Get Started
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/ValhallaTech/PowerOrchestrator.git
-   cd PowerOrchestrator
-   ```
+```bash
+# Clone and setup
+git clone https://github.com/ValhallaTech/PowerOrchestrator.git
+cd PowerOrchestrator
 
-2. **Start development environment**
-   ```bash
-   # Start PostgreSQL, Redis, and Seq with Docker
-   docker compose -f docker-compose.dev.yml up -d
-   ```
+# Start services
+docker compose -f docker-compose.dev.yml up -d
 
-3. **Restore and build**
-   ```bash
-   dotnet restore
-   dotnet build
-   ```
+# Build and run
+dotnet restore && dotnet build
+cd src/PowerOrchestrator.API && dotnet run
+```
 
-4. **Run tests**
-   ```bash
-   dotnet test
-   ```
-
-5. **Start the API**
-   ```bash
-   cd src/PowerOrchestrator.API
-   dotnet run
-   ```
-
-6. **Launch MAUI app** (optional)
-   ```bash
-   cd src/PowerOrchestrator.MAUI
-   dotnet run
-   ```
-
-### Environment URLs
-
+**Access Points:**
 - **API**: http://localhost:5000
-- **Swagger UI**: http://localhost:5000/swagger
-- **Seq Logs**: http://localhost:5341
-- **PostgreSQL**: localhost:5432
-- **Redis**: localhost:6379
+- **Swagger**: http://localhost:5000/swagger  
+- **Logs**: http://localhost:5341
+
+> **💡 For detailed setup instructions, see [Developer Setup Guide](docs/developer-guide/setup.md)**
 
 ## 🛠️ Technology Stack
 
@@ -130,112 +104,50 @@ src/
 
 The development environment uses Docker Compose for easy setup:
 
-### Services
-
 | Service | Version | Port | Purpose |
 |---------|---------|------|---------|
 | PostgreSQL | 17.5 | 5432 | Primary database |
 | Redis | 8.0.3 | 6379 | Caching & sessions |
 | Seq | Latest | 5341 | Log aggregation |
 
-### Database Configuration
-
-- **Database**: `powerorchestrator_dev`
-- **User**: `powerorch`
-- **Password**: `PowerOrch2025!`
-- **Features**: UUID, crypto extensions, performance optimization
-
-### Redis Configuration
-
-- **Password**: `PowerOrchRedis2025!`
-- **Persistence**: AOF enabled
-- **Memory**: 512MB with LRU eviction
-
 ## 🧪 Testing
 
 PowerOrchestrator includes comprehensive testing at multiple levels:
 
 ```bash
-# Unit tests
+# All tests
+dotnet test
+
+# Specific test projects
 dotnet test tests/PowerOrchestrator.UnitTests
-
-# Integration tests (requires Docker services)
 dotnet test tests/PowerOrchestrator.IntegrationTests
-
-# Load tests
 dotnet test tests/PowerOrchestrator.LoadTests
-
-# All tests with coverage
-dotnet test --collect:"XPlat Code Coverage"
 ```
-
-### Test Categories
-
-- **Unit Tests**: Domain logic and business rules
-- **Integration Tests**: API endpoints and database operations
-- **Load Tests**: Performance and scalability validation
 
 ## 🔧 Configuration
 
-### Application Settings
+PowerOrchestrator supports flexible configuration for different environments. Key configuration areas include database connections, Redis caching, logging levels, and security settings.
 
-Key configuration sections:
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=powerorchestrator_dev;Username=powerorch;Password=PowerOrch2025!",
-    "Redis": "localhost:6379"
-  },
-  "Serilog": {
-    "MinimumLevel": "Information",
-    "WriteTo": [
-      { "Name": "Console" },
-      { "Name": "Seq", "Args": { "serverUrl": "http://localhost:5341" } }
-    ]
-  }
-}
-```
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `ASPNETCORE_ENVIRONMENT` | Runtime environment | `Development` |
-| `ConnectionStrings__DefaultConnection` | Database connection | See above |
-| `ConnectionStrings__Redis` | Redis connection | `localhost:6379` |
+> **📖 For detailed configuration options, see [Developer Setup Guide](docs/developer-guide/setup.md)**
 
 ## 📚 Documentation
 
 Comprehensive documentation is available in the `docs/` directory:
 
-- **[Architecture Guide](docs/architecture/)** - System design and patterns
-- **[User Guide](docs/user-guide/)** - End-user documentation
-- **[Developer Guide](docs/developer-guide/)** - Development guidelines
-- **[API Documentation](docs/api/)** - REST API reference
+- **[Architecture Guide](docs/architecture/overview.md)** - System design and patterns
+- **[User Guide](docs/user-guide/getting-started.md)** - End-user documentation
+- **[Developer Guide](docs/developer-guide/setup.md)** - Development setup and guidelines
+- **[API Documentation](docs/api/overview.md)** - REST API reference
+- **[Phase Development Plan](docs/POrch-PhasePlan.md)** - Project roadmap and implementation phases
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! Please see our [Contributing Guidelines](docs/developer-guide/contributing.md) for details on:
 
-### Development Workflow
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests and ensure they pass
-5. Submit a pull request
-
-### Code Quality
-
-- Follow C# coding conventions
-- Write unit tests for new features
-- Update documentation as needed
-- Ensure all CI checks pass
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- Development workflow and standards  
+- Code quality requirements
+- Pull request process
+- Testing guidelines
 
 ## 🌐 Support
 
@@ -245,25 +157,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔮 Roadmap
 
-### Phase 1 (Aug 1-15): Core Infrastructure & Database Design
-- Complete database schema design
-- Implement core domain entities
-- Set up data access layer
+PowerOrchestrator is being developed in phases, with each phase building comprehensive functionality:
 
-### Phase 2 (Aug 15-29): GitHub Integration & Repository Management
-- GitHub API integration
-- Repository scanning and script discovery
-- Version management system
+**Current Phase**: Core Infrastructure & Database Design  
+**Next Phase**: GitHub Integration & Repository Management
 
-### Phase 2.5 (Aug 29-Sep 19): Identity Management & Security
-- User authentication and authorization
-- Role-based access control
-- Security audit logging
-
-### Phase 3 (Sep 19-Oct 10): MAUI Application & Material Design UI
-- Complete MAUI application
-- Material Design implementation
-- Cross-platform deployment
+For detailed phase information and timelines, see the [Phase Development Plan](docs/POrch-PhasePlan.md).
 
 ---
 
