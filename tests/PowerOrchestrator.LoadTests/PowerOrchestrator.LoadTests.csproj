@@ -15,10 +15,21 @@
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="BenchmarkDotNet.Annotations" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../../src/PowerOrchestrator.API/PowerOrchestrator.API.csproj" />
+    <ProjectReference Include="../../src/PowerOrchestrator.Infrastructure/PowerOrchestrator.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/PowerOrchestrator.Domain/PowerOrchestrator.Domain.csproj" />
+    <ProjectReference Include="../../src/PowerOrchestrator.Application/PowerOrchestrator.Application.csproj" />
   </ItemGroup>
 
 </Project>
