@@ -93,6 +93,10 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.11" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.1.0" />
     <PackageVersion Include="Testcontainers.Redis" Version="4.1.0" />
+    
+    <!-- Performance Testing -->
+    <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
+    <PackageVersion Include="BenchmarkDotNet.Annotations" Version="0.14.0" />
 
     <!-- Build & Analyzers -->
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" />
