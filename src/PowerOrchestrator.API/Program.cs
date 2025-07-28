@@ -1,5 +1,6 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using AutoMapper;
 using AutoMapper.Contrib.Autofac.DependencyInjection;
 using FluentValidation.AspNetCore;
 using MediatR;
@@ -103,14 +104,30 @@ builder.Services.AddCors(options =>
 // Configure Autofac container
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 {
-    // Register AutoMapper using Autofac integration
-    containerBuilder.RegisterAutoMapper(typeof(Program).Assembly);
+    // Register AutoMapper using Autofac integration with assembly scanning
+    // This scans for all AutoMapper Profile classes in the specified assemblies
+    containerBuilder.RegisterAutoMapper(
+        typeof(Program).Assembly // API assembly contains our mapping profiles
+    );
     
     // Register our custom modules
     containerBuilder.RegisterModule<CoreModule>();
 });
 
 var app = builder.Build();
+
+// Validate AutoMapper configuration at startup
+try
+{
+    var mapper = app.Services.GetRequiredService<IMapper>();
+    mapper.ConfigurationProvider.AssertConfigurationIsValid();
+    Log.Information("AutoMapper configuration validated successfully");
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "AutoMapper configuration validation failed");
+    throw;
+}
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
