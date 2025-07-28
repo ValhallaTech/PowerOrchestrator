@@ -1,13 +1,12 @@
-using FluentValidation;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
+using AutoMapper.Contrib.Autofac.DependencyInjection;
 using FluentValidation.AspNetCore;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using PowerOrchestrator.API.Middleware;
-using PowerOrchestrator.Application.Interfaces;
-using PowerOrchestrator.Application.Interfaces.Repositories;
-using PowerOrchestrator.Infrastructure;
+using PowerOrchestrator.API.Modules;
 using PowerOrchestrator.Infrastructure.Data;
-using PowerOrchestrator.Infrastructure.Repositories;
 using Serilog;
 using StackExchange.Redis;
 
@@ -20,18 +19,17 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// Add services to the container
+// Configure Autofac as the service provider factory
+builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
+
+// Configure services that need to be registered with the framework
 builder.Services.AddControllers();
 
 // Configure Entity Framework
 builder.Services.AddDbContext<PowerOrchestratorDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Configure AutoMapper
-builder.Services.AddAutoMapper(typeof(Program));
-
 // Configure FluentValidation
-builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddFluentValidationAutoValidation();
 
 // Configure MediatR
@@ -55,13 +53,6 @@ if (!string.IsNullOrEmpty(redisConnectionString))
         Log.Warning("Failed to configure Redis: {Message}", ex.Message);
     }
 }
-
-// Register repositories and unit of work
-builder.Services.AddScoped<IScriptRepository, ScriptRepository>();
-builder.Services.AddScoped<IExecutionRepository, ExecutionRepository>();
-builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
-builder.Services.AddScoped<IHealthCheckRepository, HealthCheckRepository>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Configure Health Checks
 builder.Services.AddHealthChecks()
@@ -107,6 +98,16 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
+});
+
+// Configure Autofac container
+builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
+{
+    // Register AutoMapper using Autofac integration
+    containerBuilder.RegisterAutoMapper(typeof(Program).Assembly);
+    
+    // Register our custom modules
+    containerBuilder.RegisterModule<CoreModule>();
 });
 
 var app = builder.Build();
@@ -164,7 +165,7 @@ app.MapGet("/health/live", () => Results.Ok(new { Status = "Alive", Timestamp = 
 
 try
 {
-    Log.Information("Starting PowerOrchestrator API");
+    Log.Information("Starting PowerOrchestrator API with Autofac DI container");
     app.Run();
 }
 catch (Exception ex)
