@@ -105,8 +105,39 @@ The tests use deterministic random generation with fixed seeds for reproducible 
 
 ## Integration with CI/CD
 
-These performance tests are designed to:
-- Run in containerized environments
+### Automated Performance Validation
+The performance tests are fully integrated into the CI/CD pipeline as a separate job that runs after the main build and test phase. This provides several benefits:
+
+- **Performance Regression Detection**: Every code change is validated against Phase 1 performance requirements
+- **Enterprise Standards Enforcement**: Ensures deployment readiness by validating all enterprise performance criteria
+- **Non-Blocking Architecture**: Performance tests run in parallel/after main tests, maintaining fast feedback loops
+- **Service Availability Handling**: Tests gracefully skip when PostgreSQL/Redis services are unavailable
+
+### CI/CD Pipeline Structure
+```yaml
+build-and-test -> performance-tests -> [build-docker, foundation-validation]
+```
+
+### Performance Requirements Validated in CI
+| Requirement | Threshold | Test Method |
+|-------------|-----------|-------------|
+| Pagination Response | < 100ms for 50 items | Automated timing validation |
+| Concurrent Operations | 10+ simultaneous users | Load testing with 15+ concurrent operations |
+| Cache Response Time | < 5ms operations | Redis performance measurement |
+| Cache Hit Rate | > 95% for frequent data | Cache efficiency validation |
+| Memory Usage | < 1GB normal operations | .NET memory monitoring |
+| Materialized Views | 50% performance improvement | Query comparison testing |
+
+### Running in CI Environment
+The tests are designed to:
+- Run in containerized environments (PostgreSQL 17.5 + Redis 8.0.3)
 - Provide clear pass/fail criteria based on performance requirements
-- Generate detailed performance reports
-- Validate performance regression prevention
+- Generate detailed performance reports with microsecond precision
+- Validate performance regression prevention through baseline comparisons
+- Handle resource constraints typical in CI environments
+
+### Artifacts Generated
+- Performance test results (TRX format)
+- Detailed timing measurements
+- Memory usage reports
+- Cache efficiency metrics
