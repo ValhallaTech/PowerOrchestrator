@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS powerorchestrator.scripts (
 -- Executions table
 CREATE TABLE IF NOT EXISTS powerorchestrator.executions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    script_id UUID NOT NULL REFERENCES powerorchestrator.scripts(id),
+    script_id UUID NOT NULL REFERENCES powerorchestrator.scripts(id) ON DELETE CASCADE,
     status powerorchestrator.execution_status NOT NULL DEFAULT 'pending',
     parameters JSONB,
     result JSONB,

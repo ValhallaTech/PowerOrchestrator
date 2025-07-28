@@ -294,6 +294,9 @@ public class MaterializedViewPerformanceTests : PerformanceTestBase
             return;
         }
 
+        // Arrange: Ensure we have test data first
+        await _seeder.SeedPerformanceDataAsync(100, 2);
+
         using var connection = await GetPostgreSqlConnectionAsync();
         await CreateMaterializedViewsAsync(connection);
 
