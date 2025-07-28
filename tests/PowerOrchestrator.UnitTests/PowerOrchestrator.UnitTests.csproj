@@ -17,12 +17,15 @@
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Moq" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="AutoMapper" />
+    <PackageReference Include="FluentValidation" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../../src/PowerOrchestrator.Domain/PowerOrchestrator.Domain.csproj" />
     <ProjectReference Include="../../src/PowerOrchestrator.Application/PowerOrchestrator.Application.csproj" />
     <ProjectReference Include="../../src/PowerOrchestrator.Infrastructure/PowerOrchestrator.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/PowerOrchestrator.API/PowerOrchestrator.API.csproj" />
   </ItemGroup>
 
 </Project>
