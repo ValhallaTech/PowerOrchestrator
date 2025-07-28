@@ -76,13 +76,11 @@ public class DapperOptimizationTests : PerformanceTestBase
         {
             const string bulkInsertSql = @"
                 INSERT INTO powerorchestrator.executions 
-                (id, script_id, status, started_at, completed_at, duration_ms, parameters, 
-                 output, error_output, exit_code, executed_on, powershell_version, metadata, 
-                 created_at, updated_at, created_by, updated_by)
+                (id, script_id, status, started_at, completed_at, parameters, 
+                 result, output, error_output, created_at, created_by)
                 VALUES 
-                (@Id, @ScriptId, @Status, @StartedAt, @CompletedAt, @DurationMs, @Parameters,
-                 @Output, @ErrorOutput, @ExitCode, @ExecutedOn, @PowerShellVersion, @Metadata,
-                 @CreatedAt, @UpdatedAt, @CreatedBy, @UpdatedBy)";
+                (@Id, @ScriptId, @Status::powerorchestrator.execution_status, @StartedAt, @CompletedAt, @Parameters::jsonb,
+                 @Result::jsonb, @Output, @ErrorOutput, @CreatedAt, @CreatedBy)";
 
             await connection.ExecuteAsync(bulkInsertSql, testExecutions);
         });
@@ -138,7 +136,7 @@ public class DapperOptimizationTests : PerformanceTestBase
         const string tagSearchQuery = @"
             SELECT s.id, s.name, s.tags, s.is_active
             FROM powerorchestrator.scripts s
-            WHERE s.tags LIKE @TagPattern
+            WHERE s.tags::text LIKE @TagPattern
             ORDER BY s.updated_at DESC
             LIMIT 50";
 
@@ -172,8 +170,8 @@ public class DapperOptimizationTests : PerformanceTestBase
             SELECT 
                 s.id, s.name, s.description,
                 COUNT(e.id) as total_executions,
-                COUNT(CASE WHEN e.status = 2 THEN 1 END) as successful_executions,
-                AVG(e.duration_ms) as avg_duration,
+                COUNT(CASE WHEN e.status = 'completed' THEN 1 END) as successful_executions,
+                AVG(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000) as avg_duration,
                 MAX(e.completed_at) as last_execution
             FROM powerorchestrator.scripts s
             LEFT JOIN powerorchestrator.executions e ON s.id = e.script_id
@@ -354,8 +352,8 @@ public class DapperOptimizationTests : PerformanceTestBase
                 LEFT JOIN powerorchestrator.executions e ON s.id = e.script_id
                 WHERE s.created_at BETWEEN @MinDate AND @MaxDate
                   AND s.is_active = @IsActive
-                  AND (s.tags LIKE ANY(@Tags) OR @Tags IS NULL)
-                  AND (e.duration_ms BETWEEN @MinDuration AND @MaxDuration OR e.duration_ms IS NULL)
+                  AND (s.tags::text LIKE ANY(@Tags) OR @Tags IS NULL)
+                  AND (EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000 BETWEEN @MinDuration AND @MaxDuration OR e.completed_at IS NULL OR e.started_at IS NULL)
                 GROUP BY s.id
                 ORDER BY execution_count DESC
                 LIMIT 50", new
@@ -401,21 +399,15 @@ public class DapperOptimizationTests : PerformanceTestBase
                 {
                     Id = Guid.NewGuid(),
                     ScriptId = scriptId,
-                    Status = 2, // Succeeded
+                    Status = "completed", // Succeeded
                     StartedAt = startedAt,
                     CompletedAt = completedAt,
-                    DurationMs = durationMs,
                     Parameters = "{}",
+                    Result = "{\"exitCode\": 0, \"status\": \"Success\"}",
                     Output = $"Test execution output {i}",
                     ErrorOutput = (string?)null,
-                    ExitCode = 0,
-                    ExecutedOn = $"TestServer_{random.Next(1, 5)}",
-                    PowerShellVersion = "7.4.1",
-                    Metadata = "{}",
                     CreatedAt = startedAt,
-                    UpdatedAt = completedAt,
-                    CreatedBy = "DapperTest",
-                    UpdatedBy = "DapperTest"
+                    CreatedBy = Guid.NewGuid()
                 });
             }
         }

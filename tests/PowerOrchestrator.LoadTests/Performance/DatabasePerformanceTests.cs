@@ -92,7 +92,7 @@ public class DatabasePerformanceTests : PerformanceTestBase
             SELECT s.*, COUNT(e.id) as execution_count
             FROM powerorchestrator.scripts s
             LEFT JOIN powerorchestrator.executions e ON s.id = e.script_id
-            WHERE s.name LIKE @SearchTerm OR s.tags LIKE @SearchTerm
+            WHERE s.name LIKE @SearchTerm OR s.tags::text LIKE @SearchTerm
             GROUP BY s.id
             ORDER BY s.updated_at DESC
             LIMIT 25";
@@ -167,10 +167,10 @@ public class DatabasePerformanceTests : PerformanceTestBase
             SELECT 
                 DATE_TRUNC('day', e.created_at) as execution_date,
                 COUNT(*) as total_executions,
-                COUNT(CASE WHEN e.status = 2 THEN 1 END) as successful_executions,
-                COUNT(CASE WHEN e.status = 3 THEN 1 END) as failed_executions,
-                AVG(e.duration_ms) as avg_duration_ms,
-                MAX(e.duration_ms) as max_duration_ms
+                COUNT(CASE WHEN e.status = 'completed' THEN 1 END) as successful_executions,
+                COUNT(CASE WHEN e.status = 'failed' THEN 1 END) as failed_executions,
+                AVG(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000) as avg_duration_ms,
+                MAX(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000) as max_duration_ms
             FROM powerorchestrator.executions e
             JOIN powerorchestrator.scripts s ON e.script_id = s.id
             WHERE e.created_at >= NOW() - INTERVAL '30 days'
@@ -185,10 +185,10 @@ public class DatabasePerformanceTests : PerformanceTestBase
         const string searchQuery = @"
             SELECT s.id, s.name, s.description, s.tags,
                    COUNT(e.id) as execution_count,
-                   AVG(e.duration_ms) as avg_duration
+                   AVG(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000) as avg_duration
             FROM powerorchestrator.scripts s
             LEFT JOIN powerorchestrator.executions e ON s.id = e.script_id
-            WHERE s.name LIKE '%automation%' OR s.description LIKE '%automation%' OR s.tags LIKE '%automation%'
+            WHERE s.name LIKE '%automation%' OR s.description LIKE '%automation%' OR s.tags::text LIKE '%automation%'
             GROUP BY s.id, s.name, s.description, s.tags
             ORDER BY execution_count DESC
             LIMIT 100";

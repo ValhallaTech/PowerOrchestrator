@@ -57,10 +57,12 @@ public class DatabaseSeeder
     /// </summary>
     private async Task ClearTestDataAsync(NpgsqlConnection connection, NpgsqlTransaction transaction)
     {
+        // Delete executions first due to foreign key constraint
         await connection.ExecuteAsync(
             "DELETE FROM powerorchestrator.executions WHERE script_id IN (SELECT id FROM powerorchestrator.scripts WHERE name LIKE 'PerfTest_%')",
             transaction: transaction);
 
+        // Then delete scripts
         await connection.ExecuteAsync(
             "DELETE FROM powerorchestrator.scripts WHERE name LIKE 'PerfTest_%'",
             transaction: transaction);
@@ -123,7 +125,7 @@ public class DatabaseSeeder
             INSERT INTO powerorchestrator.scripts 
             (id, name, description, content, version, tags, is_active, timeout_seconds, created_at, updated_at, created_by, updated_by)
             VALUES 
-            (@Id, @Name, @Description, @Content, @Version, @Tags, @IsActive, @TimeoutSeconds, @CreatedAt, @UpdatedAt, @CreatedBy, @UpdatedBy)";
+            (@Id, @Name, @Description, @Content, @Version, @Tags::jsonb, @IsActive, @TimeoutSeconds, @CreatedAt, @UpdatedAt, @CreatedBy, @UpdatedBy)";
 
         await connection.ExecuteAsync(sql, scripts, transaction: transaction);
     }
@@ -155,21 +157,15 @@ public class DatabaseSeeder
                 {
                     Id = Guid.NewGuid(),
                     ScriptId = scriptId,
-                    Status = (int)status,
+                    Status = MapExecutionStatusToString((ExecutionStatus)status),
                     StartedAt = startedAt,
                     CompletedAt = status == ExecutionStatus.Running ? (DateTime?)null : completedAt,
-                    DurationMs = status == ExecutionStatus.Running ? (long?)null : durationMs,
                     Parameters = GenerateRandomExecutionParameters(),
+                    Result = status == ExecutionStatus.Succeeded ? GenerateRandomResult() : null,
                     Output = status == ExecutionStatus.Succeeded ? GenerateRandomOutput() : null,
                     ErrorOutput = status == ExecutionStatus.Failed ? GenerateRandomError() : null,
-                    ExitCode = status == ExecutionStatus.Failed ? _random.Next(1, 10) : (status == ExecutionStatus.Succeeded ? 0 : (int?)null),
-                    ExecutedOn = $"Server_{_random.Next(1, 20):D2}",
-                    PowerShellVersion = _random.NextDouble() > 0.5 ? "5.1.19041.4412" : "7.4.1",
-                    Metadata = GenerateRandomMetadata(),
                     CreatedAt = startedAt,
-                    UpdatedAt = status == ExecutionStatus.Running ? startedAt : completedAt,
-                    CreatedBy = $"System_Executor_{_random.Next(1, 10)}",
-                    UpdatedBy = $"System_Executor_{_random.Next(1, 10)}"
+                    CreatedBy = Guid.NewGuid()
                 };
 
                 executions.Add(execution);
@@ -197,11 +193,11 @@ public class DatabaseSeeder
     {
         const string sql = @"
             INSERT INTO powerorchestrator.executions 
-            (id, script_id, status, started_at, completed_at, duration_ms, parameters, output, 
-             error_output, exit_code, executed_on, powershell_version, metadata, created_at, updated_at, created_by, updated_by)
+            (id, script_id, status, started_at, completed_at, parameters, result, output, 
+             error_output, created_at, created_by)
             VALUES 
-            (@Id, @ScriptId, @Status, @StartedAt, @CompletedAt, @DurationMs, @Parameters, @Output,
-             @ErrorOutput, @ExitCode, @ExecutedOn, @PowerShellVersion, @Metadata, @CreatedAt, @UpdatedAt, @CreatedBy, @UpdatedBy)";
+            (@Id, @ScriptId, @Status::powerorchestrator.execution_status, @StartedAt, @CompletedAt, @Parameters::jsonb, @Result::jsonb, @Output,
+             @ErrorOutput, @CreatedAt, @CreatedBy)";
 
         await connection.ExecuteAsync(sql, executions, transaction: transaction);
     }
@@ -256,8 +252,8 @@ return @{{
     private string GenerateRandomTags()
     {
         var tags = new[] { "automation", "maintenance", "security", "backup", "monitoring", "deployment", "performance", "test" };
-        var selectedTags = tags.OrderBy(x => _random.Next()).Take(_random.Next(1, 4));
-        return string.Join(",", selectedTags);
+        var selectedTags = tags.OrderBy(x => _random.Next()).Take(_random.Next(1, 4)).ToArray();
+        return JsonSerializer.Serialize(selectedTags);
     }
 
     private string? GenerateRandomParametersSchema()
@@ -285,6 +281,31 @@ return @{{
             Environment = _random.NextDouble() > 0.5 ? "Production" : "Test",
             Iterations = _random.Next(1, 50),
             Verbose = _random.NextDouble() > 0.7
+        });
+    }
+
+    private string MapExecutionStatusToString(ExecutionStatus status)
+    {
+        return status switch
+        {
+            ExecutionStatus.Pending => "pending",
+            ExecutionStatus.Running => "running",
+            ExecutionStatus.Succeeded => "completed",
+            ExecutionStatus.Failed => "failed",
+            ExecutionStatus.Cancelled => "cancelled",
+            ExecutionStatus.TimedOut => "failed", // Map timeout to failed for simplicity
+            _ => "pending"
+        };
+    }
+
+    private string GenerateRandomResult()
+    {
+        return JsonSerializer.Serialize(new
+        {
+            exitCode = 0,
+            duration = _random.Next(100, 5000),
+            processedItems = _random.Next(1, 100),
+            status = "Success"
         });
     }
 

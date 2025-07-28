@@ -39,11 +39,11 @@ public class MaterializedViewPerformanceTests : PerformanceTestBase
             SELECT 
                 DATE_TRUNC('day', e.created_at) as execution_date,
                 COUNT(*) as total_executions,
-                COUNT(CASE WHEN e.status = 2 THEN 1 END) as successful_executions,
-                COUNT(CASE WHEN e.status = 3 THEN 1 END) as failed_executions,
-                AVG(e.duration_ms) as avg_duration_ms,
-                MAX(e.duration_ms) as max_duration_ms,
-                MIN(e.duration_ms) as min_duration_ms
+                COUNT(CASE WHEN e.status = 'completed' THEN 1 END) as successful_executions,
+                COUNT(CASE WHEN e.status = 'failed' THEN 1 END) as failed_executions,
+                AVG(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000) as avg_duration_ms,
+                MAX(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000) as max_duration_ms,
+                MIN(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000) as min_duration_ms
             FROM powerorchestrator.executions e
             JOIN powerorchestrator.scripts s ON e.script_id = s.id
             WHERE e.created_at >= NOW() - INTERVAL '30 days'
@@ -72,11 +72,11 @@ public class MaterializedViewPerformanceTests : PerformanceTestBase
                 s.description,
                 s.tags,
                 COUNT(e.id) as total_executions,
-                COUNT(CASE WHEN e.status = 2 THEN 1 END) as successful_executions,
-                ROUND(AVG(e.duration_ms), 2) as avg_duration_ms,
-                ROUND(STDDEV(e.duration_ms), 2) as duration_stddev,
-                MAX(e.duration_ms) as max_duration_ms,
-                MIN(e.duration_ms) as min_duration_ms,
+                COUNT(CASE WHEN e.status = 'completed' THEN 1 END) as successful_executions,
+                ROUND(AVG(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000), 2) as avg_duration_ms,
+                ROUND(STDDEV(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000), 2) as duration_stddev,
+                MAX(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000) as max_duration_ms,
+                MIN(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000) as min_duration_ms,
                 MAX(e.completed_at) as last_execution_time
             FROM powerorchestrator.scripts s
             LEFT JOIN powerorchestrator.executions e ON s.id = e.script_id
@@ -107,9 +107,9 @@ public class MaterializedViewPerformanceTests : PerformanceTestBase
                 s.tags,
                 COUNT(DISTINCT s.id) as script_count,
                 COUNT(e.id) as total_executions,
-                ROUND(AVG(e.duration_ms), 2) as avg_duration,
-                COUNT(CASE WHEN e.status = 2 THEN 1 END) as success_count,
-                ROUND(COUNT(CASE WHEN e.status = 2 THEN 1 END) * 100.0 / COUNT(e.id), 2) as success_rate
+                ROUND(AVG(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000), 2) as avg_duration,
+                COUNT(CASE WHEN e.status = 'completed' THEN 1 END) as success_count,
+                ROUND(COUNT(CASE WHEN e.status = 'completed' THEN 1 END) * 100.0 / NULLIF(COUNT(e.id), 0), 2) as success_rate
             FROM powerorchestrator.scripts s
             JOIN powerorchestrator.executions e ON s.id = e.script_id
             WHERE e.created_at >= NOW() - INTERVAL '7 days'
@@ -217,22 +217,23 @@ public class MaterializedViewPerformanceTests : PerformanceTestBase
                 {
                     Id = Guid.NewGuid(),
                     ScriptId = scriptId,
-                    Status = 2, // Succeeded
+                    Status = "completed", // Succeeded
                     StartedAt = DateTime.UtcNow.AddMinutes(-i * 10),
                     CompletedAt = DateTime.UtcNow.AddMinutes(-i * 10 + 2),
-                    DurationMs = 120000,
+                    Parameters = "{}",
+                    Result = "{\"exitCode\": 0, \"status\": \"Success\"}",
+                    Output = $"Test execution output {i}",
+                    ErrorOutput = (string?)null,
                     CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
-                    CreatedBy = "RefreshTest",
-                    UpdatedBy = "RefreshTest"
+                    CreatedBy = Guid.NewGuid()
                 });
             }
         }
 
         await connection.ExecuteAsync(@"
             INSERT INTO powerorchestrator.executions 
-            (id, script_id, status, started_at, completed_at, duration_ms, created_at, updated_at, created_by, updated_by)
-            VALUES (@Id, @ScriptId, @Status, @StartedAt, @CompletedAt, @DurationMs, @CreatedAt, @UpdatedAt, @CreatedBy, @UpdatedBy)",
+            (id, script_id, status, started_at, completed_at, parameters, result, output, error_output, created_at, created_by)
+            VALUES (@Id, @ScriptId, @Status::powerorchestrator.execution_status, @StartedAt, @CompletedAt, @Parameters::jsonb, @Result::jsonb, @Output, @ErrorOutput, @CreatedAt, @CreatedBy)",
             executions);
 
         // Test incremental refresh performance
@@ -348,15 +349,15 @@ public class MaterializedViewPerformanceTests : PerformanceTestBase
             SELECT 
                 DATE_TRUNC('day', e.created_at) as execution_date,
                 COUNT(*) as total_executions,
-                COUNT(CASE WHEN e.status = 2 THEN 1 END) as successful_executions,
-                COUNT(CASE WHEN e.status = 3 THEN 1 END) as failed_executions,
-                COUNT(CASE WHEN e.status = 4 THEN 1 END) as cancelled_executions,
-                COUNT(CASE WHEN e.status = 5 THEN 1 END) as timed_out_executions,
-                ROUND(AVG(e.duration_ms), 2) as avg_duration_ms,
-                MAX(e.duration_ms) as max_duration_ms,
-                MIN(e.duration_ms) as min_duration_ms,
-                ROUND(STDDEV(e.duration_ms), 2) as duration_stddev,
-                ROUND(COUNT(CASE WHEN e.status = 2 THEN 1 END) * 100.0 / COUNT(*), 2) as success_rate
+                COUNT(CASE WHEN e.status = 'completed' THEN 1 END) as successful_executions,
+                COUNT(CASE WHEN e.status = 'failed' THEN 1 END) as failed_executions,
+                COUNT(CASE WHEN e.status = 'cancelled' THEN 1 END) as cancelled_executions,
+                COUNT(CASE WHEN e.status = 'failed' THEN 1 END) as timed_out_executions,
+                ROUND(AVG(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000), 2) as avg_duration_ms,
+                MAX(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000) as max_duration_ms,
+                MIN(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000) as min_duration_ms,
+                ROUND(STDDEV(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000), 2) as duration_stddev,
+                ROUND(COUNT(CASE WHEN e.status = 'completed' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) as success_rate
             FROM powerorchestrator.executions e
             JOIN powerorchestrator.scripts s ON e.script_id = s.id
             WHERE e.created_at >= NOW() - INTERVAL '90 days'
@@ -373,15 +374,15 @@ public class MaterializedViewPerformanceTests : PerformanceTestBase
                 s.tags,
                 s.is_active,
                 COUNT(e.id) as total_executions,
-                COUNT(CASE WHEN e.status = 2 THEN 1 END) as successful_executions,
-                COUNT(CASE WHEN e.status = 3 THEN 1 END) as failed_executions,
-                ROUND(AVG(e.duration_ms), 2) as avg_duration_ms,
-                ROUND(STDDEV(e.duration_ms), 2) as duration_stddev,
-                MAX(e.duration_ms) as max_duration_ms,
-                MIN(e.duration_ms) as min_duration_ms,
+                COUNT(CASE WHEN e.status = 'completed' THEN 1 END) as successful_executions,
+                COUNT(CASE WHEN e.status = 'failed' THEN 1 END) as failed_executions,
+                ROUND(AVG(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000), 2) as avg_duration_ms,
+                ROUND(STDDEV(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000), 2) as duration_stddev,
+                MAX(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000) as max_duration_ms,
+                MIN(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000) as min_duration_ms,
                 MAX(e.completed_at) as last_execution_time,
-                ROUND(COUNT(CASE WHEN e.status = 2 THEN 1 END) * 100.0 / COUNT(e.id), 2) as success_rate,
-                ROUND(AVG(CASE WHEN e.status = 2 THEN e.duration_ms END), 2) as avg_success_duration_ms
+                ROUND(COUNT(CASE WHEN e.status = 'completed' THEN 1 END) * 100.0 / NULLIF(COUNT(e.id), 0), 2) as success_rate,
+                ROUND(AVG(CASE WHEN e.status = 'completed' THEN EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000 END), 2) as avg_success_duration_ms
             FROM powerorchestrator.scripts s
             LEFT JOIN powerorchestrator.executions e ON s.id = e.script_id
             WHERE s.is_active = true
