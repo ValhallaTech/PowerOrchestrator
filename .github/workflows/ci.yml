@@ -40,7 +40,7 @@ jobs:
         ports:
           - 6379:6379
         env:
-          REDIS_ARGS: "--protected-mode no"
+          REDIS_ARGS: "--protected-mode no --requirepass PowerOrchRedis2025!"
 
     steps:
     - name: Checkout code
@@ -71,7 +71,6 @@ jobs:
     - name: Create test database and role
       run: |
         psql -U powerorch -h localhost -d powerorchestrator_test -c "CREATE DATABASE powerorchestrator_dev;"
-        psql -U powerorch -h localhost -d powerorchestrator_test -c "CREATE ROLE root WITH LOGIN PASSWORD 'password';"
         psql -U powerorch -h localhost -d powerorchestrator_dev -f scripts/database/init.sql
       env:
         PGPASSWORD: PowerOrch2025!
@@ -89,7 +88,7 @@ jobs:
       run: dotnet test tests/PowerOrchestrator.IntegrationTests --no-build --configuration Release --logger trx --collect:"XPlat Code Coverage"
       env:
         ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=powerorchestrator_test;Username=powerorch;Password=PowerOrch2025!"
-        ConnectionStrings__Redis: "localhost:6379"
+        ConnectionStrings__Redis: "localhost:6379,password=PowerOrchRedis2025!,allowAdmin=true"
 
     - name: Upload test results
       uses: actions/upload-artifact@v4

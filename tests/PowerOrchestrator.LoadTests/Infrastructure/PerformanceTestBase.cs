@@ -21,7 +21,7 @@ public abstract class PerformanceTestBase : IDisposable
         Configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Port=5432;Database=powerorchestrator_dev;Username=powerorch;Password=PowerOrch2025!",
+                ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Port=5432;Database=powerorchestrator_test;Username=powerorch;Password=PowerOrch2025!",
                 ["ConnectionStrings:Redis"] = "localhost:6379,password=PowerOrchRedis2025!,allowAdmin=true"
             })
             .AddEnvironmentVariables()

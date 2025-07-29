@@ -105,38 +105,52 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON powerorchestrator.audit_log
 -- Create materialized views for performance testing
 CREATE MATERIALIZED VIEW IF NOT EXISTS powerorchestrator.mv_execution_statistics AS
 SELECT 
-    e.script_id,
-    s.name as script_name,
+    DATE_TRUNC('day', e.created_at) as execution_date,
     COUNT(*) as total_executions,
     COUNT(CASE WHEN e.status = 'completed' THEN 1 END) as successful_executions,
     COUNT(CASE WHEN e.status = 'failed' THEN 1 END) as failed_executions,
-    AVG(EXTRACT(EPOCH FROM (e.completed_at - e.started_at))) as avg_duration_seconds,
-    MAX(e.completed_at) as last_execution,
-    MIN(e.created_at) as first_execution
+    COUNT(CASE WHEN e.status = 'cancelled' THEN 1 END) as cancelled_executions,
+    ROUND(AVG(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000), 2) as avg_duration_ms,
+    MAX(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000) as max_duration_ms,
+    MIN(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000) as min_duration_ms,
+    ROUND(STDDEV(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000), 2) as duration_stddev,
+    ROUND(COUNT(CASE WHEN e.status = 'completed' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) as success_rate
 FROM powerorchestrator.executions e
 JOIN powerorchestrator.scripts s ON e.script_id = s.id
-WHERE e.completed_at IS NOT NULL AND e.started_at IS NOT NULL
-GROUP BY e.script_id, s.name;
+WHERE e.created_at >= NOW() - INTERVAL '90 days'
+  AND e.completed_at IS NOT NULL AND e.started_at IS NOT NULL
+GROUP BY DATE_TRUNC('day', e.created_at)
+ORDER BY execution_date DESC;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS powerorchestrator.mv_script_performance AS
 SELECT 
-    s.id,
-    s.name,
-    s.description,
+    s.id as script_id,
+    s.name as script_name,
+    s.description as script_description,
     s.tags,
     s.is_active,
-    COUNT(e.id) as execution_count,
-    MAX(e.completed_at) as last_execution,
-    AVG(EXTRACT(EPOCH FROM (e.completed_at - e.started_at))) as avg_duration_seconds
+    COUNT(e.id) as total_executions,
+    COUNT(CASE WHEN e.status = 'completed' THEN 1 END) as successful_executions,
+    COUNT(CASE WHEN e.status = 'failed' THEN 1 END) as failed_executions,
+    ROUND(AVG(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000), 2) as avg_duration_ms,
+    ROUND(STDDEV(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000), 2) as duration_stddev,
+    MAX(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000) as max_duration_ms,
+    MIN(EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000) as min_duration_ms,
+    MAX(e.completed_at) as last_execution_time,
+    ROUND(COUNT(CASE WHEN e.status = 'completed' THEN 1 END) * 100.0 / NULLIF(COUNT(e.id), 0), 2) as success_rate,
+    ROUND(AVG(CASE WHEN e.status = 'completed' THEN EXTRACT(EPOCH FROM (e.completed_at - e.started_at)) * 1000 END), 2) as avg_success_duration_ms
 FROM powerorchestrator.scripts s
-LEFT JOIN powerorchestrator.executions e ON s.id = e.script_id 
-    AND e.completed_at IS NOT NULL AND e.started_at IS NOT NULL
+LEFT JOIN powerorchestrator.executions e ON s.id = e.script_id
 WHERE s.is_active = true
-GROUP BY s.id, s.name, s.description, s.tags, s.is_active;
+  AND (e.created_at >= NOW() - INTERVAL '90 days' OR e.created_at IS NULL)
+  AND (e.completed_at IS NOT NULL AND e.started_at IS NOT NULL OR e.id IS NULL)
+GROUP BY s.id, s.name, s.description, s.tags, s.is_active
+ORDER BY total_executions DESC NULLS LAST;
 
 -- Create indexes on materialized views
-CREATE INDEX IF NOT EXISTS idx_mv_execution_statistics_script_id ON powerorchestrator.mv_execution_statistics(script_id);
-CREATE INDEX IF NOT EXISTS idx_mv_script_performance_id ON powerorchestrator.mv_script_performance(id);
+CREATE INDEX IF NOT EXISTS idx_mv_execution_statistics_date ON powerorchestrator.mv_execution_statistics(execution_date);
+CREATE INDEX IF NOT EXISTS idx_mv_script_performance_executions ON powerorchestrator.mv_script_performance(total_executions);
+CREATE INDEX IF NOT EXISTS idx_mv_script_performance_last_exec ON powerorchestrator.mv_script_performance(last_execution_time);
 
 -- Insert initial health check data
 INSERT INTO powerorchestrator.health_checks (service_name, status, message) 
