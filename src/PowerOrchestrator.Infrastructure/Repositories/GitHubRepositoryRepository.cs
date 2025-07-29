@@ -79,4 +79,17 @@ public class GitHubRepositoryRepository : Repository<GitHubRepository>, IGitHubR
             await _context.SaveChangesAsync();
         }
     }
+
+    /// <summary>
+    /// Gets a repository by full name
+    /// </summary>
+    /// <param name="fullName">Repository full name (owner/name)</param>
+    /// <returns>Repository entity if found</returns>
+    public async Task<GitHubRepository?> GetByFullNameAsync(string fullName)
+    {
+        return await _dbSet
+            .Include(r => r.Scripts)
+            .Include(r => r.SyncHistory)
+            .FirstOrDefaultAsync(r => r.FullName == fullName);
+    }
 }

@@ -4,6 +4,7 @@ using Octokit;
 using PowerOrchestrator.Application.Interfaces.Services;
 using PowerOrchestrator.Domain.Entities;
 using PowerOrchestrator.Domain.ValueObjects;
+using PowerOrchestrator.Infrastructure.Configuration;
 
 namespace PowerOrchestrator.Infrastructure.Services;
 
@@ -197,20 +198,4 @@ public class GitHubService : IGitHubService
             _logger.LogWarning(ex, "Failed to fetch contents from {Path} in {Owner}/{Name}", path, owner, name);
         }
     }
-}
-
-/// <summary>
-/// GitHub configuration options
-/// </summary>
-public class GitHubOptions
-{
-    /// <summary>
-    /// GitHub access token
-    /// </summary>
-    public string AccessToken { get; set; } = string.Empty;
-
-    /// <summary>
-    /// GitHub API base URL (for Enterprise)
-    /// </summary>
-    public string? BaseUrl { get; set; }
 }

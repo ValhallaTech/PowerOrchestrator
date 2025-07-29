@@ -33,5 +33,10 @@ public enum SyncStatus
     /// <summary>
     /// Synchronization completed with warnings
     /// </summary>
-    CompletedWithWarnings = 5
+    CompletedWithWarnings = 5,
+
+    /// <summary>
+    /// Synchronization was skipped
+    /// </summary>
+    Skipped = 6
 }

@@ -52,4 +52,11 @@ public interface IGitHubRepositoryRepository : IRepository<GitHubRepository>
     /// <param name="status">New status</param>
     /// <returns>Task</returns>
     Task UpdateStatusAsync(Guid repositoryId, RepositoryStatus status);
+
+    /// <summary>
+    /// Gets a repository by full name
+    /// </summary>
+    /// <param name="fullName">Repository full name (owner/name)</param>
+    /// <returns>Repository entity if found</returns>
+    Task<GitHubRepository?> GetByFullNameAsync(string fullName);
 }

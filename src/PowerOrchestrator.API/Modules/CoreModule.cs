@@ -33,6 +33,10 @@ public class CoreModule : Module
 
         // Register GitHub services
         builder.RegisterType<GitHubService>().As<IGitHubService>().InstancePerLifetimeScope();
+        builder.RegisterType<GitHubAuthService>().As<IGitHubAuthService>().InstancePerLifetimeScope();
+        builder.RegisterType<RepositoryManager>().As<IRepositoryManager>().InstancePerLifetimeScope();
+        builder.RegisterType<RepositorySyncService>().As<IRepositorySyncService>().InstancePerLifetimeScope();
+        builder.RegisterType<WebhookService>().As<IWebhookService>().InstancePerLifetimeScope();
         builder.RegisterType<PowerShellScriptParser>().As<IPowerShellScriptParser>().InstancePerLifetimeScope();
 
         // Register FluentValidation validators
