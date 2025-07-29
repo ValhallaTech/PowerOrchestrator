@@ -20,6 +20,9 @@ public class UnitOfWork : IUnitOfWork
     private IExecutionRepository? _executions;
     private IAuditLogRepository? _auditLogs;
     private IHealthCheckRepository? _healthChecks;
+    private IGitHubRepositoryRepository? _gitHubRepositories;
+    private IRepositoryScriptRepository? _repositoryScripts;
+    private ISyncHistoryRepository? _syncHistory;
 
     /// <summary>
     /// Initializes a new instance of the UnitOfWork class
@@ -41,6 +44,15 @@ public class UnitOfWork : IUnitOfWork
 
     /// <inheritdoc />
     public IHealthCheckRepository HealthChecks => _healthChecks ??= new HealthCheckRepository(_context);
+
+    /// <inheritdoc />
+    public IGitHubRepositoryRepository GitHubRepositories => _gitHubRepositories ??= new GitHubRepositoryRepository(_context);
+
+    /// <inheritdoc />
+    public IRepositoryScriptRepository RepositoryScripts => _repositoryScripts ??= new RepositoryScriptRepository(_context);
+
+    /// <inheritdoc />
+    public ISyncHistoryRepository SyncHistory => _syncHistory ??= new SyncHistoryRepository(_context);
 
     /// <inheritdoc />
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

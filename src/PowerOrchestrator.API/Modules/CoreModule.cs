@@ -3,8 +3,10 @@ using FluentValidation;
 using MediatR;
 using PowerOrchestrator.Application.Interfaces;
 using PowerOrchestrator.Application.Interfaces.Repositories;
+using PowerOrchestrator.Application.Interfaces.Services;
 using PowerOrchestrator.Infrastructure;
 using PowerOrchestrator.Infrastructure.Repositories;
+using PowerOrchestrator.Infrastructure.Services;
 
 namespace PowerOrchestrator.API.Modules;
 
@@ -24,7 +26,14 @@ public class CoreModule : Module
         builder.RegisterType<ExecutionRepository>().As<IExecutionRepository>().InstancePerLifetimeScope();
         builder.RegisterType<AuditLogRepository>().As<IAuditLogRepository>().InstancePerLifetimeScope();
         builder.RegisterType<HealthCheckRepository>().As<IHealthCheckRepository>().InstancePerLifetimeScope();
+        builder.RegisterType<GitHubRepositoryRepository>().As<IGitHubRepositoryRepository>().InstancePerLifetimeScope();
+        builder.RegisterType<RepositoryScriptRepository>().As<IRepositoryScriptRepository>().InstancePerLifetimeScope();
+        builder.RegisterType<SyncHistoryRepository>().As<ISyncHistoryRepository>().InstancePerLifetimeScope();
         builder.RegisterType<UnitOfWork>().As<IUnitOfWork>().InstancePerLifetimeScope();
+
+        // Register GitHub services
+        builder.RegisterType<GitHubService>().As<IGitHubService>().InstancePerLifetimeScope();
+        builder.RegisterType<PowerShellScriptParser>().As<IPowerShellScriptParser>().InstancePerLifetimeScope();
 
         // Register FluentValidation validators
         builder.RegisterAssemblyTypes(typeof(Program).Assembly)

@@ -28,6 +28,21 @@ public interface IUnitOfWork : IDisposable
     IHealthCheckRepository HealthChecks { get; }
 
     /// <summary>
+    /// Gets the GitHub repositories repository
+    /// </summary>
+    IGitHubRepositoryRepository GitHubRepositories { get; }
+
+    /// <summary>
+    /// Gets the Repository scripts repository
+    /// </summary>
+    IRepositoryScriptRepository RepositoryScripts { get; }
+
+    /// <summary>
+    /// Gets the Sync history repository
+    /// </summary>
+    ISyncHistoryRepository SyncHistory { get; }
+
+    /// <summary>
     /// Saves all changes within the current transaction
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
