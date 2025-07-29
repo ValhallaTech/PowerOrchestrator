@@ -172,7 +172,7 @@ app.MapHealthChecks("/health", new()
                 Exception = entry.Value.Exception?.Message
             })
         };
-        await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response));
+        await context.Response.WriteAsync(Newtonsoft.Json.JsonConvert.SerializeObject(response));
     }
 });
 

@@ -53,7 +53,7 @@ public class CreateScriptDtoValidator : AbstractValidator<CreateScriptDto>
 
         try
         {
-            System.Text.Json.JsonDocument.Parse(json);
+            Newtonsoft.Json.JsonConvert.DeserializeObject(json);
             return true;
         }
         catch

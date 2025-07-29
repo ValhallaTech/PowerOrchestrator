@@ -5,7 +5,7 @@ using PowerOrchestrator.Application.Interfaces.Services;
 using PowerOrchestrator.Infrastructure.Configuration;
 using System.Net.Http;
 using System.Text;
-using System.Text.Json;
+using Newtonsoft.Json;
 
 namespace PowerOrchestrator.Infrastructure.Services;
 
@@ -165,7 +165,7 @@ public class GitHubAuthService : IGitHubAuthService
             // GitHub's OAuth token revocation endpoint
             var request = new HttpRequestMessage(HttpMethod.Delete, "https://api.github.com/applications/{clientId}/grant")
             {
-                Content = new StringContent(JsonSerializer.Serialize(new { access_token = token }), Encoding.UTF8, "application/json")
+                Content = new StringContent(JsonConvert.SerializeObject(new { access_token = token }), Encoding.UTF8, "application/json")
             };
 
             var authValue = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_options.ClientId}:{_options.ClientSecret}"));

@@ -5,7 +5,7 @@ using PowerOrchestrator.Application.Interfaces.Services;
 using PowerOrchestrator.Infrastructure.Configuration;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
+using Newtonsoft.Json;
 
 namespace PowerOrchestrator.Infrastructure.Services;
 
@@ -232,18 +232,17 @@ public class WebhookService : IWebhookService
         {
             _logger.LogInformation("Processing webhook event: {EventType}", eventType);
 
-            using var document = JsonDocument.Parse(payload);
-            var root = document.RootElement;
-
+            var parsedPayload = JsonConvert.DeserializeObject<dynamic>(payload);
+            
             // Extract repository information
-            if (!root.TryGetProperty("repository", out var repoElement))
+            if (parsedPayload?.repository == null)
             {
                 result.Success = false;
                 result.Message = "No repository information found in webhook payload";
                 return result;
             }
 
-            var repositoryFullName = repoElement.GetProperty("full_name").GetString();
+            var repositoryFullName = parsedPayload.repository.full_name?.ToString();
             if (string.IsNullOrEmpty(repositoryFullName))
             {
                 result.Success = false;
@@ -255,7 +254,7 @@ public class WebhookService : IWebhookService
             var webhookEvent = new WebhookEvent
             {
                 EventType = eventType,
-                RepositoryFullName = repositoryFullName,
+                RepositoryFullName = repositoryFullName!,
                 RawPayload = payload
             };
 
@@ -263,14 +262,14 @@ public class WebhookService : IWebhookService
             switch (eventType.ToLowerInvariant())
             {
                 case "push":
-                    ExtractPushEventData(root, webhookEvent);
+                    ExtractPushEventData(parsedPayload, webhookEvent);
                     break;
                 case "pull_request":
-                    ExtractPullRequestEventData(root, webhookEvent);
+                    ExtractPullRequestEventData(parsedPayload, webhookEvent);
                     break;
                 case "create":
                 case "delete":
-                    ExtractBranchEventData(root, webhookEvent);
+                    ExtractBranchEventData(parsedPayload, webhookEvent);
                     break;
             }
 
@@ -282,7 +281,7 @@ public class WebhookService : IWebhookService
             result.Data["sync_result"] = syncResult;
 
             _logger.LogInformation("Webhook event {EventType} for {Repository} processed: {Status}", 
-                eventType, repositoryFullName, result.Success ? "Success" : "Failed");
+                (object)eventType, (object)(repositoryFullName ?? "unknown"), result.Success ? "Success" : "Failed");
         }
         catch (Exception ex)
         {
@@ -349,78 +348,108 @@ public class WebhookService : IWebhookService
         }
     }
 
-    private static void ExtractPushEventData(JsonElement root, WebhookEvent webhookEvent)
+    private static void ExtractPushEventData(dynamic root, WebhookEvent webhookEvent)
     {
-        if (root.TryGetProperty("ref", out var refElement))
+        try
         {
-            var refValue = refElement.GetString();
-            if (refValue?.StartsWith("refs/heads/") == true)
+            if (root.@ref != null)
             {
-                webhookEvent.Branch = refValue.Substring(11); // Remove "refs/heads/"
-            }
-        }
-
-        if (root.TryGetProperty("head_commit", out var commitElement) && 
-            commitElement.TryGetProperty("id", out var shaElement))
-        {
-            webhookEvent.CommitSha = shaElement.GetString();
-        }
-
-        if (root.TryGetProperty("commits", out var commitsElement) && commitsElement.ValueKind == JsonValueKind.Array)
-        {
-            var modifiedFiles = new List<string>();
-            foreach (var commit in commitsElement.EnumerateArray())
-            {
-                if (commit.TryGetProperty("added", out var addedElement))
+                var refValue = root.@ref.ToString();
+                if (refValue?.StartsWith("refs/heads/") == true)
                 {
-                    modifiedFiles.AddRange(addedElement.EnumerateArray().Select(f => f.GetString()).Where(f => !string.IsNullOrEmpty(f))!);
-                }
-                if (commit.TryGetProperty("modified", out var modifiedElement))
-                {
-                    modifiedFiles.AddRange(modifiedElement.EnumerateArray().Select(f => f.GetString()).Where(f => !string.IsNullOrEmpty(f))!);
-                }
-                if (commit.TryGetProperty("removed", out var removedElement))
-                {
-                    modifiedFiles.AddRange(removedElement.EnumerateArray().Select(f => f.GetString()).Where(f => !string.IsNullOrEmpty(f))!);
+                    webhookEvent.Branch = refValue.Substring(11); // Remove "refs/heads/"
                 }
             }
-            webhookEvent.ModifiedFiles = modifiedFiles.Distinct();
+
+            if (root.head_commit?.id != null)
+            {
+                webhookEvent.CommitSha = root.head_commit.id.ToString();
+            }
+
+            if (root.commits != null)
+            {
+                var modifiedFiles = new List<string>();
+                foreach (var commit in root.commits)
+                {
+                    if (commit.added != null)
+                    {
+                        foreach (var file in commit.added)
+                        {
+                            var fileName = file?.ToString();
+                            if (!string.IsNullOrEmpty(fileName))
+                                modifiedFiles.Add(fileName);
+                        }
+                    }
+                    if (commit.modified != null)
+                    {
+                        foreach (var file in commit.modified)
+                        {
+                            var fileName = file?.ToString();
+                            if (!string.IsNullOrEmpty(fileName))
+                                modifiedFiles.Add(fileName);
+                        }
+                    }
+                    if (commit.removed != null)
+                    {
+                        foreach (var file in commit.removed)
+                        {
+                            var fileName = file?.ToString();
+                            if (!string.IsNullOrEmpty(fileName))
+                                modifiedFiles.Add(fileName);
+                        }
+                    }
+                }
+                webhookEvent.ModifiedFiles = modifiedFiles.Distinct();
+            }
+        }
+        catch
+        {
+            // Ignore errors in data extraction
         }
     }
 
-    private static void ExtractPullRequestEventData(JsonElement root, WebhookEvent webhookEvent)
+    private static void ExtractPullRequestEventData(dynamic root, WebhookEvent webhookEvent)
     {
-        if (root.TryGetProperty("pull_request", out var prElement))
+        try
         {
-            if (prElement.TryGetProperty("head", out var headElement) &&
-                headElement.TryGetProperty("ref", out var branchElement))
+            if (root.pull_request?.head?.@ref != null)
             {
-                webhookEvent.Branch = branchElement.GetString();
+                webhookEvent.Branch = root.pull_request.head.@ref.ToString();
             }
 
-            if (prElement.TryGetProperty("head", out var headCommitElement) &&
-                headCommitElement.TryGetProperty("sha", out var shaElement))
+            if (root.pull_request?.head?.sha != null)
             {
-                webhookEvent.CommitSha = shaElement.GetString();
+                webhookEvent.CommitSha = root.pull_request.head.sha.ToString();
             }
+        }
+        catch
+        {
+            // Ignore errors in data extraction
         }
     }
 
-    private static void ExtractBranchEventData(JsonElement root, WebhookEvent webhookEvent)
+    private static void ExtractBranchEventData(dynamic root, WebhookEvent webhookEvent)
     {
-        if (root.TryGetProperty("ref", out var refElement))
+        try
         {
-            webhookEvent.Branch = refElement.GetString();
-        }
-
-        if (root.TryGetProperty("ref_type", out var refTypeElement))
-        {
-            var refType = refTypeElement.GetString();
-            if (refType != "branch")
+            if (root.@ref != null)
             {
-                // This is a tag event, not a branch event
-                webhookEvent.Branch = null;
+                webhookEvent.Branch = root.@ref.ToString();
             }
+
+            if (root.ref_type != null)
+            {
+                var refType = root.ref_type.ToString();
+                if (refType != "branch")
+                {
+                    // This is a tag event, not a branch event
+                    webhookEvent.Branch = null;
+                }
+            }
+        }
+        catch
+        {
+            // Ignore errors in data extraction
         }
     }
 }

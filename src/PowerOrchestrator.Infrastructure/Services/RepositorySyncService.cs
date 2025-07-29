@@ -4,7 +4,7 @@ using PowerOrchestrator.Application.Interfaces.Services;
 using PowerOrchestrator.Domain.Entities;
 using PowerOrchestrator.Domain.ValueObjects;
 using System.Diagnostics;
-using System.Text.Json;
+using Newtonsoft.Json;
 
 namespace PowerOrchestrator.Infrastructure.Services;
 
@@ -383,8 +383,8 @@ public class RepositorySyncService : IRepositorySyncService
                         if (existingScript.Sha != file.Sha)
                         {
                             existingScript.Sha = file.Sha;
-                            existingScript.Metadata = JsonSerializer.Serialize(metadata);
-                            existingScript.SecurityAnalysis = JsonSerializer.Serialize(securityAnalysis);
+                            existingScript.Metadata = JsonConvert.SerializeObject(metadata);
+                            existingScript.SecurityAnalysis = JsonConvert.SerializeObject(securityAnalysis);
                             existingScript.LastModified = DateTime.UtcNow;
                             existingScript.UpdatedAt = DateTime.UtcNow;
 
@@ -401,8 +401,8 @@ public class RepositorySyncService : IRepositorySyncService
                             FilePath = file.Path,
                             Branch = repository.DefaultBranch,
                             Sha = file.Sha,
-                            Metadata = JsonSerializer.Serialize(metadata),
-                            SecurityAnalysis = JsonSerializer.Serialize(securityAnalysis),
+                            Metadata = JsonConvert.SerializeObject(metadata),
+                            SecurityAnalysis = JsonConvert.SerializeObject(securityAnalysis),
                             LastModified = DateTime.UtcNow
                         };
 

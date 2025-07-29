@@ -1,5 +1,5 @@
 using System.Net;
-using System.Text.Json;
+using Newtonsoft.Json;
 
 namespace PowerOrchestrator.API.Middleware;
 
@@ -79,9 +79,9 @@ public class ExceptionHandlingMiddleware
                 break;
         }
 
-        var jsonResponse = JsonSerializer.Serialize(response, new JsonSerializerOptions
+        var jsonResponse = JsonConvert.SerializeObject(response, new JsonSerializerSettings
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
         });
 
         await context.Response.WriteAsync(jsonResponse);
