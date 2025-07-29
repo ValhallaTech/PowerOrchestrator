@@ -19,6 +19,10 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
     <PackageReference Include="AutoMapper" />
     <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Octokit" />
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="System.Management.Automation" />
   </ItemGroup>
 
   <ItemGroup>

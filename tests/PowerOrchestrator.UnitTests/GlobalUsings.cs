@@ -1,1 +1,11 @@
 global using Xunit;
+global using FluentAssertions;
+global using Moq;
+global using Microsoft.Extensions.Logging;
+global using Microsoft.Extensions.Options;
+global using AutoMapper;
+global using PowerOrchestrator.Application.Interfaces.Services;
+global using PowerOrchestrator.Infrastructure.Services;
+global using PowerOrchestrator.Domain.Entities;
+global using PowerOrchestrator.Domain.ValueObjects;
+global using PowerOrchestrator.Infrastructure.Configuration;
