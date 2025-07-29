@@ -26,6 +26,7 @@
     <PackageReference Include="Octokit" />
     <PackageReference Include="System.Management.Automation" />
     <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" />
   </ItemGroup>
 
   <ItemGroup>

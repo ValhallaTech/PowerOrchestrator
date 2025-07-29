@@ -29,10 +29,13 @@ public class CoreModule : Module
         builder.RegisterType<GitHubRepositoryRepository>().As<IGitHubRepositoryRepository>().InstancePerLifetimeScope();
         builder.RegisterType<RepositoryScriptRepository>().As<IRepositoryScriptRepository>().InstancePerLifetimeScope();
         builder.RegisterType<SyncHistoryRepository>().As<ISyncHistoryRepository>().InstancePerLifetimeScope();
+        builder.RegisterType<BulkOperationsRepository>().As<IBulkOperationsRepository>().InstancePerLifetimeScope();
         builder.RegisterType<UnitOfWork>().As<IUnitOfWork>().InstancePerLifetimeScope();
 
         // Register GitHub services
         builder.RegisterType<GitHubRateLimitService>().As<IGitHubRateLimitService>().SingleInstance();
+        builder.RegisterType<GitHubCacheService>().As<IGitHubCacheService>().InstancePerLifetimeScope();
+        builder.RegisterType<GitHubTokenSecurityService>().As<IGitHubTokenSecurityService>().InstancePerLifetimeScope();
         builder.RegisterType<GitHubService>().As<IGitHubService>().InstancePerLifetimeScope();
         builder.RegisterType<GitHubAuthService>().As<IGitHubAuthService>().InstancePerLifetimeScope();
         builder.RegisterType<RepositoryManager>().As<IRepositoryManager>().InstancePerLifetimeScope();

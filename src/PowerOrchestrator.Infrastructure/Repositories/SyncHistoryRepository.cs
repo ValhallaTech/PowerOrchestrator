@@ -3,6 +3,7 @@ using PowerOrchestrator.Application.Interfaces.Repositories;
 using PowerOrchestrator.Domain.Entities;
 using PowerOrchestrator.Domain.ValueObjects;
 using PowerOrchestrator.Infrastructure.Data;
+using static PowerOrchestrator.Application.Interfaces.Repositories.ISyncHistoryRepository;
 
 namespace PowerOrchestrator.Infrastructure.Repositories;
 
