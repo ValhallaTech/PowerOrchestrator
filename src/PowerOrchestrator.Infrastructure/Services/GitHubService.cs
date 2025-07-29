@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Octokit;
 using PowerOrchestrator.Application.Interfaces.Services;
+using PowerOrchestrator.Application.Validators;
 using PowerOrchestrator.Domain.Entities;
 using PowerOrchestrator.Domain.ValueObjects;
 using PowerOrchestrator.Infrastructure.Configuration;
@@ -16,22 +17,39 @@ public class GitHubService : IGitHubService
     private readonly ILogger<GitHubService> _logger;
     private readonly GitHubClient _client;
     private readonly GitHubOptions _options;
+    private readonly IGitHubRateLimitService _rateLimitService;
 
     /// <summary>
     /// Initializes a new instance of the GitHubService class
     /// </summary>
     /// <param name="logger">Logger instance</param>
     /// <param name="options">GitHub configuration options</param>
-    public GitHubService(ILogger<GitHubService> logger, IOptions<GitHubOptions> options)
+    /// <param name="rateLimitService">Rate limiting service</param>
+    public GitHubService(ILogger<GitHubService> logger, IOptions<GitHubOptions> options, IGitHubRateLimitService rateLimitService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+        _rateLimitService = rateLimitService ?? throw new ArgumentNullException(nameof(rateLimitService));
 
         // Configure GitHub client
         _client = new GitHubClient(new ProductHeaderValue("PowerOrchestrator"))
         {
             Credentials = new Credentials(_options.AccessToken)
         };
+    }
+
+    /// <summary>
+    /// Executes an API call with rate limiting
+    /// </summary>
+    /// <typeparam name="T">Return type</typeparam>
+    /// <param name="apiCall">API call function</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>API call result</returns>
+    private async Task<T> ExecuteWithRateLimitingAsync<T>(Func<Task<T>> apiCall, CancellationToken cancellationToken = default)
+    {
+        await _rateLimitService.WaitForRateLimitAsync(cancellationToken);
+        _rateLimitService.RecordApiCall();
+        return await apiCall();
     }
 
     /// <inheritdoc />
@@ -41,7 +59,9 @@ public class GitHubService : IGitHubService
         {
             _logger.LogInformation("Fetching GitHub repositories");
 
-            var repositories = await _client.Repository.GetAllForCurrent();
+            var repositories = await ExecuteWithRateLimitingAsync(
+                () => _client.Repository.GetAllForCurrent(), 
+                cancellationToken);
             
             return repositories.Select(repo => new GitHubRepository
             {
@@ -64,11 +84,16 @@ public class GitHubService : IGitHubService
     /// <inheritdoc />
     public async Task<GitHubRepository?> GetRepositoryAsync(string owner, string name, CancellationToken cancellationToken = default)
     {
+        GitHubValidationExtensions.ValidateOwner(owner);
+        GitHubValidationExtensions.ValidateRepositoryName(name);
+
         try
         {
             _logger.LogInformation("Fetching GitHub repository {Owner}/{Name}", owner, name);
 
-            var repo = await _client.Repository.Get(owner, name);
+            var repo = await ExecuteWithRateLimitingAsync(
+                () => _client.Repository.Get(owner, name), 
+                cancellationToken);
             
             return new GitHubRepository
             {
@@ -96,6 +121,10 @@ public class GitHubService : IGitHubService
     /// <inheritdoc />
     public async Task<IEnumerable<GitHubFile>> GetScriptFilesAsync(string owner, string name, string? branch = null, CancellationToken cancellationToken = default)
     {
+        GitHubValidationExtensions.ValidateOwner(owner);
+        GitHubValidationExtensions.ValidateRepositoryName(name);
+        GitHubValidationExtensions.ValidateBranchName(branch);
+
         try
         {
             _logger.LogInformation("Fetching PowerShell files from {Owner}/{Name}", owner, name);
@@ -116,6 +145,11 @@ public class GitHubService : IGitHubService
     /// <inheritdoc />
     public async Task<GitHubFile?> GetFileContentAsync(string owner, string name, string path, string? branch = null, CancellationToken cancellationToken = default)
     {
+        GitHubValidationExtensions.ValidateOwner(owner);
+        GitHubValidationExtensions.ValidateRepositoryName(name);
+        GitHubValidationExtensions.ValidateFilePath(path);
+        GitHubValidationExtensions.ValidateBranchName(branch);
+
         try
         {
             _logger.LogInformation("Fetching file content for {Owner}/{Name}/{Path}", owner, name, path);

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using PowerOrchestrator.Application.Interfaces;
 using PowerOrchestrator.Application.Interfaces.Services;
+using PowerOrchestrator.Application.Validators;
 using PowerOrchestrator.Domain.Entities;
 using PowerOrchestrator.Domain.ValueObjects;
 using System.Diagnostics;
@@ -45,6 +46,8 @@ public class RepositorySyncService : IRepositorySyncService
     /// <inheritdoc />
     public async Task<SyncResult> SynchronizeRepositoryAsync(string repositoryFullName)
     {
+        GitHubValidationExtensions.ValidateRepositoryFullName(repositoryFullName);
+
         try
         {
             _logger.LogInformation("Starting synchronization for repository {Repository}", repositoryFullName);
@@ -72,6 +75,8 @@ public class RepositorySyncService : IRepositorySyncService
     /// <inheritdoc />
     public async Task<SyncResult> SynchronizeRepositoryAsync(Guid repositoryId)
     {
+        GitHubValidationExtensions.ValidateGuid(repositoryId, nameof(repositoryId));
+
         var stopwatch = Stopwatch.StartNew();
         var syncHistory = new SyncHistory
         {

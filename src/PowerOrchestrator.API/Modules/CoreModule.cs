@@ -32,6 +32,7 @@ public class CoreModule : Module
         builder.RegisterType<UnitOfWork>().As<IUnitOfWork>().InstancePerLifetimeScope();
 
         // Register GitHub services
+        builder.RegisterType<GitHubRateLimitService>().As<IGitHubRateLimitService>().SingleInstance();
         builder.RegisterType<GitHubService>().As<IGitHubService>().InstancePerLifetimeScope();
         builder.RegisterType<GitHubAuthService>().As<IGitHubAuthService>().InstancePerLifetimeScope();
         builder.RegisterType<RepositoryManager>().As<IRepositoryManager>().InstancePerLifetimeScope();
