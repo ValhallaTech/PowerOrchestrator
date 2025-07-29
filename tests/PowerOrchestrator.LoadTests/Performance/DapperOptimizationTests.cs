@@ -82,7 +82,23 @@ public class DapperOptimizationTests : PerformanceTestBase
         var bulkQueryDuration = bulkQueryResults.Duration;
 
         // Test 3: Optimized bulk insert performance
-        var testExecutions = GenerateTestExecutions(scriptIds.Take(10).ToList(), 50);
+        // First, verify scripts still exist (defensive against concurrent test cleanup)
+        var existingScriptIds = (await connection.QueryAsync<Guid>(@"
+            SELECT id FROM powerorchestrator.scripts 
+            WHERE id = ANY(@ScriptIds)", 
+            new { ScriptIds = scriptIds.Take(10).ToArray() })).ToList();
+            
+        if (existingScriptIds.Count < 10)
+        {
+            // Re-seed data if scripts were cleaned up by concurrent tests
+            await _seeder.SeedPerformanceDataAsync(100, 1);
+            existingScriptIds = (await connection.QueryAsync<Guid>(@"
+                SELECT id FROM powerorchestrator.scripts 
+                WHERE name LIKE 'PerfTest_%' 
+                LIMIT 10")).ToList();
+        }
+        
+        var testExecutions = GenerateTestExecutions(existingScriptIds, 50);
         
         var bulkInsertDuration = await MeasureAsync(async () =>
         {

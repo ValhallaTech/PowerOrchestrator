@@ -52,8 +52,9 @@ services:
         --save 900 1
         --save 300 10
         --save 60 10000
+        --protected-mode no
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ["CMD", "redis-cli", "-a", "PowerOrchRedis2025!", "ping"]
       interval: 10s
       timeout: 3s
       retries: 5

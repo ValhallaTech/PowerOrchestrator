@@ -39,6 +39,8 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
+        env:
+          REDIS_ARGS: "--protected-mode no"
 
     steps:
     - name: Checkout code

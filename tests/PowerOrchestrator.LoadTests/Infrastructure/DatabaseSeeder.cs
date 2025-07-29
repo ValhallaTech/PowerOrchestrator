@@ -54,35 +54,21 @@ public class DatabaseSeeder
 
     /// <summary>
     /// Clears existing test data from the database
+    /// Now simplified thanks to ON DELETE CASCADE constraint
     /// </summary>
     private async Task ClearTestDataAsync(NpgsqlConnection connection, NpgsqlTransaction transaction)
     {
-        // First, remove all executions referencing test scripts (expanded patterns)
-        await connection.ExecuteAsync(
-            @"DELETE FROM powerorchestrator.executions 
-              WHERE script_id IN (SELECT id FROM powerorchestrator.scripts WHERE name LIKE 'PerfTest_%' OR name LIKE 'RefreshTest_%')",
-            transaction: transaction);
-
-        // Remove any remaining orphaned executions to prevent constraint violations
-        await connection.ExecuteAsync(
-            @"DELETE FROM powerorchestrator.executions 
-              WHERE script_id NOT IN (SELECT id FROM powerorchestrator.scripts)",
-            transaction: transaction);
-
-        // Remove any executions that might reference scripts about to be deleted
-        await connection.ExecuteAsync(
-            @"DELETE FROM powerorchestrator.executions e
-              WHERE EXISTS (
-                  SELECT 1 FROM powerorchestrator.scripts s 
-                  WHERE s.id = e.script_id 
-                  AND (s.name LIKE 'PerfTest_%' OR s.name LIKE 'RefreshTest_%')
-              )",
-            transaction: transaction);
-
-        // Now safely remove test scripts
+        // With ON DELETE CASCADE, we can simply delete test scripts
+        // and all related executions will be automatically removed
         await connection.ExecuteAsync(
             @"DELETE FROM powerorchestrator.scripts 
               WHERE name LIKE 'PerfTest_%' OR name LIKE 'RefreshTest_%'",
+            transaction: transaction);
+            
+        // Clean up any orphaned executions (defensive cleanup)
+        await connection.ExecuteAsync(
+            @"DELETE FROM powerorchestrator.executions 
+              WHERE script_id NOT IN (SELECT id FROM powerorchestrator.scripts)",
             transaction: transaction);
     }
 
