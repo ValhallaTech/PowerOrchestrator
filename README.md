@@ -5,6 +5,7 @@ Enterprise-grade PowerShell script orchestration platform with secure execution,
 ![.NET 8](https://img.shields.io/badge/.NET-8-purple) 
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17.5-blue) 
 ![Redis](https://img.shields.io/badge/Redis-8.0.3-red)
+[![PowerOrchestrator CI/CD](https://github.com/ValhallaTech/PowerOrchestrator/actions/workflows/ci.yml/badge.svg)](https://github.com/ValhallaTech/PowerOrchestrator/actions/workflows/ci.yml)
 
 ## 🌟 Features
 
