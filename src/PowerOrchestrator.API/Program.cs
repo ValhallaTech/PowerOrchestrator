@@ -193,3 +193,6 @@ finally
 {
     Log.CloseAndFlush();
 }
+
+// Make Program class available for testing
+public partial class Program { }

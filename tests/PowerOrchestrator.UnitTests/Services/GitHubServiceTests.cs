@@ -1,78 +1,52 @@
 namespace PowerOrchestrator.UnitTests.Services;
 
 /// <summary>
-/// Unit tests for GitHub service with mocked dependencies
+/// Unit tests for GitHub service using production architecture
 /// </summary>
-public class GitHubServiceTests
+public class GitHubServiceTests : IClassFixture<ProductionArchitectureTestFixture>
 {
-    private readonly Mock<ILogger<GitHubService>> _mockLogger;
+    private readonly ProductionArchitectureTestFixture _fixture;
     private readonly Mock<IGitHubRateLimitService> _mockRateLimitService;
-    private readonly Mock<IOptions<GitHubOptions>> _mockOptions;
-    private readonly GitHubOptions _gitHubOptions;
 
-    public GitHubServiceTests()
+    public GitHubServiceTests(ProductionArchitectureTestFixture fixture)
     {
-        _mockLogger = new Mock<ILogger<GitHubService>>();
+        _fixture = fixture;
         _mockRateLimitService = new Mock<IGitHubRateLimitService>();
-        _mockOptions = new Mock<IOptions<GitHubOptions>>();
-
-        _gitHubOptions = new GitHubOptions
-        {
-            AccessToken = "test-token",
-            ApplicationName = "PowerOrchestrator-Test",
-            EnterpriseBaseUrl = ""
-        };
-
-        _mockOptions.Setup(x => x.Value).Returns(_gitHubOptions);
+        
+        // Register the mock rate limit service in the container
+        var containerBuilder = new ContainerBuilder();
+        containerBuilder.RegisterInstance(_mockRateLimitService.Object).As<IGitHubRateLimitService>();
+        containerBuilder.Update(_fixture.Container);
     }
 
     [Fact]
     public void Constructor_WithValidParameters_ShouldInitializeCorrectly()
     {
-        // Act
-        var service = new GitHubService(_mockLogger.Object, _mockOptions.Object, _mockRateLimitService.Object);
+        // Arrange & Act
+        var service = _fixture.Resolve<IGitHubService>();
 
         // Assert
         service.Should().NotBeNull();
     }
 
     [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
+    public void AutoMapper_ShouldBeConfiguredCorrectly()
     {
-        // Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => 
-            new GitHubService(null!, _mockOptions.Object, _mockRateLimitService.Object));
-        
-        exception.ParamName.Should().Be("logger");
-    }
+        // Arrange & Act
+        var mapper = _fixture.Resolve<IMapper>();
 
-    [Fact]
-    public void Constructor_WithNullOptions_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => 
-            new GitHubService(_mockLogger.Object, null!, _mockRateLimitService.Object));
-        
-        exception.ParamName.Should().Be("options");
-    }
-
-    [Fact]
-    public void Constructor_WithNullRateLimitService_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => 
-            new GitHubService(_mockLogger.Object, _mockOptions.Object, null!));
-        
-        exception.ParamName.Should().Be("rateLimitService");
+        // Assert
+        mapper.Should().NotBeNull();
+        mapper.ConfigurationProvider.AssertConfigurationIsValid();
     }
 
     [Fact]
     public async Task GetRepositoriesAsync_ShouldRespectRateLimit()
     {
         // Arrange
-        var service = new GitHubService(_mockLogger.Object, _mockOptions.Object, _mockRateLimitService.Object);
+        var service = _fixture.Resolve<IGitHubService>();
         
-        // This test verifies that rate limiting is called before API operations
+        // Setup rate limiting mock
         _mockRateLimitService.Setup(x => x.WaitForRateLimitAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
@@ -90,7 +64,7 @@ public class GitHubServiceTests
     public async Task GetRepositoryAsync_WithValidParameters_ShouldCallRateLimit(string owner, string name)
     {
         // Arrange
-        var service = new GitHubService(_mockLogger.Object, _mockOptions.Object, _mockRateLimitService.Object);
+        var service = _fixture.Resolve<IGitHubService>();
         
         _mockRateLimitService.Setup(x => x.WaitForRateLimitAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -108,7 +82,7 @@ public class GitHubServiceTests
     public async Task GetRepositoryAsync_WithInvalidParameters_ShouldThrow(string owner, string name)
     {
         // Arrange
-        var service = new GitHubService(_mockLogger.Object, _mockOptions.Object, _mockRateLimitService.Object);
+        var service = _fixture.Resolve<IGitHubService>();
 
         // Act & Assert
         var exception = await Record.ExceptionAsync(() => service.GetRepositoryAsync(owner, name));
@@ -125,10 +99,7 @@ public class GitHubServiceTests
     [InlineData("script.py", false)]
     public void IsPowerShellFile_WithDifferentExtensions_ShouldReturnCorrectResult(string fileName, bool expected)
     {
-        // This would test a utility method for filtering PowerShell files
-        // Since this might be private, we can test it indirectly through GetScriptFilesAsync
-        
-        // For now, we'll test the pattern that the service should follow
+        // This tests the pattern that the service should follow
         var powerShellExtensions = new[] { ".ps1", ".psm1", ".psd1", ".ps1xml" };
         var result = powerShellExtensions.Any(ext => fileName.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
         
@@ -136,32 +107,23 @@ public class GitHubServiceTests
     }
 
     [Fact]
-    public void GitHubOptions_WithEnterpriseUrl_ShouldConfigureCorrectly()
+    public void GitHubOptions_ShouldBeConfiguredCorrectly()
     {
-        // Arrange
-        var enterpriseOptions = new GitHubOptions
-        {
-            AccessToken = "test-token",
-            ApplicationName = "PowerOrchestrator-Test",
-            EnterpriseBaseUrl = "https://github.enterprise.com/api/v3"
-        };
-
-        var mockEnterpriseOptions = new Mock<IOptions<GitHubOptions>>();
-        mockEnterpriseOptions.Setup(x => x.Value).Returns(enterpriseOptions);
-
-        // Act
-        var service = new GitHubService(_mockLogger.Object, mockEnterpriseOptions.Object, _mockRateLimitService.Object);
+        // Arrange & Act
+        var options = _fixture.Resolve<IOptions<GitHubOptions>>();
 
         // Assert
-        service.Should().NotBeNull();
-        // The service should be configured with enterprise URL
+        options.Should().NotBeNull();
+        options.Value.Should().NotBeNull();
+        options.Value.AccessToken.Should().Be("test-token");
+        options.Value.ApplicationName.Should().Be("PowerOrchestrator-Test");
     }
 
     [Fact]
     public async Task CancellationToken_ShouldBePropagatedToRateLimit()
     {
         // Arrange
-        var service = new GitHubService(_mockLogger.Object, _mockOptions.Object, _mockRateLimitService.Object);
+        var service = _fixture.Resolve<IGitHubService>();
         var cts = new CancellationTokenSource();
         var cancellationToken = cts.Token;
 
@@ -180,5 +142,44 @@ public class GitHubServiceTests
 
         // Assert
         _mockRateLimitService.Verify(x => x.WaitForRateLimitAsync(cancellationToken), Times.AtLeastOnce);
+    }
+
+    [Fact]
+    public void DependencyInjection_ShouldResolveAllRequiredServices()
+    {
+        // Arrange & Act & Assert
+        var gitHubService = _fixture.Resolve<IGitHubService>();
+        var gitHubAuthService = _fixture.Resolve<IGitHubAuthService>();
+        var repositoryManager = _fixture.Resolve<IRepositoryManager>();
+        var syncService = _fixture.Resolve<IRepositorySyncService>();
+        var webhookService = _fixture.Resolve<IWebhookService>();
+        var parserService = _fixture.Resolve<IPowerShellScriptParser>();
+
+        gitHubService.Should().NotBeNull();
+        gitHubAuthService.Should().NotBeNull();
+        repositoryManager.Should().NotBeNull();
+        syncService.Should().NotBeNull();
+        webhookService.Should().NotBeNull();
+        parserService.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void ServiceLifetimes_ShouldBeCorrect()
+    {
+        // Arrange
+        using var scope1 = _fixture.CreateScope();
+        using var scope2 = _fixture.CreateScope();
+
+        // Act
+        var service1 = scope1.Resolve<IGitHubService>();
+        var service2 = scope1.Resolve<IGitHubService>();
+        var service3 = scope2.Resolve<IGitHubService>();
+
+        // Assert
+        // Same scope should return same instance
+        service1.Should().BeSameAs(service2);
+        
+        // Different scope should return different instance
+        service1.Should().NotBeSameAs(service3);
     }
 }

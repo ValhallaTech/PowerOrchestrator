@@ -5,32 +5,26 @@ using Newtonsoft.Json;
 namespace PowerOrchestrator.UnitTests.Services;
 
 /// <summary>
-/// Unit tests for webhook service with signature validation
+/// Unit tests for webhook service using production architecture
 /// </summary>
-public class WebhookServiceTests
+public class WebhookServiceTests : IClassFixture<ProductionArchitectureTestFixture>
 {
-    private readonly Mock<ILogger<WebhookService>> _mockLogger;
+    private readonly ProductionArchitectureTestFixture _fixture;
     private readonly Mock<IRepositorySyncService> _mockSyncService;
-    private readonly Mock<IOptions<GitHubOptions>> _mockOptions;
-    private readonly GitHubOptions _gitHubOptions;
-    private readonly WebhookService _webhookService;
+    private readonly IWebhookService _webhookService;
+    private readonly string _testSecret = "test-webhook-secret";
 
-    public WebhookServiceTests()
+    public WebhookServiceTests(ProductionArchitectureTestFixture fixture)
     {
-        _mockLogger = new Mock<ILogger<WebhookService>>();
+        _fixture = fixture;
         _mockSyncService = new Mock<IRepositorySyncService>();
-        _mockOptions = new Mock<IOptions<GitHubOptions>>();
-
-        _gitHubOptions = new GitHubOptions
-        {
-            AccessToken = "test-token",
-            WebhookSecret = "test-secret",
-            ApplicationName = "PowerOrchestrator-Test",
-            EnterpriseBaseUrl = ""
-        };
-
-        _mockOptions.Setup(x => x.Value).Returns(_gitHubOptions);
-        _webhookService = new WebhookService(_mockLogger.Object, _mockOptions.Object, _mockSyncService.Object);
+        
+        // Register the mock sync service in the container
+        var containerBuilder = new ContainerBuilder();
+        containerBuilder.RegisterInstance(_mockSyncService.Object).As<IRepositorySyncService>();
+        containerBuilder.Update(_fixture.Container);
+        
+        _webhookService = _fixture.Resolve<IWebhookService>();
     }
 
     [Fact]
@@ -38,7 +32,7 @@ public class WebhookServiceTests
     {
         // Arrange
         var payload = JsonConvert.SerializeObject(new { test = "data" });
-        var signature = GenerateSignature(payload, _gitHubOptions.WebhookSecret);
+        var signature = GenerateSignature(payload, _testSecret);
 
         // Act
         var result = await _webhookService.ValidateWebhookSignatureAsync(payload, signature);
@@ -183,6 +177,28 @@ public class WebhookServiceTests
     /// <summary>
     /// Generates HMAC-SHA256 signature for testing
     /// </summary>
+    [Fact]
+    public void DependencyInjection_ShouldResolveWebhookService()
+    {
+        // Arrange & Act
+        var webhookService = _fixture.Resolve<IWebhookService>();
+
+        // Assert
+        webhookService.Should().NotBeNull();
+        webhookService.Should().BeOfType<WebhookService>();
+    }
+
+    [Fact]
+    public void AutoMapper_ShouldBeAvailableForWebhookService()
+    {
+        // Arrange & Act
+        var mapper = _fixture.Resolve<IMapper>();
+
+        // Assert
+        mapper.Should().NotBeNull();
+        mapper.ConfigurationProvider.AssertConfigurationIsValid();
+    }
+
     private string GenerateSignature(string payload, string secret)
     {
         var encoding = Encoding.UTF8;
