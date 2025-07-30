@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Hosting;
 using System.Text;
 using Newtonsoft.Json;
 using FluentAssertions;
@@ -7,14 +10,54 @@ using FluentAssertions;
 namespace PowerOrchestrator.IntegrationTests.GitHub;
 
 /// <summary>
+/// Custom WebApplicationFactory for webhook integration tests
+/// </summary>
+public class WebhookTestApplicationFactory : WebApplicationFactory<Program>
+{
+    protected override IHost CreateHost(IHostBuilder builder)
+    {
+        builder.ConfigureAppConfiguration((context, config) =>
+        {
+            // Add test-specific configuration in memory
+            var testConfig = new Dictionary<string, string?>
+            {
+                ["GitHub:ApplicationName"] = "PowerOrchestrator-Test",
+                ["GitHub:AccessToken"] = "test-token-for-integration-tests",
+                ["GitHub:WebhookSecret"] = "test-webhook-secret",
+                ["GitHub:WebhookEndpointBaseUrl"] = "https://localhost:5001",
+                ["GitHub:RateLimit:RequestsPerHour"] = "5000",
+                ["GitHub:RateLimit:SafetyThreshold"] = "0.8",
+                ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Port=5432;Database=powerorchestrator_test;Username=postgres;Password=postgres",
+                ["ConnectionStrings:Redis"] = "localhost:6379"
+            };
+            
+            config.AddInMemoryCollection(testConfig);
+        });
+
+        return base.CreateHost(builder);
+    }
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Test");
+        
+        builder.ConfigureServices(services =>
+        {
+            // Override services for testing if needed
+            // For now, we'll use the real services with test configuration
+        });
+    }
+}
+
+/// <summary>
 /// Integration tests for GitHub webhook processing
 /// </summary>
-public class WebhookIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+public class WebhookIntegrationTests : IClassFixture<WebhookTestApplicationFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly WebhookTestApplicationFactory _factory;
     private readonly HttpClient _client;
 
-    public WebhookIntegrationTests(WebApplicationFactory<Program> factory)
+    public WebhookIntegrationTests(WebhookTestApplicationFactory factory)
     {
         _factory = factory;
         _client = _factory.CreateClient();
