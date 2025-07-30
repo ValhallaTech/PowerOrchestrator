@@ -32,6 +32,20 @@ public class CoreModule : Module
         builder.RegisterType<BulkOperationsRepository>().As<IBulkOperationsRepository>().InstancePerLifetimeScope();
         builder.RegisterType<UnitOfWork>().As<IUnitOfWork>().InstancePerLifetimeScope();
 
+        // Register Identity repositories
+        builder.RegisterType<PowerOrchestrator.Infrastructure.Identity.UserRepository>()
+            .As<PowerOrchestrator.Infrastructure.Identity.IUserRepository>()
+            .InstancePerLifetimeScope();
+
+        // Register Identity services
+        builder.RegisterType<PowerOrchestrator.Identity.Services.JwtTokenService>()
+            .As<PowerOrchestrator.Identity.Services.IJwtTokenService>()
+            .InstancePerLifetimeScope();
+        
+        builder.RegisterType<PowerOrchestrator.Identity.Services.MfaService>()
+            .As<PowerOrchestrator.Identity.Services.IMfaService>()
+            .InstancePerLifetimeScope();
+
         // Register GitHub services
         builder.RegisterType<GitHubRateLimitService>().As<IGitHubRateLimitService>().SingleInstance();
         builder.RegisterType<GitHubCacheService>().As<IGitHubCacheService>().InstancePerLifetimeScope();

@@ -108,6 +108,66 @@ builder.Services.Configure<PowerOrchestrator.Infrastructure.Configuration.GitHub
 // Configure HttpClient for GitHub services
 builder.Services.AddHttpClient();
 
+// Configure JWT Authentication
+var jwtSettings = new PowerOrchestrator.Identity.Services.JwtSettings();
+builder.Configuration.GetSection("Jwt").Bind(jwtSettings);
+builder.Services.AddSingleton(jwtSettings);
+
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options =>
+    {
+        options.Authority = jwtSettings.Issuer;
+        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtSettings.Audience,
+            ValidateLifetime = true,
+            IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
+                System.Text.Encoding.ASCII.GetBytes(jwtSettings.Secret)),
+            ValidateIssuerSigningKey = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+// Configure Authorization
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireUser", policy => policy.RequireAuthenticatedUser());
+    options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("ManageUsers", policy => policy.RequireClaim("permission", "Users.Manage"));
+    options.AddPolicy("ManageScripts", policy => policy.RequireClaim("permission", "Scripts.Manage"));
+    options.AddPolicy("ExecuteScripts", policy => policy.RequireClaim("permission", "Scripts.Execute"));
+});
+
+// Configure ASP.NET Core Identity
+builder.Services.AddIdentity<PowerOrchestrator.Domain.Entities.User, PowerOrchestrator.Domain.Entities.Role>(options =>
+{
+    // Password settings
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequiredLength = 8;
+    options.Password.RequiredUniqueChars = 1;
+
+    // Lockout settings
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
+
+    // User settings
+    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+    options.User.RequireUniqueEmail = true;
+
+    // Email confirmation settings
+    options.SignIn.RequireConfirmedEmail = false;
+    options.SignIn.RequireConfirmedPhoneNumber = false;
+})
+.AddEntityFrameworkStores<PowerOrchestratorDbContext>();
+
 // Configure Autofac container
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 {
@@ -150,6 +210,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+
+// Add authentication and authorization
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Add global exception handling
 app.UseMiddleware<ExceptionHandlingMiddleware>();
