@@ -1,13 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PowerOrchestrator.Domain.Entities;
 using PowerOrchestrator.Infrastructure.Configuration;
 
 namespace PowerOrchestrator.Infrastructure.Data;
 
 /// <summary>
-/// PowerOrchestrator database context for Entity Framework Core
+/// PowerOrchestrator database context for Entity Framework Core with Identity support
 /// </summary>
-public class PowerOrchestratorDbContext : DbContext
+public class PowerOrchestratorDbContext : IdentityDbContext<User, Role, Guid>
 {
     /// <summary>
     /// Initializes a new instance of the PowerOrchestratorDbContext class
@@ -53,6 +54,16 @@ public class PowerOrchestratorDbContext : DbContext
     public DbSet<SyncHistory> SyncHistory { get; set; } = null!;
 
     /// <summary>
+    /// Gets or sets the UserSessions DbSet
+    /// </summary>
+    public DbSet<UserSession> UserSessions { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the SecurityAuditLogs DbSet
+    /// </summary>
+    public DbSet<SecurityAuditLog> SecurityAuditLogs { get; set; } = null!;
+
+    /// <summary>
     /// Configures the model and entity mappings
     /// </summary>
     /// <param name="modelBuilder">The model builder</param>
@@ -71,6 +82,11 @@ public class PowerOrchestratorDbContext : DbContext
         modelBuilder.ApplyConfiguration(new GitHubRepositoryConfiguration());
         modelBuilder.ApplyConfiguration(new RepositoryScriptConfiguration());
         modelBuilder.ApplyConfiguration(new SyncHistoryConfiguration());
+        modelBuilder.ApplyConfiguration(new UserSessionConfiguration());
+        modelBuilder.ApplyConfiguration(new SecurityAuditLogConfiguration());
+
+        // Configure Identity entities
+        ConfigureIdentityEntities(modelBuilder);
     }
 
     /// <summary>
@@ -119,5 +135,49 @@ public class PowerOrchestratorDbContext : DbContext
                 entityEntry.Property(nameof(Domain.Common.BaseEntity.CreatedBy)).IsModified = false;
             }
         }
+    }
+
+    /// <summary>
+    /// Configures Identity entities with custom table names and relationships
+    /// </summary>
+    /// <param name="modelBuilder">The model builder</param>
+    private void ConfigureIdentityEntities(ModelBuilder modelBuilder)
+    {
+        // Configure User entity
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.ToTable("Users");
+            entity.Property(e => e.FirstName).HasMaxLength(100);
+            entity.Property(e => e.LastName).HasMaxLength(100);
+            entity.Property(e => e.MfaSecret).HasMaxLength(255);
+            entity.Property(e => e.LastLoginIp).HasMaxLength(45);
+            entity.Property(e => e.CreatedBy).HasMaxLength(255);
+            entity.Property(e => e.UpdatedBy).HasMaxLength(255);
+        });
+
+        // Configure Role entity
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.ToTable("Roles");
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.CreatedBy).HasMaxLength(255);
+            entity.Property(e => e.UpdatedBy).HasMaxLength(255);
+        });
+
+        // Configure Identity tables with custom names
+        modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserRole<Guid>>()
+            .ToTable("UserRoles");
+
+        modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserClaim<Guid>>()
+            .ToTable("UserClaims");
+
+        modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserLogin<Guid>>()
+            .ToTable("UserLogins");
+
+        modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserToken<Guid>>()
+            .ToTable("UserTokens");
+
+        modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityRoleClaim<Guid>>()
+            .ToTable("RoleClaims");
     }
 }
