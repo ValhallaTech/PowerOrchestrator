@@ -13,32 +13,51 @@ public class AuthenticationService : IAuthenticationService
 {
     private readonly ILogger<AuthenticationService> _logger;
     private readonly IApiService? _apiService;
-    private readonly ISettingsService _settingsService;
+    private readonly ISecureStorageService _secureStorageService;
     
     private const string TokenKey = "auth_token";
     private const string UserKey = "current_user";
+    private const string RefreshTokenKey = "refresh_token";
+    private const string TokenExpiryKey = "token_expiry";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AuthenticationService"/> class
     /// </summary>
     /// <param name="logger">The logger instance</param>
-    /// <param name="settingsService">The settings service</param>
+    /// <param name="secureStorageService">The secure storage service</param>
     /// <param name="apiService">The API service (optional for console mode)</param>
     public AuthenticationService(
         ILogger<AuthenticationService> logger,
-        ISettingsService settingsService,
+        ISecureStorageService secureStorageService,
         IApiService? apiService = null)
     {
         _logger = logger;
         _apiService = apiService;
-        _settingsService = settingsService;
+        _secureStorageService = secureStorageService;
     }
 
     /// <inheritdoc/>
-    public bool IsAuthenticated => !string.IsNullOrEmpty(Token);
+    public bool IsAuthenticated => !string.IsNullOrEmpty(GetTokenSync());
 
     /// <inheritdoc/>
-    public string? Token => _settingsService.GetSetting<string>(TokenKey);
+    public string? Token => GetTokenSync();
+
+    /// <summary>
+    /// Gets the token synchronously for the IsAuthenticated property
+    /// </summary>
+    /// <returns>The authentication token</returns>
+    private string? GetTokenSync()
+    {
+        try
+        {
+            // Use Task.Run to avoid blocking in property getter
+            return Task.Run(async () => await _secureStorageService.GetAsync(TokenKey)).Result;
+        }
+        catch
+        {
+            return null;
+        }
+    }
 
     /// <inheritdoc/>
     public async Task<bool> LoginAsync(string email, string password)
@@ -58,8 +77,13 @@ public class AuthenticationService : IAuthenticationService
             await Task.Delay(500);
             if (email == "admin@powerorchestrator.com" && password == "password")
             {
-                _settingsService.SetSetting(TokenKey, "fake-jwt-token-console-mode");
-                _settingsService.SetSetting(UserKey, "{ \"email\": \"admin@powerorchestrator.com\", \"name\": \"Admin\" }");
+                var token = GenerateJwtToken(email);
+                var expiry = DateTime.UtcNow.AddHours(24);
+                
+                await _secureStorageService.SetAsync(TokenKey, token);
+                await _secureStorageService.SetAsync(UserKey, "{ \"email\": \"admin@powerorchestrator.com\", \"name\": \"Admin\", \"roles\": [\"Admin\"] }");
+                await _secureStorageService.SetAsync(TokenExpiryKey, expiry.ToString("O"));
+                
                 _logger.LogInformation("Console mode login successful for user: {Email}", email);
                 return true;
             }
@@ -77,8 +101,18 @@ public class AuthenticationService : IAuthenticationService
 
             if (response?.Success == true && !string.IsNullOrEmpty(response.Token))
             {
-                _settingsService.SetSetting(TokenKey, response.Token);
-                _settingsService.SetSetting(UserKey, JsonConvert.SerializeObject(response.User));
+                await _secureStorageService.SetAsync(TokenKey, response.Token);
+                await _secureStorageService.SetAsync(UserKey, JsonConvert.SerializeObject(response.User));
+                
+                if (!string.IsNullOrEmpty(response.RefreshToken))
+                {
+                    await _secureStorageService.SetAsync(RefreshTokenKey, response.RefreshToken);
+                }
+                
+                if (response.ExpiresAt.HasValue)
+                {
+                    await _secureStorageService.SetAsync(TokenExpiryKey, response.ExpiresAt.Value.ToString("O"));
+                }
                 
                 _logger.LogInformation("Login successful for user: {Email}", email);
                 return true;
@@ -103,11 +137,12 @@ public class AuthenticationService : IAuthenticationService
             _logger.LogInformation("Logging out user");
 
             // Clear stored authentication data
-            _settingsService.RemoveSetting(TokenKey);
-            _settingsService.RemoveSetting(UserKey);
+            await _secureStorageService.RemoveAsync(TokenKey);
+            await _secureStorageService.RemoveAsync(UserKey);
+            await _secureStorageService.RemoveAsync(RefreshTokenKey);
+            await _secureStorageService.RemoveAsync(TokenExpiryKey);
 
             // TODO: Call logout API endpoint if needed
-            await Task.CompletedTask;
             
             _logger.LogInformation("User logged out successfully");
         }
@@ -174,12 +209,12 @@ public class AuthenticationService : IAuthenticationService
     {
         try
         {
-            var userJson = _settingsService.GetSetting<string>(UserKey);
+            var userJson = await _secureStorageService.GetAsync(UserKey);
             if (!string.IsNullOrEmpty(userJson))
             {
 #if NET8_0
                 // Console mode - return simple object
-                return new { email = "admin@powerorchestrator.com", name = "Admin" };
+                return new { email = "admin@powerorchestrator.com", name = "Admin", roles = new[] { "Admin" } };
 #else
                 // MAUI mode - deserialize from JSON
                 return JsonConvert.DeserializeObject(userJson);
@@ -187,13 +222,121 @@ public class AuthenticationService : IAuthenticationService
             }
 
             // TODO: Fetch from API if not cached
-            await Task.CompletedTask;
             return null;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting current user");
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Generates a JWT token for console mode
+    /// </summary>
+    /// <param name="email">The user's email</param>
+    /// <returns>A simulated JWT token</returns>
+    private static string GenerateJwtToken(string email)
+    {
+        // Simple token format for console mode: base64(header).base64(payload).signature
+        var header = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"; // {"alg":"HS256","typ":"JWT"}
+        var payload = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"{{\"email\":\"{email}\",\"exp\":{DateTimeOffset.UtcNow.AddHours(24).ToUnixTimeSeconds()}}}"));
+        var signature = "console-mode-signature";
+        
+        return $"{header}.{payload}.{signature}";
+    }
+
+    /// <summary>
+    /// Checks if the current token is expired
+    /// </summary>
+    /// <returns>True if the token is expired</returns>
+    public async Task<bool> IsTokenExpiredAsync()
+    {
+        try
+        {
+            var expiryString = await _secureStorageService.GetAsync(TokenExpiryKey);
+            if (string.IsNullOrEmpty(expiryString))
+            {
+                return true; // No expiry data means expired
+            }
+
+            if (DateTime.TryParse(expiryString, out var expiry))
+            {
+                return DateTime.UtcNow >= expiry;
+            }
+
+            return true; // Invalid expiry data means expired
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking token expiry");
+            return true; // Error means treat as expired
+        }
+    }
+
+    /// <summary>
+    /// Refreshes the authentication token
+    /// </summary>
+    /// <returns>True if the token was refreshed successfully</returns>
+    public async Task<bool> RefreshTokenAsync()
+    {
+        try
+        {
+            var refreshToken = await _secureStorageService.GetAsync(RefreshTokenKey);
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                _logger.LogWarning("No refresh token available");
+                return false;
+            }
+
+#if NET8_0
+            // Console mode - simulate refresh
+            await Task.Delay(200);
+            var newToken = GenerateJwtToken("admin@powerorchestrator.com");
+            var newExpiry = DateTime.UtcNow.AddHours(24);
+            
+            await _secureStorageService.SetAsync(TokenKey, newToken);
+            await _secureStorageService.SetAsync(TokenExpiryKey, newExpiry.ToString("O"));
+            
+            _logger.LogInformation("Console mode token refresh successful");
+            return true;
+#else
+            // MAUI mode - call refresh API
+            if (_apiService == null)
+            {
+                _logger.LogError("API service not available for token refresh");
+                return false;
+            }
+
+            var refreshRequest = new { RefreshToken = refreshToken };
+            var response = await _apiService.PostAsync<LoginResponse>("/api/auth/refresh", refreshRequest);
+
+            if (response?.Success == true && !string.IsNullOrEmpty(response.Token))
+            {
+                await _secureStorageService.SetAsync(TokenKey, response.Token);
+                
+                if (!string.IsNullOrEmpty(response.RefreshToken))
+                {
+                    await _secureStorageService.SetAsync(RefreshTokenKey, response.RefreshToken);
+                }
+                
+                if (response.ExpiresAt.HasValue)
+                {
+                    await _secureStorageService.SetAsync(TokenExpiryKey, response.ExpiresAt.Value.ToString("O"));
+                }
+                
+                _logger.LogInformation("Token refresh successful");
+                return true;
+            }
+
+            _logger.LogWarning("Token refresh failed");
+            return false;
+#endif
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during token refresh");
+            return false;
         }
     }
 }
@@ -212,6 +355,16 @@ public class LoginResponse
     /// Gets or sets the authentication token
     /// </summary>
     public string? Token { get; set; }
+
+    /// <summary>
+    /// Gets or sets the refresh token
+    /// </summary>
+    public string? RefreshToken { get; set; }
+
+    /// <summary>
+    /// Gets or sets the token expiration date
+    /// </summary>
+    public DateTime? ExpiresAt { get; set; }
 
     /// <summary>
     /// Gets or sets the user information

@@ -167,6 +167,7 @@ public static class Program
 
         // Register core services without dependencies first
         containerBuilder.RegisterType<SettingsService>().As<ISettingsService>().SingleInstance();
+        containerBuilder.RegisterType<SecureStorageService>().As<ISecureStorageService>().SingleInstance();
         containerBuilder.RegisterType<NavigationService>().As<INavigationService>().SingleInstance();
         containerBuilder.RegisterType<DialogService>().As<IDialogService>().SingleInstance();
 
@@ -174,6 +175,7 @@ public static class Program
         // Register API and authentication services only in MAUI mode to avoid circular dependencies
         containerBuilder.RegisterType<ApiService>().As<IApiService>().SingleInstance();
         containerBuilder.RegisterType<AuthenticationService>().As<IAuthenticationService>().SingleInstance();
+        containerBuilder.RegisterType<AuthorizationService>().As<IAuthorizationService>().SingleInstance();
 #endif
 
         // Register ViewModels

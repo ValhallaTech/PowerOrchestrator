@@ -107,6 +107,18 @@ public interface IAuthenticationService
     /// </summary>
     /// <returns>A task with the user information</returns>
     Task<object?> GetCurrentUserAsync();
+
+    /// <summary>
+    /// Checks if the current token is expired
+    /// </summary>
+    /// <returns>True if the token is expired</returns>
+    Task<bool> IsTokenExpiredAsync();
+
+    /// <summary>
+    /// Refreshes the authentication token
+    /// </summary>
+    /// <returns>True if the token was refreshed successfully</returns>
+    Task<bool> RefreshTokenAsync();
 }
 
 /// <summary>

@@ -1,4 +1,5 @@
 using AutoMapper;
+using PowerOrchestrator.MAUI.Mappings;
 
 #if !NET8_0
 using Autofac;
@@ -22,6 +23,7 @@ public class MauiMappingModule : Module
         var configuration = new MapperConfiguration(cfg =>
         {
             // Add mapping profiles here as they are created
+            cfg.AddProfile<UIModelProfile>();
             // cfg.AddProfile<UserProfile>();
             // cfg.AddProfile<ScriptProfile>();
             // cfg.AddProfile<RepositoryProfile>();
@@ -46,6 +48,7 @@ public static class MauiMappingModule
         var configuration = new MapperConfiguration(cfg =>
         {
             // Add mapping profiles here as they are created
+            cfg.AddProfile<UIModelProfile>();
             // cfg.AddProfile<UserProfile>();
             // cfg.AddProfile<ScriptProfile>();
             // cfg.AddProfile<RepositoryProfile>();
