@@ -29,6 +29,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/PowerOrchestrator.API/PowerOrchestrator.API.csproj" />
     <ProjectReference Include="../../src/PowerOrchestrator.Infrastructure/PowerOrchestrator.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/PowerOrchestrator.MAUI/PowerOrchestrator.MAUI.csproj" />
   </ItemGroup>
 
 </Project>
