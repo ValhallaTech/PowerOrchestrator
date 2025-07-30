@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="PowerOrchestrator.MAUI.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:PowerOrchestrator.MAUI"
+    xmlns:views="clr-namespace:PowerOrchestrator.MAUI.Views"
+    Title="PowerOrchestrator">
+
+    <Shell.FlyoutHeader>
+        <Grid BackgroundColor="{DynamicResource Primary}" HeightRequest="160">
+            <StackLayout Orientation="Horizontal" HorizontalOptions="Center" VerticalOptions="Center">
+                <Label 
+                    Text="⚡" 
+                    FontSize="32" 
+                    TextColor="White" 
+                    VerticalOptions="Center" />
+                <Label 
+                    Text="PowerOrchestrator" 
+                    FontSize="20" 
+                    FontAttributes="Bold" 
+                    TextColor="White" 
+                    VerticalOptions="Center" 
+                    Margin="10,0,0,0" />
+            </StackLayout>
+        </Grid>
+    </Shell.FlyoutHeader>
+
+    <!-- 
+        The FlyoutDisplayOptions="AsMultipleItems" will create a separate flyout item for each child element    
+        https://docs.microsoft.com/dotnet/api/xamarin.forms.shellgroupitem.flyoutdisplayoptions?view=xamarin-forms
+    -->
+    <FlyoutItem Title="Dashboard" Icon="dashboard.png">
+        <ShellContent Title="Dashboard" Route="dashboard" ContentTemplate="{DataTemplate views:DashboardPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Scripts" Icon="script.png">
+        <ShellContent Title="Scripts" Route="scripts" ContentTemplate="{DataTemplate views:ScriptsPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Repositories" Icon="repo.png">
+        <ShellContent Title="Repositories" Route="repositories" ContentTemplate="{DataTemplate views:RepositoriesPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Executions" Icon="play.png">
+        <ShellContent Title="Executions" Route="executions" ContentTemplate="{DataTemplate views:ExecutionsPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Admin" Icon="admin.png">
+        <ShellContent Title="Users" Route="users" ContentTemplate="{DataTemplate views:UsersPage}" />
+        <ShellContent Title="Roles" Route="roles" ContentTemplate="{DataTemplate views:RolesPage}" />
+        <ShellContent Title="Audit" Route="audit" ContentTemplate="{DataTemplate views:AuditPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Settings" Icon="settings.png">
+        <ShellContent Title="Settings" Route="settings" ContentTemplate="{DataTemplate views:SettingsPage}" />
+    </FlyoutItem>
+
+    <!-- Authentication-related pages (not shown in flyout) -->
+    <ShellContent Title="Login" Route="login" ContentTemplate="{DataTemplate views:LoginPage}" Shell.FlyoutBehavior="Disabled" />
+    <ShellContent Title="Register" Route="register" ContentTemplate="{DataTemplate views:RegisterPage}" Shell.FlyoutBehavior="Disabled" />
+
+    <Shell.FlyoutFooter>
+        <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Margin="0,10">
+            <Label Text="© 2025 PowerOrchestrator" FontSize="Small" TextColor="{DynamicResource Gray600}" />
+        </StackLayout>
+    </Shell.FlyoutFooter>
+
+</Shell>

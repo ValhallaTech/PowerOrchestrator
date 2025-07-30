@@ -1,2 +1,174 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using PowerOrchestrator.MAUI.Services;
+using PowerOrchestrator.MAUI.ViewModels;
+using PowerOrchestrator.Application.Interfaces.Services;
+using Serilog;
+
+#if !NET8_0
+using UraniumUI;
+#endif
+
+namespace PowerOrchestrator.MAUI;
+
+/// <summary>
+/// Main program entry point for PowerOrchestrator MAUI application
+/// </summary>
+public static class Program
+{
+    /// <summary>
+    /// Main entry point for the application
+    /// </summary>
+    /// <param name="args">Command line arguments</param>
+    public static void Main(string[] args)
+    {
+#if NET8_0
+        // Console application mode (for development/testing without MAUI workloads)
+        RunConsoleApp();
+#else
+        // MAUI application mode
+        var app = CreateMauiApp();
+        app.Run();
+#endif
+    }
+
+#if NET8_0
+    /// <summary>
+    /// Runs as a console application for development/testing
+    /// </summary>
+    private static void RunConsoleApp()
+    {
+        Console.WriteLine("PowerOrchestrator MAUI Application (Console Mode)");
+        Console.WriteLine("To run as a full MAUI application, install MAUI workloads:");
+        Console.WriteLine("dotnet workload install maui");
+        Console.WriteLine();
+        Console.WriteLine("This console mode demonstrates the core architecture setup...");
+        
+        // Configure basic logging
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.Console()
+            .CreateLogger();
+
+        try
+        {
+            // Test basic dependency injection setup
+            var containerBuilder = new ContainerBuilder();
+            ConfigureServices(containerBuilder);
+            var container = containerBuilder.Build();
+            
+            Console.WriteLine("✓ Autofac container configured successfully");
+            
+            // Test service resolution
+            var dialogService = container.Resolve<IDialogService>();
+            var navigationService = container.Resolve<INavigationService>();
+            var settingsService = container.Resolve<ISettingsService>();
+            
+            Console.WriteLine("✓ Core services resolved successfully");
+            Console.WriteLine("✓ MAUI application architecture is ready");
+            Console.WriteLine();
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error: {ex.Message}");
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey();
+        }
+        finally
+        {
+            Log.CloseAndFlush();
+        }
+    }
+#else
+    /// <summary>
+    /// Creates and configures the MAUI application
+    /// </summary>
+    /// <returns>The configured MAUI application</returns>
+    public static MauiApp CreateMauiApp()
+    {
+        var builder = MauiApp.CreateBuilder();
+        
+        builder
+            .UseMauiApp<App>()
+            .UseUraniumUI()
+            .UseUraniumUIMaterial()
+            .ConfigureFonts(fonts =>
+            {
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+            });
+
+        // Configure logging with Serilog
+        ConfigureLogging(builder);
+
+        // Configure dependency injection with Autofac
+        builder.ConfigureContainer(new AutofacServiceProviderFactory(), ConfigureServices);
+
+        // Build the app
+        var app = builder.Build();
+
+        // Set the container in the App class for service location
+        var container = app.Services.GetRequiredService<IContainer>();
+        App.SetContainer(container);
+
+        return app;
+    }
+
+    /// <summary>
+    /// Configures logging with Serilog
+    /// </summary>
+    /// <param name="builder">The MAUI app builder</param>
+    private static void ConfigureLogging(MauiAppBuilder builder)
+    {
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.Console()
+            .WriteTo.File(
+                Path.Combine(FileSystem.AppDataDirectory, "logs", "powerorchestrator-.log"),
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7)
+            .CreateLogger();
+
+        builder.Logging.ClearProviders();
+        builder.Logging.AddSerilog(Log.Logger);
+    }
+#endif
+
+    /// <summary>
+    /// Configures services with Autofac
+    /// </summary>
+    /// <param name="containerBuilder">The Autofac container builder</param>
+    private static void ConfigureServices(ContainerBuilder containerBuilder)
+    {
+        // Register MAUI-specific services
+        containerBuilder.RegisterType<NavigationService>().As<INavigationService>().SingleInstance();
+        containerBuilder.RegisterType<DialogService>().As<IDialogService>().SingleInstance();
+        containerBuilder.RegisterType<AuthenticationService>().As<IAuthenticationService>().SingleInstance();
+        containerBuilder.RegisterType<ApiService>().As<IApiService>().SingleInstance();
+        containerBuilder.RegisterType<SettingsService>().As<ISettingsService>().SingleInstance();
+
+        // Register ViewModels
+        containerBuilder.RegisterType<DashboardViewModel>().AsSelf();
+        containerBuilder.RegisterType<ScriptsViewModel>().AsSelf();
+        containerBuilder.RegisterType<RepositoriesViewModel>().AsSelf();
+        containerBuilder.RegisterType<ExecutionsViewModel>().AsSelf();
+        containerBuilder.RegisterType<UsersViewModel>().AsSelf();
+        containerBuilder.RegisterType<RolesViewModel>().AsSelf();
+        containerBuilder.RegisterType<AuditViewModel>().AsSelf();
+        containerBuilder.RegisterType<SettingsViewModel>().AsSelf();
+        containerBuilder.RegisterType<LoginViewModel>().AsSelf();
+        containerBuilder.RegisterType<RegisterViewModel>().AsSelf();
+
+        // Register AutoMapper
+        containerBuilder.RegisterModule<MauiMappingModule>();
+
+        // Register HttpClient for API service
+        containerBuilder.RegisterType<HttpClient>().AsSelf().SingleInstance();
+
+        // TODO: Register Application layer services when available
+        // This will be integrated with existing PowerOrchestrator.Application services
+    }
+}
