@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
 using PowerOrchestrator.MAUI.Services;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
+using AutoMapper;
 
 #if NET8_0
 using Command = PowerOrchestrator.MAUI.Services.Command;
@@ -304,18 +306,6 @@ public class AuditViewModel : BaseViewModel
         Title = "Audit Logs";
     }
 }
-
-using Microsoft.Extensions.Logging;
-using PowerOrchestrator.MAUI.Services;
-using System.Collections.ObjectModel;
-using System.Windows.Input;
-using AutoMapper;
-
-#if NET8_0
-using Command = PowerOrchestrator.MAUI.Services.Command;
-#endif
-
-namespace PowerOrchestrator.MAUI.ViewModels;
 
 /// <summary>
 /// View model for the settings page
