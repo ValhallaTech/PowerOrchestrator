@@ -93,7 +93,7 @@ public class MfaService : IMfaService
             using var rng = RandomNumberGenerator.Create();
             rng.GetBytes(bytes);
             
-            var code = BitConverter.ToUInt32(bytes, 0).ToString("D8");
+            var code = (BitConverter.ToUInt32(bytes, 0) % 100000000).ToString("D8");
             codes.Add(code);
         }
 

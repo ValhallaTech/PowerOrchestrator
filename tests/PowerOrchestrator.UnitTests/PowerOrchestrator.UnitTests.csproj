@@ -30,12 +30,16 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Sinks.Console" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../../src/PowerOrchestrator.Domain/PowerOrchestrator.Domain.csproj" />
     <ProjectReference Include="../../src/PowerOrchestrator.Application/PowerOrchestrator.Application.csproj" />
     <ProjectReference Include="../../src/PowerOrchestrator.Infrastructure/PowerOrchestrator.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/PowerOrchestrator.Identity/PowerOrchestrator.Identity.csproj" />
     <ProjectReference Include="../../src/PowerOrchestrator.API/PowerOrchestrator.API.csproj" />
   </ItemGroup>
 
