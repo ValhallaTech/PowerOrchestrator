@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="PowerOrchestrator.MAUI.Views.ScriptsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:material="http://schemas.enisn-projects.io/dotnet/maui/uraniumui/material"
+    xmlns:m="clr-namespace:UraniumUI.Icons.MaterialIcons;assembly=UraniumUI.Icons.MaterialIcons"
+    xmlns:viewmodels="clr-namespace:PowerOrchestrator.MAUI.ViewModels"
+    x:DataType="viewmodels:ScriptsViewModel"
+    Title="{Binding Title}"
+    BackgroundColor="{DynamicResource Surface}">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        
+        <!-- Header with Search and Actions -->
+        <material:CardView Grid.Row="0" BackgroundColor="{DynamicResource SurfaceContainer}" CornerRadius="0" Margin="0">
+            <StackLayout Padding="20" Spacing="15">
+                
+                <!-- Title and Add Button -->
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                    <Label 
+                        Grid.Column="0"
+                        Text="PowerShell Scripts" 
+                        FontSize="24" 
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource OnSurface}"
+                        VerticalOptions="Center" />
+                    
+                    <material:Button 
+                        Grid.Column="1"
+                        Text="New Script"
+                        Icon="{x:Static m:MaterialIcons.Add}"
+                        Style="{DynamicResource FilledButtonStyle}"
+                        Command="{Binding AddScriptCommand}" />
+                </Grid>
+
+                <!-- Search Bar -->
+                <material:TextField
+                    Title="Search scripts..."
+                    Icon="{x:Static m:MaterialIcons.Search}"
+                    Text="{Binding SearchText}"
+                    BackgroundColor="{DynamicResource SurfaceContainerHigh}"
+                    Style="{DynamicResource OutlinedTextFieldStyle}" />
+
+                <!-- Filter Chips -->
+                <ScrollView Orientation="Horizontal">
+                    <StackLayout Orientation="Horizontal" Spacing="10">
+                        <material:Button 
+                            Text="All"
+                            Style="{DynamicResource OutlinedButtonStyle}"
+                            Command="{Binding FilterAllCommand}" />
+                        <material:Button 
+                            Text="PowerShell"
+                            Style="{DynamicResource OutlinedButtonStyle}"
+                            Command="{Binding FilterPowerShellCommand}" />
+                        <material:Button 
+                            Text="Batch"
+                            Style="{DynamicResource OutlinedButtonStyle}"
+                            Command="{Binding FilterBatchCommand}" />
+                        <material:Button 
+                            Text="Python"
+                            Style="{DynamicResource OutlinedButtonStyle}"
+                            Command="{Binding FilterPythonCommand}" />
+                    </StackLayout>
+                </ScrollView>
+
+            </StackLayout>
+        </material:CardView>
+
+        <!-- Scripts List -->
+        <ScrollView Grid.Row="1" Padding="20,10">
+            <StackLayout Spacing="15">
+                
+                <!-- Sample Script Cards -->
+                <material:CardView BackgroundColor="{DynamicResource SurfaceContainer}" CornerRadius="12">
+                    <StackLayout Padding="20" Spacing="10">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <StackLayout Grid.Column="0" Spacing="5">
+                                <Label 
+                                    Text="System Health Check"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource OnSurface}" />
+                                <Label 
+                                    Text="Comprehensive system monitoring script"
+                                    FontSize="14"
+                                    TextColor="{DynamicResource Outline}" />
+                                <StackLayout Orientation="Horizontal" Spacing="10">
+                                    <Label 
+                                        Text="PowerShell"
+                                        FontSize="12"
+                                        TextColor="{DynamicResource Primary}"
+                                        BackgroundColor="{DynamicResource PrimaryContainer}"
+                                        Padding="8,4" />
+                                    <Label 
+                                        Text="Last run: 2 hours ago"
+                                        FontSize="12"
+                                        TextColor="{DynamicResource Outline}" />
+                                </StackLayout>
+                            </StackLayout>
+                            
+                            <StackLayout Grid.Column="1" Orientation="Horizontal" Spacing="5">
+                                <material:Button 
+                                    Icon="{x:Static m:MaterialIcons.PlayArrow}"
+                                    Style="{DynamicResource IconButtonStyle}"
+                                    Command="{Binding RunScriptCommand}" />
+                                <material:Button 
+                                    Icon="{x:Static m:MaterialIcons.Edit}"
+                                    Style="{DynamicResource IconButtonStyle}"
+                                    Command="{Binding EditScriptCommand}" />
+                                <material:Button 
+                                    Icon="{x:Static m:MaterialIcons.MoreVert}"
+                                    Style="{DynamicResource IconButtonStyle}"
+                                    Command="{Binding ScriptOptionsCommand}" />
+                            </StackLayout>
+                        </Grid>
+                    </StackLayout>
+                </material:CardView>
+
+                <material:CardView BackgroundColor="{DynamicResource SurfaceContainer}" CornerRadius="12">
+                    <StackLayout Padding="20" Spacing="10">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <StackLayout Grid.Column="0" Spacing="5">
+                                <Label 
+                                    Text="Database Backup"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource OnSurface}" />
+                                <Label 
+                                    Text="Automated database backup and compression"
+                                    FontSize="14"
+                                    TextColor="{DynamicResource Outline}" />
+                                <StackLayout Orientation="Horizontal" Spacing="10">
+                                    <Label 
+                                        Text="PowerShell"
+                                        FontSize="12"
+                                        TextColor="{DynamicResource Primary}"
+                                        BackgroundColor="{DynamicResource PrimaryContainer}"
+                                        Padding="8,4" />
+                                    <Label 
+                                        Text="Scheduled: Daily 2:00 AM"
+                                        FontSize="12"
+                                        TextColor="{DynamicResource Outline}" />
+                                </StackLayout>
+                            </StackLayout>
+                            
+                            <StackLayout Grid.Column="1" Orientation="Horizontal" Spacing="5">
+                                <material:Button 
+                                    Icon="{x:Static m:MaterialIcons.PlayArrow}"
+                                    Style="{DynamicResource IconButtonStyle}"
+                                    Command="{Binding RunScriptCommand}" />
+                                <material:Button 
+                                    Icon="{x:Static m:MaterialIcons.Edit}"
+                                    Style="{DynamicResource IconButtonStyle}"
+                                    Command="{Binding EditScriptCommand}" />
+                                <material:Button 
+                                    Icon="{x:Static m:MaterialIcons.MoreVert}"
+                                    Style="{DynamicResource IconButtonStyle}"
+                                    Command="{Binding ScriptOptionsCommand}" />
+                            </StackLayout>
+                        </Grid>
+                    </StackLayout>
+                </material:CardView>
+
+                <material:CardView BackgroundColor="{DynamicResource SurfaceContainer}" CornerRadius="12">
+                    <StackLayout Padding="20" Spacing="10">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <StackLayout Grid.Column="0" Spacing="5">
+                                <Label 
+                                    Text="User Account Management"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource OnSurface}" />
+                                <Label 
+                                    Text="Bulk user creation and permission management"
+                                    FontSize="14"
+                                    TextColor="{DynamicResource Outline}" />
+                                <StackLayout Orientation="Horizontal" Spacing="10">
+                                    <Label 
+                                        Text="PowerShell"
+                                        FontSize="12"
+                                        TextColor="{DynamicResource Primary}"
+                                        BackgroundColor="{DynamicResource PrimaryContainer}"
+                                        Padding="8,4" />
+                                    <Label 
+                                        Text="Never run"
+                                        FontSize="12"
+                                        TextColor="{DynamicResource Outline}" />
+                                </StackLayout>
+                            </StackLayout>
+                            
+                            <StackLayout Grid.Column="1" Orientation="Horizontal" Spacing="5">
+                                <material:Button 
+                                    Icon="{x:Static m:MaterialIcons.PlayArrow}"
+                                    Style="{DynamicResource IconButtonStyle}"
+                                    Command="{Binding RunScriptCommand}" />
+                                <material:Button 
+                                    Icon="{x:Static m:MaterialIcons.Edit}"
+                                    Style="{DynamicResource IconButtonStyle}"
+                                    Command="{Binding EditScriptCommand}" />
+                                <material:Button 
+                                    Icon="{x:Static m:MaterialIcons.MoreVert}"
+                                    Style="{DynamicResource IconButtonStyle}"
+                                    Command="{Binding ScriptOptionsCommand}" />
+                            </StackLayout>
+                        </Grid>
+                    </StackLayout>
+                </material:CardView>
+
+                <!-- Empty State (when no scripts) -->
+                <material:CardView BackgroundColor="{DynamicResource SurfaceContainer}" CornerRadius="12" IsVisible="False">
+                    <StackLayout Padding="40" Spacing="15" HorizontalOptions="Center">
+                        <Label 
+                            Text="{x:Static m:MaterialIcons.Description}"
+                            FontFamily="MaterialRegular"
+                            FontSize="48"
+                            TextColor="{DynamicResource Outline}"
+                            HorizontalOptions="Center" />
+                        <Label 
+                            Text="No Scripts Found"
+                            FontSize="20"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource OnSurface}"
+                            HorizontalOptions="Center" />
+                        <Label 
+                            Text="Create your first PowerShell script to get started"
+                            FontSize="14"
+                            TextColor="{DynamicResource Outline}"
+                            HorizontalOptions="Center"
+                            HorizontalTextAlignment="Center" />
+                        <material:Button 
+                            Text="Create Script"
+                            Icon="{x:Static m:MaterialIcons.Add}"
+                            Style="{DynamicResource FilledButtonStyle}"
+                            Command="{Binding AddScriptCommand}"
+                            HorizontalOptions="Center"
+                            Margin="0,10,0,0" />
+                    </StackLayout>
+                </material:CardView>
+
+            </StackLayout>
+        </ScrollView>
+
+        <!-- Floating Action Button (Alternative) -->
+        <material:FloatingActionButton 
+            Grid.Row="1"
+            Icon="{x:Static m:MaterialIcons.Add}"
+            Command="{Binding AddScriptCommand}"
+            HorizontalOptions="End"
+            VerticalOptions="End"
+            Margin="20"
+            IsVisible="False" />
+
+    </Grid>
+
+</ContentPage>

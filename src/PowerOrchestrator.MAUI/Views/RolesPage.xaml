@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="PowerOrchestrator.MAUI.Views.RolesPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:material="http://schemas.enisn-projects.io/dotnet/maui/uraniumui/material"
+    xmlns:m="clr-namespace:UraniumUI.Icons.MaterialIcons;assembly=UraniumUI.Icons.MaterialIcons"
+    xmlns:viewmodels="clr-namespace:PowerOrchestrator.MAUI.ViewModels"
+    x:DataType="viewmodels:RolesViewModel"
+    Title="{Binding Title}"
+    BackgroundColor="{DynamicResource Surface}">
+
+    <StackLayout Padding="20" Spacing="20">
+        <material:CardView BackgroundColor="{DynamicResource TertiaryContainer}" CornerRadius="12">
+            <StackLayout Padding="20" Spacing="10" HorizontalOptions="Center">
+                <Label 
+                    Text="{x:Static m:MaterialIcons.Security}"
+                    FontFamily="MaterialRegular"
+                    FontSize="48"
+                    TextColor="{DynamicResource OnTertiaryContainer}"
+                    HorizontalOptions="Center" />
+                <Label 
+                    Text="Role Management"
+                    FontSize="24"
+                    FontAttributes="Bold"
+                    TextColor="{DynamicResource OnTertiaryContainer}"
+                    HorizontalOptions="Center" />
+                <Label 
+                    Text="Configure roles and permission sets"
+                    FontSize="16"
+                    TextColor="{DynamicResource OnTertiaryContainer}"
+                    HorizontalOptions="Center"
+                    HorizontalTextAlignment="Center" />
+            </StackLayout>
+        </material:CardView>
+        
+        <Label 
+            Text="This page will show role definitions, permission assignments, and role management capabilities."
+            FontSize="14"
+            TextColor="{DynamicResource Outline}"
+            HorizontalTextAlignment="Center" />
+    </StackLayout>
+
+</ContentPage>

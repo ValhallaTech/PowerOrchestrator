@@ -36,6 +36,13 @@
     <Color x:Key="SurfaceVariant">#E7E0EC</Color>
     <Color x:Key="OnSurfaceVariant">#49454F</Color>
     <Color x:Key="SurfaceTint">#6750A4</Color>
+    <Color x:Key="SurfaceContainer">#F3EDF7</Color>
+    <Color x:Key="SurfaceContainerHigh">#ECE6F0</Color>
+    <Color x:Key="SurfaceContainerHighest">#E6E0E9</Color>
+    <Color x:Key="Surface2">#F7F2FA</Color>
+    <Color x:Key="Surface3">#F1ECF4</Color>
+    <Color x:Key="Surface4">#EFE7F2</Color>
+    <Color x:Key="Surface5">#ECE6F0</Color>
 
     <!-- Background Colors -->
     <Color x:Key="Background">#FFFBFE</Color>

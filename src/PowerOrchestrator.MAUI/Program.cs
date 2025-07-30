@@ -188,6 +188,20 @@ public static class Program
         containerBuilder.RegisterType<LoginViewModel>().AsSelf();
         containerBuilder.RegisterType<RegisterViewModel>().AsSelf();
 
+#if !NET8_0
+        // Register Views (only in MAUI mode)
+        containerBuilder.RegisterType<PowerOrchestrator.MAUI.Views.DashboardPage>().AsSelf();
+        containerBuilder.RegisterType<PowerOrchestrator.MAUI.Views.ScriptsPage>().AsSelf();
+        containerBuilder.RegisterType<PowerOrchestrator.MAUI.Views.RepositoriesPage>().AsSelf();
+        containerBuilder.RegisterType<PowerOrchestrator.MAUI.Views.ExecutionsPage>().AsSelf();
+        containerBuilder.RegisterType<PowerOrchestrator.MAUI.Views.UsersPage>().AsSelf();
+        containerBuilder.RegisterType<PowerOrchestrator.MAUI.Views.RolesPage>().AsSelf();
+        containerBuilder.RegisterType<PowerOrchestrator.MAUI.Views.AuditPage>().AsSelf();
+        containerBuilder.RegisterType<PowerOrchestrator.MAUI.Views.SettingsPage>().AsSelf();
+        containerBuilder.RegisterType<PowerOrchestrator.MAUI.Views.LoginPage>().AsSelf();
+        containerBuilder.RegisterType<PowerOrchestrator.MAUI.Views.RegisterPage>().AsSelf();
+#endif
+
         // Register AutoMapper
 #if NET8_0
         var mapper = MauiMappingModule.CreateMapper();
