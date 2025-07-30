@@ -3,20 +3,13 @@ namespace PowerOrchestrator.UnitTests.Services;
 /// <summary>
 /// Unit tests for GitHub service using production architecture
 /// </summary>
-public class GitHubServiceTests : IClassFixture<ProductionArchitectureTestFixture>
+public class GitHubServiceTests : IClassFixture<GitHubServiceTestFixture>
 {
-    private readonly ProductionArchitectureTestFixture _fixture;
-    private readonly Mock<IGitHubRateLimitService> _mockRateLimitService;
+    private readonly GitHubServiceTestFixture _fixture;
 
-    public GitHubServiceTests(ProductionArchitectureTestFixture fixture)
+    public GitHubServiceTests(GitHubServiceTestFixture fixture)
     {
         _fixture = fixture;
-        _mockRateLimitService = new Mock<IGitHubRateLimitService>();
-        
-        // Register the mock rate limit service in the container
-        var containerBuilder = new ContainerBuilder();
-        containerBuilder.RegisterInstance(_mockRateLimitService.Object).As<IGitHubRateLimitService>();
-        containerBuilder.Update(_fixture.Container);
     }
 
     [Fact]
@@ -47,14 +40,14 @@ public class GitHubServiceTests : IClassFixture<ProductionArchitectureTestFixtur
         var service = _fixture.Resolve<IGitHubService>();
         
         // Setup rate limiting mock
-        _mockRateLimitService.Setup(x => x.WaitForRateLimitAsync(It.IsAny<CancellationToken>()))
+        _fixture.MockRateLimitService.Setup(x => x.WaitForRateLimitAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Act & Assert
         var exception = await Record.ExceptionAsync(() => service.GetRepositoriesAsync());
         
         // Verify rate limiting was called
-        _mockRateLimitService.Verify(x => x.WaitForRateLimitAsync(It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+        _fixture.MockRateLimitService.Verify(x => x.WaitForRateLimitAsync(It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     [Theory]
@@ -66,14 +59,14 @@ public class GitHubServiceTests : IClassFixture<ProductionArchitectureTestFixtur
         // Arrange
         var service = _fixture.Resolve<IGitHubService>();
         
-        _mockRateLimitService.Setup(x => x.WaitForRateLimitAsync(It.IsAny<CancellationToken>()))
+        _fixture.MockRateLimitService.Setup(x => x.WaitForRateLimitAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Act
         var exception = await Record.ExceptionAsync(() => service.GetRepositoryAsync(owner, name));
 
         // Assert
-        _mockRateLimitService.Verify(x => x.WaitForRateLimitAsync(It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+        _fixture.MockRateLimitService.Verify(x => x.WaitForRateLimitAsync(It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     [Theory]
@@ -127,7 +120,7 @@ public class GitHubServiceTests : IClassFixture<ProductionArchitectureTestFixtur
         var cts = new CancellationTokenSource();
         var cancellationToken = cts.Token;
 
-        _mockRateLimitService.Setup(x => x.WaitForRateLimitAsync(cancellationToken))
+        _fixture.MockRateLimitService.Setup(x => x.WaitForRateLimitAsync(cancellationToken))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -141,7 +134,7 @@ public class GitHubServiceTests : IClassFixture<ProductionArchitectureTestFixtur
         }
 
         // Assert
-        _mockRateLimitService.Verify(x => x.WaitForRateLimitAsync(cancellationToken), Times.AtLeastOnce);
+        _fixture.MockRateLimitService.Verify(x => x.WaitForRateLimitAsync(cancellationToken), Times.AtLeastOnce);
     }
 
     [Fact]

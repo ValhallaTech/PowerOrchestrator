@@ -85,11 +85,29 @@ public class PowerShellScriptParser : IPowerShellScriptParser
                     "Set-ExecutionPolicy", "Remove-Item", "Delete"
                 };
 
+                // Commands that typically require elevation
+                var elevationRequiredCommands = new[]
+                {
+                    "Start-Process", "Remove-Item", "Set-ExecutionPolicy", "Delete",
+                    "New-Service", "Stop-Service", "Start-Service", "Restart-Service",
+                    "Set-Service", "Install-WindowsFeature", "Enable-WindowsOptionalFeature"
+                };
+
                 foreach (var command in dangerousCommands)
                 {
                     if (scriptContent.Contains(command, StringComparison.OrdinalIgnoreCase))
                     {
                         analysis.SecurityIssues.Add($"Potentially dangerous command found: {command}");
+                    }
+                }
+
+                // Check if elevation is required
+                foreach (var command in elevationRequiredCommands)
+                {
+                    if (scriptContent.Contains(command, StringComparison.OrdinalIgnoreCase))
+                    {
+                        analysis.RequiresElevation = true;
+                        break;
                     }
                 }
 
@@ -158,6 +176,15 @@ public class PowerShellScriptParser : IPowerShellScriptParser
                     dependencies.Add(match.Groups[1].Value);
                 }
 
+                // Extract using module statements
+                var usingPattern = @"using\s+module\s+([^\s,;]+)";
+                var usingMatches = Regex.Matches(scriptContent, usingPattern, RegexOptions.IgnoreCase);
+
+                foreach (Match match in usingMatches)
+                {
+                    dependencies.Add(match.Groups[1].Value);
+                }
+
                 return dependencies.Distinct();
             }
             catch (Exception ex)
@@ -211,11 +238,11 @@ public class PowerShellScriptParser : IPowerShellScriptParser
     {
         var helpPatterns = new Dictionary<string, string>
         {
-            { "Synopsis", @"\.SYNOPSIS\s*\r?\n\s*([^\r\n.]+(?:\r?\n\s*[^.\r\n][^\r\n]*)*)" },
-            { "Description", @"\.DESCRIPTION\s*\r?\n\s*([^\r\n.]+(?:\r?\n\s*[^.\r\n][^\r\n]*)*)" },
-            { "Notes", @"\.NOTES\s*\r?\n\s*([^\r\n.]+(?:\r?\n\s*[^.\r\n][^\r\n]*)*)" },
-            { "Author", @"\.AUTHOR\s*\r?\n\s*([^\r\n.]+)" },
-            { "Version", @"\.VERSION\s*\r?\n\s*([^\r\n.]+)" }
+            { "Synopsis", @"\.SYNOPSIS\s*\r?\n\s*([^\r\n.]+(?:\r?\n\s*[^.\r\n#][^\r\n]*)*?)(?=\s*(?:\.\w+|\#>|$))" },
+            { "Description", @"\.DESCRIPTION\s*\r?\n\s*([^\r\n.]+(?:\r?\n\s*[^.\r\n#][^\r\n]*)*?)(?=\s*(?:\.\w+|\#>|$))" },
+            { "Notes", @"\.NOTES\s*\r?\n\s*([^\r\n.]+(?:\r?\n\s*[^.\r\n#][^\r\n]*)*?)(?=\s*(?:\.\w+|\#>|$))" },
+            { "Author", @"\.AUTHOR\s*\r?\n\s*([^\r\n.]+)(?=\s*(?:\.\w+|\#>|$))" },
+            { "Version", @"\.VERSION\s*\r?\n\s*([^\r\n.]+)(?=\s*(?:\.\w+|\#>|$))" }
         };
 
         foreach (var pattern in helpPatterns)

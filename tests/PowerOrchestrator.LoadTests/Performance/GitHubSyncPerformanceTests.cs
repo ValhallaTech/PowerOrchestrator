@@ -20,14 +20,14 @@ namespace PowerOrchestrator.LoadTests.Performance;
 [RPlotExporter]
 public class GitHubSyncPerformanceTests
 {
-    private Mock<ILogger<RepositorySyncService>> _mockLogger;
-    private Mock<IGitHubService> _mockGitHubService;
-    private Mock<IPowerShellScriptParser> _mockParser;
-    private Mock<IUnitOfWork> _mockUnitOfWork;
-    private Mock<IRepositoryManager> _mockRepositoryManager;
-    private RepositorySyncService _syncService;
-    private List<GitHubFile> _smallRepositoryFiles;
-    private List<GitHubFile> _largeRepositoryFiles;
+    private Mock<ILogger<RepositorySyncService>> _mockLogger = null!;
+    private Mock<IGitHubService> _mockGitHubService = null!;
+    private Mock<IPowerShellScriptParser> _mockParser = null!;
+    private Mock<IUnitOfWork> _mockUnitOfWork = null!;
+    private Mock<IRepositoryManager> _mockRepositoryManager = null!;
+    private RepositorySyncService _syncService = null!;
+    private List<GitHubFile> _smallRepositoryFiles = null!;
+    private List<GitHubFile> _largeRepositoryFiles = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -238,7 +238,7 @@ function Test-Function{index} {{
 [SimpleJob]
 public class GitHubRateLimitBenchmarks
 {
-    private GitHubRateLimitService _rateLimitService;
+    private GitHubRateLimitService _rateLimitService = null!;
 
     [GlobalSetup]
     public void Setup()

@@ -7,23 +7,15 @@ namespace PowerOrchestrator.UnitTests.Services;
 /// <summary>
 /// Unit tests for webhook service using production architecture
 /// </summary>
-public class WebhookServiceTests : IClassFixture<ProductionArchitectureTestFixture>
+public class WebhookServiceTests : IClassFixture<WebhookServiceTestFixture>
 {
-    private readonly ProductionArchitectureTestFixture _fixture;
-    private readonly Mock<IRepositorySyncService> _mockSyncService;
+    private readonly WebhookServiceTestFixture _fixture;
     private readonly IWebhookService _webhookService;
     private readonly string _testSecret = "test-webhook-secret";
 
-    public WebhookServiceTests(ProductionArchitectureTestFixture fixture)
+    public WebhookServiceTests(WebhookServiceTestFixture fixture)
     {
         _fixture = fixture;
-        _mockSyncService = new Mock<IRepositorySyncService>();
-        
-        // Register the mock sync service in the container
-        var containerBuilder = new ContainerBuilder();
-        containerBuilder.RegisterInstance(_mockSyncService.Object).As<IRepositorySyncService>();
-        containerBuilder.Update(_fixture.Container);
-        
         _webhookService = _fixture.Resolve<IWebhookService>();
     }
 
@@ -99,6 +91,8 @@ public class WebhookServiceTests : IClassFixture<ProductionArchitectureTestFixtu
     public async Task ProcessWebhookEventAsync_WithPushEvent_ShouldTriggerSync()
     {
         // Arrange
+        _fixture.ResetMock(); // Reset mock for isolated test
+        
         var pushPayload = JsonConvert.SerializeObject(new
         {
             @ref = "refs/heads/main",
@@ -115,14 +109,11 @@ public class WebhookServiceTests : IClassFixture<ProductionArchitectureTestFixtu
             }
         });
 
-        _mockSyncService.Setup(x => x.SynchronizeRepositoryAsync("test/repo"))
-            .ReturnsAsync(new SyncResult { Status = SyncStatus.Completed });
-
         // Act
         await _webhookService.ProcessWebhookEventAsync("push", pushPayload);
 
         // Assert
-        _mockSyncService.Verify(x => x.SynchronizeRepositoryAsync("test/repo"), Times.Once);
+        _fixture.MockSyncService.Verify(x => x.HandleWebhookEventAsync(It.Is<WebhookEvent>(we => we.RepositoryFullName == "test/repo")), Times.Once);
     }
 
     [Theory]
@@ -136,6 +127,8 @@ public class WebhookServiceTests : IClassFixture<ProductionArchitectureTestFixtu
     public async Task ProcessWebhookEventAsync_WithDifferentEventTypes_ShouldHandleAppropriately(string eventType, bool shouldTriggerSync)
     {
         // Arrange
+        _fixture.ResetMock(); // Reset mock for isolated test
+        
         var payload = JsonConvert.SerializeObject(new
         {
             repository = new
@@ -144,20 +137,17 @@ public class WebhookServiceTests : IClassFixture<ProductionArchitectureTestFixtu
             }
         });
 
-        _mockSyncService.Setup(x => x.SynchronizeRepositoryAsync("test/repo"))
-            .ReturnsAsync(new SyncResult { Status = SyncStatus.Completed });
-
         // Act
         await _webhookService.ProcessWebhookEventAsync(eventType, payload);
 
         // Assert
         if (shouldTriggerSync)
         {
-            _mockSyncService.Verify(x => x.SynchronizeRepositoryAsync("test/repo"), Times.Once);
+            _fixture.MockSyncService.Verify(x => x.HandleWebhookEventAsync(It.Is<WebhookEvent>(we => we.RepositoryFullName == "test/repo")), Times.Once);
         }
         else
         {
-            _mockSyncService.Verify(x => x.SynchronizeRepositoryAsync(It.IsAny<string>()), Times.Never);
+            _fixture.MockSyncService.Verify(x => x.HandleWebhookEventAsync(It.IsAny<WebhookEvent>()), Times.Never);
         }
     }
 

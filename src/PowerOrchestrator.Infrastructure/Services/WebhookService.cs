@@ -273,12 +273,24 @@ public class WebhookService : IWebhookService
                     break;
             }
 
-            // Process the event through sync service
-            var syncResult = await _syncService.HandleWebhookEventAsync(webhookEvent);
+            // Only process sync-triggering events
+            var syncTriggeringEvents = new[] { "push", "pull_request", "create", "delete" };
+            if (syncTriggeringEvents.Contains(eventType.ToLowerInvariant()))
+            {
+                // Process the event through sync service
+                var syncResult = await _syncService.HandleWebhookEventAsync(webhookEvent);
 
-            result.Success = syncResult.Status == Domain.ValueObjects.SyncStatus.Completed;
-            result.Message = result.Success ? "Webhook event processed successfully" : syncResult.ErrorMessage ?? "Sync failed";
-            result.Data["sync_result"] = syncResult;
+                result.Success = syncResult.Status == Domain.ValueObjects.SyncStatus.Completed;
+                result.Message = result.Success ? "Webhook event processed successfully" : syncResult.ErrorMessage ?? "Sync failed";
+                result.Data["sync_result"] = syncResult;
+            }
+            else
+            {
+                // Event received but not processed for sync
+                result.Success = true;
+                result.Message = $"Webhook event '{eventType}' received but does not trigger synchronization";
+                result.Data["event_type"] = eventType;
+            }
 
             _logger.LogInformation("Webhook event {EventType} for {Repository} processed: {Status}", 
                 (object)eventType, (object)(repositoryFullName ?? "unknown"), result.Success ? "Success" : "Failed");

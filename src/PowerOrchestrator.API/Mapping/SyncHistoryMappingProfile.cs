@@ -16,6 +16,7 @@ public class SyncHistoryMappingProfile : Profile
     {
         // SyncHistory to SyncHistoryDto
         CreateMap<SyncHistory, SyncHistoryDto>()
-            .ForMember(dest => dest.RepositoryName, opt => opt.MapFrom(src => src.Repository != null ? src.Repository.FullName : null));
+            .ForMember(dest => dest.RepositoryName, opt => opt.MapFrom(src => src.Repository != null ? src.Repository.FullName : null))
+            .ForMember(dest => dest.Duration, opt => opt.MapFrom(src => TimeSpan.FromMilliseconds(src.DurationMs)));
     }
 }

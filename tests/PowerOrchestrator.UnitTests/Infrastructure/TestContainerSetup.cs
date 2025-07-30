@@ -14,6 +14,9 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using System;
 using System.Collections.Generic;
+using Moq;
+using PowerOrchestrator.Application.Interfaces.Services;
+using PowerOrchestrator.Domain.ValueObjects;
 
 namespace PowerOrchestrator.UnitTests.Infrastructure;
 
@@ -22,11 +25,25 @@ namespace PowerOrchestrator.UnitTests.Infrastructure;
 /// </summary>
 public class TestContainerSetup : IDisposable
 {
-    public IContainer Container { get; private set; }
-    public ILifetimeScope Scope { get; private set; }
+    public IContainer Container { get; private set; } = default!;
+    public ILifetimeScope Scope { get; private set; } = default!;
 
     public TestContainerSetup()
     {
+        InitializeContainer(null);
+    }
+
+    protected TestContainerSetup(Action<ContainerBuilder>? customRegistrations)
+    {
+        InitializeContainer(customRegistrations);
+    }
+
+    protected void InitializeContainer(Action<ContainerBuilder>? customRegistrations)
+    {
+        // Dispose existing resources if re-initializing
+        Scope?.Dispose();
+        Container?.Dispose();
+        
         var services = new ServiceCollection();
         
         // Configure test configuration
@@ -51,6 +68,9 @@ public class TestContainerSetup : IDisposable
         // Configure logging for tests
         services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
 
+        // Add HttpClient for GitHub services
+        services.AddHttpClient();
+
         // Configure options
         services.Configure<GitHubOptions>(configuration.GetSection("GitHubOptions"));
 
@@ -64,12 +84,14 @@ public class TestContainerSetup : IDisposable
 
         // Register AutoMapper using Autofac integration with assembly scanning
         containerBuilder.RegisterAutoMapper(
-            typeof(Program).Assembly, // API assembly contains our mapping profiles
-            typeof(PowerOrchestrator.Infrastructure.Services.GitHubService).Assembly // Infrastructure assembly
+            typeof(Program).Assembly // API assembly contains our mapping profiles
         );
         
         // Register our custom modules (this includes all the production services)
         containerBuilder.RegisterModule<CoreModule>();
+
+        // Allow custom test registrations (for mocks, etc.)
+        customRegistrations?.Invoke(containerBuilder);
 
         Container = containerBuilder.Build();
         Scope = Container.BeginLifetimeScope();
@@ -119,4 +141,68 @@ public class ProductionArchitectureTestFixture : TestContainerSetup
 {
     // This class exists to provide a shared container instance for test classes
     // that implement IClassFixture<ProductionArchitectureTestFixture>
+}
+
+/// <summary>
+/// Test fixture with GitHub rate limit service mock
+/// </summary>
+public class GitHubServiceTestFixture : TestContainerSetup
+{
+    public Mock<IGitHubRateLimitService> MockRateLimitService { get; }
+
+    public GitHubServiceTestFixture()
+    {
+        MockRateLimitService = new Mock<IGitHubRateLimitService>();
+        
+        // Re-initialize with custom registration
+        InitializeContainer(builder =>
+        {
+            builder.RegisterInstance(MockRateLimitService.Object).As<IGitHubRateLimitService>();
+        });
+    }
+}
+
+/// <summary>
+/// Test fixture with repository sync service mock
+/// </summary>
+public class WebhookServiceTestFixture : TestContainerSetup
+{
+    public Mock<IRepositorySyncService> MockSyncService { get; }
+
+    public WebhookServiceTestFixture()
+    {
+        MockSyncService = new Mock<IRepositorySyncService>();
+        
+        // Set up default mock behavior
+        MockSyncService.Setup(x => x.HandleWebhookEventAsync(It.IsAny<WebhookEvent>()))
+            .ReturnsAsync(new SyncResult 
+            { 
+                Status = SyncStatus.Completed,
+                StartedAt = DateTime.UtcNow,
+                CompletedAt = DateTime.UtcNow
+            });
+        
+        // Re-initialize with custom registration
+        InitializeContainer(builder =>
+        {
+            builder.RegisterInstance(MockSyncService.Object).As<IRepositorySyncService>();
+        });
+    }
+
+    /// <summary>
+    /// Resets the mock for isolated test execution
+    /// </summary>
+    public void ResetMock()
+    {
+        MockSyncService.Reset();
+        
+        // Re-setup default behavior
+        MockSyncService.Setup(x => x.HandleWebhookEventAsync(It.IsAny<WebhookEvent>()))
+            .ReturnsAsync(new SyncResult 
+            { 
+                Status = SyncStatus.Completed,
+                StartedAt = DateTime.UtcNow,
+                CompletedAt = DateTime.UtcNow
+            });
+    }
 }

@@ -187,7 +187,7 @@ Write-Host ""Hello $Name
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Parse errors found")),
+                It.Is<It.IsAnyType>((v, t) => v != null && v.ToString()!.Contains("Parse errors found")),
                 It.IsAny<Exception?>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
