@@ -38,6 +38,21 @@ public class PowerOrchestratorDbContext : DbContext
     public DbSet<HealthCheck> HealthChecks { get; set; } = null!;
 
     /// <summary>
+    /// Gets or sets the GitHubRepositories DbSet
+    /// </summary>
+    public DbSet<GitHubRepository> GitHubRepositories { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the RepositoryScripts DbSet
+    /// </summary>
+    public DbSet<RepositoryScript> RepositoryScripts { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the SyncHistory DbSet
+    /// </summary>
+    public DbSet<SyncHistory> SyncHistory { get; set; } = null!;
+
+    /// <summary>
     /// Configures the model and entity mappings
     /// </summary>
     /// <param name="modelBuilder">The model builder</param>
@@ -53,6 +68,9 @@ public class PowerOrchestratorDbContext : DbContext
         modelBuilder.ApplyConfiguration(new ExecutionConfiguration());
         modelBuilder.ApplyConfiguration(new AuditLogConfiguration());
         modelBuilder.ApplyConfiguration(new HealthCheckConfiguration());
+        modelBuilder.ApplyConfiguration(new GitHubRepositoryConfiguration());
+        modelBuilder.ApplyConfiguration(new RepositoryScriptConfiguration());
+        modelBuilder.ApplyConfiguration(new SyncHistoryConfiguration());
     }
 
     /// <summary>

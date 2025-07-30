@@ -18,7 +18,18 @@
     <PackageReference Include="Moq" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
     <PackageReference Include="AutoMapper" />
+    <PackageReference Include="AutoMapper.Contrib.Autofac.DependencyInjection" />
+    <PackageReference Include="Autofac" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" />
     <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.AspNetCore" />
+    <PackageReference Include="Octokit" />
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="System.Management.Automation" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
   </ItemGroup>
 
   <ItemGroup>

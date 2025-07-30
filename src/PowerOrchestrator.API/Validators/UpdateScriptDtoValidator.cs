@@ -56,7 +56,7 @@ public class UpdateScriptDtoValidator : AbstractValidator<UpdateScriptDto>
 
         try
         {
-            System.Text.Json.JsonDocument.Parse(json);
+            Newtonsoft.Json.JsonConvert.DeserializeObject(json);
             return true;
         }
         catch

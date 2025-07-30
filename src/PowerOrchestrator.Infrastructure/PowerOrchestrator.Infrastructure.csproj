@@ -23,6 +23,10 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
+    <PackageReference Include="Octokit" />
+    <PackageReference Include="System.Management.Automation" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" />
   </ItemGroup>
 
   <ItemGroup>

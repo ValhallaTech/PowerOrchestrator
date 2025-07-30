@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PowerOrchestrator.Infrastructure.Data;
@@ -11,9 +12,11 @@ using PowerOrchestrator.Infrastructure.Data;
 namespace PowerOrchestrator.Infrastructure.Migrations
 {
     [DbContext(typeof(PowerOrchestratorDbContext))]
-    partial class PowerOrchestratorDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250729182133_AddGitHubIntegration")]
+    partial class AddGitHubIntegration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

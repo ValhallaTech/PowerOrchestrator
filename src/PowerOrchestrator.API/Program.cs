@@ -101,6 +101,13 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Configure GitHub options
+builder.Services.Configure<PowerOrchestrator.Infrastructure.Configuration.GitHubOptions>(
+    builder.Configuration.GetSection(PowerOrchestrator.Infrastructure.Configuration.GitHubOptions.SectionName));
+
+// Configure HttpClient for GitHub services
+builder.Services.AddHttpClient();
+
 // Configure Autofac container
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 {
@@ -172,7 +179,7 @@ app.MapHealthChecks("/health", new()
                 Exception = entry.Value.Exception?.Message
             })
         };
-        await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response));
+        await context.Response.WriteAsync(Newtonsoft.Json.JsonConvert.SerializeObject(response));
     }
 });
 
@@ -193,3 +200,6 @@ finally
 {
     Log.CloseAndFlush();
 }
+
+// Make Program class available for testing
+public partial class Program { }
