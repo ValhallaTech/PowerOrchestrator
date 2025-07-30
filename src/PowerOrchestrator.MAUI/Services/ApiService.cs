@@ -1,7 +1,10 @@
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
+
+#if !NET8_0
+using Newtonsoft.Json;
+#endif
 
 namespace PowerOrchestrator.MAUI.Services;
 
@@ -12,22 +15,22 @@ public class ApiService : IApiService
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<ApiService> _logger;
-    private readonly IAuthenticationService _authenticationService;
+    private readonly Lazy<IAuthenticationService>? _authenticationService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ApiService"/> class
     /// </summary>
     /// <param name="httpClient">The HTTP client</param>
     /// <param name="logger">The logger instance</param>
-    /// <param name="authenticationService">The authentication service</param>
+    /// <param name="authenticationService">The authentication service (optional for avoiding circular dependency)</param>
     public ApiService(
         HttpClient httpClient,
         ILogger<ApiService> logger,
-        IAuthenticationService authenticationService)
+        IAuthenticationService? authenticationService = null)
     {
         _httpClient = httpClient;
         _logger = logger;
-        _authenticationService = authenticationService;
+        _authenticationService = authenticationService != null ? new Lazy<IAuthenticationService>(() => authenticationService) : null;
         
         // TODO: Configure base address from settings
         _httpClient.BaseAddress = new Uri("https://localhost:7001"); // Default API base URL
@@ -43,6 +46,12 @@ public class ApiService : IApiService
             
             AddAuthenticationHeader();
             
+#if NET8_0
+            // Console mode - simulate API call
+            await Task.Delay(100);
+            return default;
+#else
+            // MAUI mode
             var response = await _httpClient.GetAsync(endpoint);
             
             if (response.IsSuccessStatusCode)
@@ -53,6 +62,7 @@ public class ApiService : IApiService
             
             _logger.LogWarning("GET request failed. Status: {StatusCode}, Endpoint: {Endpoint}", response.StatusCode, endpoint);
             return default;
+#endif
         }
         catch (Exception ex)
         {
@@ -70,6 +80,12 @@ public class ApiService : IApiService
             
             AddAuthenticationHeader();
             
+#if NET8_0
+            // Console mode - simulate API call
+            await Task.Delay(100);
+            return default;
+#else
+            // MAUI mode
             var json = JsonConvert.SerializeObject(data);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             
@@ -83,6 +99,7 @@ public class ApiService : IApiService
             
             _logger.LogWarning("POST request failed. Status: {StatusCode}, Endpoint: {Endpoint}", response.StatusCode, endpoint);
             return default;
+#endif
         }
         catch (Exception ex)
         {
@@ -100,6 +117,12 @@ public class ApiService : IApiService
             
             AddAuthenticationHeader();
             
+#if NET8_0
+            // Console mode - simulate API call
+            await Task.Delay(100);
+            return default;
+#else
+            // MAUI mode
             var json = JsonConvert.SerializeObject(data);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             
@@ -113,6 +136,7 @@ public class ApiService : IApiService
             
             _logger.LogWarning("PUT request failed. Status: {StatusCode}, Endpoint: {Endpoint}", response.StatusCode, endpoint);
             return default;
+#endif
         }
         catch (Exception ex)
         {
@@ -130,6 +154,12 @@ public class ApiService : IApiService
             
             AddAuthenticationHeader();
             
+#if NET8_0
+            // Console mode - simulate API call
+            await Task.Delay(100);
+            return true;
+#else
+            // MAUI mode
             var response = await _httpClient.DeleteAsync(endpoint);
             
             if (response.IsSuccessStatusCode)
@@ -139,6 +169,7 @@ public class ApiService : IApiService
             
             _logger.LogWarning("DELETE request failed. Status: {StatusCode}, Endpoint: {Endpoint}", response.StatusCode, endpoint);
             return false;
+#endif
         }
         catch (Exception ex)
         {
@@ -152,10 +183,12 @@ public class ApiService : IApiService
     /// </summary>
     private void AddAuthenticationHeader()
     {
-        if (_authenticationService.IsAuthenticated && !string.IsNullOrEmpty(_authenticationService.Token))
+        if (_authenticationService?.Value != null && 
+            _authenticationService.Value.IsAuthenticated && 
+            !string.IsNullOrEmpty(_authenticationService.Value.Token))
         {
             _httpClient.DefaultRequestHeaders.Authorization = 
-                new AuthenticationHeaderValue("Bearer", _authenticationService.Token);
+                new AuthenticationHeaderValue("Bearer", _authenticationService.Value.Token);
         }
     }
 }

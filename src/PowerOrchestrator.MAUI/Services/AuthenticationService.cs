@@ -1,5 +1,8 @@
 using Microsoft.Extensions.Logging;
+
+#if !NET8_0
 using Newtonsoft.Json;
+#endif
 
 namespace PowerOrchestrator.MAUI.Services;
 
@@ -9,7 +12,7 @@ namespace PowerOrchestrator.MAUI.Services;
 public class AuthenticationService : IAuthenticationService
 {
     private readonly ILogger<AuthenticationService> _logger;
-    private readonly IApiService _apiService;
+    private readonly IApiService? _apiService;
     private readonly ISettingsService _settingsService;
     
     private const string TokenKey = "auth_token";
@@ -19,12 +22,12 @@ public class AuthenticationService : IAuthenticationService
     /// Initializes a new instance of the <see cref="AuthenticationService"/> class
     /// </summary>
     /// <param name="logger">The logger instance</param>
-    /// <param name="apiService">The API service</param>
     /// <param name="settingsService">The settings service</param>
+    /// <param name="apiService">The API service (optional for console mode)</param>
     public AuthenticationService(
         ILogger<AuthenticationService> logger,
-        IApiService apiService,
-        ISettingsService settingsService)
+        ISettingsService settingsService,
+        IApiService? apiService = null)
     {
         _logger = logger;
         _apiService = apiService;
@@ -50,7 +53,26 @@ public class AuthenticationService : IAuthenticationService
                 Password = password
             };
 
-            // TODO: Replace with actual API endpoint
+#if NET8_0
+            // Console mode - simulate login
+            await Task.Delay(500);
+            if (email == "admin@powerorchestrator.com" && password == "password")
+            {
+                _settingsService.SetSetting(TokenKey, "fake-jwt-token-console-mode");
+                _settingsService.SetSetting(UserKey, "{ \"email\": \"admin@powerorchestrator.com\", \"name\": \"Admin\" }");
+                _logger.LogInformation("Console mode login successful for user: {Email}", email);
+                return true;
+            }
+            _logger.LogWarning("Console mode login failed for user: {Email}", email);
+            return false;
+#else
+            // MAUI mode - call actual API
+            if (_apiService == null)
+            {
+                _logger.LogError("API service not available for authentication");
+                return false;
+            }
+            
             var response = await _apiService.PostAsync<LoginResponse>("/api/auth/login", loginRequest);
 
             if (response?.Success == true && !string.IsNullOrEmpty(response.Token))
@@ -64,6 +86,7 @@ public class AuthenticationService : IAuthenticationService
 
             _logger.LogWarning("Login failed for user: {Email}", email);
             return false;
+#endif
         }
         catch (Exception ex)
         {
@@ -114,7 +137,19 @@ public class AuthenticationService : IAuthenticationService
                 ConfirmPassword = confirmPassword
             };
 
-            // TODO: Replace with actual API endpoint
+#if NET8_0
+            // Console mode - simulate registration
+            await Task.Delay(500);
+            _logger.LogInformation("Console mode registration successful for user: {Email}", email);
+            return true;
+#else
+            // MAUI mode - call actual API
+            if (_apiService == null)
+            {
+                _logger.LogError("API service not available for registration");
+                return false;
+            }
+            
             var response = await _apiService.PostAsync<RegisterResponse>("/api/auth/register", registerRequest);
 
             if (response?.Success == true)
@@ -125,6 +160,7 @@ public class AuthenticationService : IAuthenticationService
 
             _logger.LogWarning("Registration failed for user: {Email}", email);
             return false;
+#endif
         }
         catch (Exception ex)
         {
@@ -141,7 +177,13 @@ public class AuthenticationService : IAuthenticationService
             var userJson = _settingsService.GetSetting<string>(UserKey);
             if (!string.IsNullOrEmpty(userJson))
             {
+#if NET8_0
+                // Console mode - return simple object
+                return new { email = "admin@powerorchestrator.com", name = "Admin" };
+#else
+                // MAUI mode - deserialize from JSON
                 return JsonConvert.DeserializeObject(userJson);
+#endif
             }
 
             // TODO: Fetch from API if not cached

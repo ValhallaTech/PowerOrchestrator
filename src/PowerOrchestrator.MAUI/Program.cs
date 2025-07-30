@@ -56,6 +56,18 @@ public static class Program
             // Test basic dependency injection setup
             var containerBuilder = new ContainerBuilder();
             ConfigureServices(containerBuilder);
+            
+            // Register a simple logger for testing
+            containerBuilder.Register(c => LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<DialogService>())
+                .As<ILogger<DialogService>>()
+                .SingleInstance();
+            containerBuilder.Register(c => LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<NavigationService>())
+                .As<ILogger<NavigationService>>()
+                .SingleInstance();
+            containerBuilder.Register(c => LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<SettingsService>())
+                .As<ILogger<SettingsService>>()
+                .SingleInstance();
+            
             var container = containerBuilder.Build();
             
             Console.WriteLine("✓ Autofac container configured successfully");
@@ -66,8 +78,15 @@ public static class Program
             var settingsService = container.Resolve<ISettingsService>();
             
             Console.WriteLine("✓ Core services resolved successfully");
+            
+            // Test a simple operation
+            settingsService.SetSetting("test", "value");
+            var testValue = settingsService.GetSetting<string>("test");
+            Console.WriteLine($"✓ Settings service working: {testValue}");
+            
             Console.WriteLine("✓ MAUI application architecture is ready");
             Console.WriteLine();
+            Console.WriteLine("Note: Authentication and API services require full MAUI mode");
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
         }
@@ -143,12 +162,19 @@ public static class Program
     /// <param name="containerBuilder">The Autofac container builder</param>
     private static void ConfigureServices(ContainerBuilder containerBuilder)
     {
-        // Register MAUI-specific services
+        // Register HttpClient first
+        containerBuilder.RegisterType<HttpClient>().AsSelf().SingleInstance();
+
+        // Register core services without dependencies first
+        containerBuilder.RegisterType<SettingsService>().As<ISettingsService>().SingleInstance();
         containerBuilder.RegisterType<NavigationService>().As<INavigationService>().SingleInstance();
         containerBuilder.RegisterType<DialogService>().As<IDialogService>().SingleInstance();
-        containerBuilder.RegisterType<AuthenticationService>().As<IAuthenticationService>().SingleInstance();
+
+#if !NET8_0
+        // Register API and authentication services only in MAUI mode to avoid circular dependencies
         containerBuilder.RegisterType<ApiService>().As<IApiService>().SingleInstance();
-        containerBuilder.RegisterType<SettingsService>().As<ISettingsService>().SingleInstance();
+        containerBuilder.RegisterType<AuthenticationService>().As<IAuthenticationService>().SingleInstance();
+#endif
 
         // Register ViewModels
         containerBuilder.RegisterType<DashboardViewModel>().AsSelf();
@@ -163,10 +189,12 @@ public static class Program
         containerBuilder.RegisterType<RegisterViewModel>().AsSelf();
 
         // Register AutoMapper
+#if NET8_0
+        var mapper = MauiMappingModule.CreateMapper();
+        containerBuilder.RegisterInstance(mapper).As<AutoMapper.IMapper>().SingleInstance();
+#else
         containerBuilder.RegisterModule<MauiMappingModule>();
-
-        // Register HttpClient for API service
-        containerBuilder.RegisterType<HttpClient>().AsSelf().SingleInstance();
+#endif
 
         // TODO: Register Application layer services when available
         // This will be integrated with existing PowerOrchestrator.Application services

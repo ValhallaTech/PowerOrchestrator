@@ -2,6 +2,10 @@ using Microsoft.Extensions.Logging;
 using PowerOrchestrator.MAUI.Services;
 using System.Windows.Input;
 
+#if NET8_0
+using Command = PowerOrchestrator.MAUI.Services.Command;
+#endif
+
 namespace PowerOrchestrator.MAUI.ViewModels;
 
 /// <summary>
