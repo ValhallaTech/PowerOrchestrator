@@ -131,16 +131,15 @@ public class RepositoryUIModel
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the repository URL
-    /// </summary>
-    [Required]
-    [Url]
-    public string Url { get; set; } = string.Empty;
-
-    /// <summary>
     /// Gets or sets the repository description
     /// </summary>
     public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the repository URL
+    /// </summary>
+    [Required]
+    public string Url { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the current branch
@@ -148,14 +147,9 @@ public class RepositoryUIModel
     public string Branch { get; set; } = "main";
 
     /// <summary>
-    /// Gets or sets the last commit hash
+    /// Gets or sets the repository type (Git, GitHub, etc.)
     /// </summary>
-    public string? LastCommitHash { get; set; }
-
-    /// <summary>
-    /// Gets or sets the last commit message
-    /// </summary>
-    public string? LastCommitMessage { get; set; }
+    public string Type { get; set; } = "Git";
 
     /// <summary>
     /// Gets or sets the sync status
@@ -163,19 +157,75 @@ public class RepositoryUIModel
     public string SyncStatus { get; set; } = "Unknown";
 
     /// <summary>
+    /// Gets or sets the last sync date
+    /// </summary>
+    public DateTime? LastSyncAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of scripts in the repository
+    /// </summary>
+    public int ScriptCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the repository size in bytes
+    /// </summary>
+    public long SizeBytes { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether the repository is active
     /// </summary>
     public bool IsActive { get; set; } = true;
 
     /// <summary>
-    /// Gets or sets the date the repository was added
+    /// Gets or sets a value indicating whether auto-sync is enabled
+    /// </summary>
+    public bool AutoSync { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the date the repository was created
     /// </summary>
     public DateTime CreatedAt { get; set; }
 
     /// <summary>
-    /// Gets or sets the date the repository was last synced
+    /// Gets or sets the repository tags
     /// </summary>
-    public DateTime? LastSyncAt { get; set; }
+    public List<string> Tags { get; set; } = new();
+
+    /// <summary>
+    /// Gets a formatted size string
+    /// </summary>
+    public string FormattedSize => FormatBytes(SizeBytes);
+
+    /// <summary>
+    /// Gets the sync status color
+    /// </summary>
+    public string SyncStatusColor => SyncStatus switch
+    {
+        "Synced" => "#4CAF50",
+        "Syncing" => "#FF9800", 
+        "Error" => "#F44336",
+        _ => "#9E9E9E"
+    };
+
+    /// <summary>
+    /// Gets a value indicating whether sync is in progress
+    /// </summary>
+    public bool IsSyncing => SyncStatus == "Syncing";
+
+    /// <summary>
+    /// Formats bytes to human readable string
+    /// </summary>
+    /// <param name="bytes">Number of bytes</param>
+    /// <returns>Formatted string</returns>
+    private static string FormatBytes(long bytes)
+    {
+        if (bytes == 0) return "0 B";
+        
+        string[] suffixes = { "B", "KB", "MB", "GB", "TB" };
+        var place = Convert.ToInt32(Math.Floor(Math.Log(bytes, 1024)));
+        var num = Math.Round(bytes / Math.Pow(1024, place), 1);
+        return $"{num} {suffixes[place]}";
+    }
 }
 
 /// <summary>
@@ -320,4 +370,101 @@ public class DashboardStatsUIModel
     /// Gets or sets the number of active users
     /// </summary>
     public int ActiveUsers { get; set; }
+}
+
+/// <summary>
+/// Performance statistics model
+/// </summary>
+public class PerformanceStatistics
+{
+    /// <summary>
+    /// Gets or sets the total number of operations tracked
+    /// </summary>
+    public int TotalOperations { get; set; }
+
+    /// <summary>
+    /// Gets or sets the average operation duration in milliseconds
+    /// </summary>
+    public double AverageDuration { get; set; }
+
+    /// <summary>
+    /// Gets or sets the minimum operation duration in milliseconds
+    /// </summary>
+    public double MinDuration { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum operation duration in milliseconds
+    /// </summary>
+    public double MaxDuration { get; set; }
+
+    /// <summary>
+    /// Gets or sets the 95th percentile duration in milliseconds
+    /// </summary>
+    public double P95Duration { get; set; }
+
+    /// <summary>
+    /// Gets or sets the operations per second
+    /// </summary>
+    public double OperationsPerSecond { get; set; }
+
+    /// <summary>
+    /// Gets or sets the error rate percentage
+    /// </summary>
+    public double ErrorRate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the category
+    /// </summary>
+    public string Category { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the time range for these statistics
+    /// </summary>
+    public TimeSpan TimeRange { get; set; }
+
+    /// <summary>
+    /// Gets or sets detailed operation statistics
+    /// </summary>
+    public Dictionary<string, OperationStatistics> OperationStats { get; set; } = new();
+}
+
+/// <summary>
+/// Operation-specific statistics
+/// </summary>
+public class OperationStatistics
+{
+    /// <summary>
+    /// Gets or sets the operation name
+    /// </summary>
+    public string OperationName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the total execution count
+    /// </summary>
+    public int ExecutionCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the average duration in milliseconds
+    /// </summary>
+    public double AverageDuration { get; set; }
+
+    /// <summary>
+    /// Gets or sets the total duration in milliseconds
+    /// </summary>
+    public double TotalDuration { get; set; }
+
+    /// <summary>
+    /// Gets or sets the last execution time
+    /// </summary>
+    public DateTime LastExecution { get; set; }
+
+    /// <summary>
+    /// Gets or sets the success count
+    /// </summary>
+    public int SuccessCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the error count
+    /// </summary>
+    public int ErrorCount { get; set; }
 }

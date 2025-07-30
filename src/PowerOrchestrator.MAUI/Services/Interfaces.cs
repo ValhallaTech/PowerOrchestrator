@@ -193,3 +193,58 @@ public interface ISettingsService
     /// </summary>
     void ClearSettings();
 }
+
+/// <summary>
+/// Performance monitoring service interface
+/// </summary>
+public interface IPerformanceMonitoringService
+{
+    /// <summary>
+    /// Starts tracking a performance metric
+    /// </summary>
+    /// <param name="operationName">The operation name</param>
+    /// <param name="category">The metric category</param>
+    /// <returns>A performance tracker</returns>
+    IPerformanceTracker StartTracking(string operationName, string category = "General");
+
+    /// <summary>
+    /// Records a custom metric
+    /// </summary>
+    /// <param name="metricName">The metric name</param>
+    /// <param name="value">The metric value</param>
+    /// <param name="unit">The metric unit</param>
+    /// <param name="properties">Additional properties</param>
+    void RecordMetric(string metricName, double value, string unit = "ms", Dictionary<string, object>? properties = null);
+
+    /// <summary>
+    /// Records an event
+    /// </summary>
+    /// <param name="eventName">The event name</param>
+    /// <param name="properties">Event properties</param>
+    void RecordEvent(string eventName, Dictionary<string, object>? properties = null);
+
+    /// <summary>
+    /// Gets performance statistics
+    /// </summary>
+    /// <param name="category">Optional category filter</param>
+    /// <returns>Performance statistics</returns>
+    Task<PowerOrchestrator.MAUI.Models.PerformanceStatistics> GetStatisticsAsync(string? category = null);
+}
+
+/// <summary>
+/// Performance tracker interface
+/// </summary>
+public interface IPerformanceTracker : IDisposable
+{
+    /// <summary>
+    /// Stops tracking and records the result
+    /// </summary>
+    void Stop();
+
+    /// <summary>
+    /// Adds a custom property to the tracking
+    /// </summary>
+    /// <param name="key">The property key</param>
+    /// <param name="value">The property value</param>
+    void AddProperty(string key, object value);
+}

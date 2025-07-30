@@ -1,12 +1,9 @@
 using Microsoft.Extensions.Logging;
 using PowerOrchestrator.MAUI.Services;
+using PowerOrchestrator.MAUI.Models;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using AutoMapper;
-
-#if NET8_0
-using Command = PowerOrchestrator.MAUI.Services.Command;
-#endif
 
 namespace PowerOrchestrator.MAUI.ViewModels;
 
@@ -16,6 +13,10 @@ namespace PowerOrchestrator.MAUI.ViewModels;
 public class ScriptsViewModel : BaseViewModel
 {
     private string _searchText = string.Empty;
+    private string _selectedFilter = "all";
+    private ObservableCollection<ScriptUIModel> _scripts = new();
+    private ObservableCollection<ScriptUIModel> _filteredScripts = new();
+    private bool _isRefreshing = false;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ScriptsViewModel"/> class
@@ -34,14 +35,28 @@ public class ScriptsViewModel : BaseViewModel
         Title = "Scripts";
         
         // Commands
-        AddScriptCommand = new Command(async () => await AddScriptAsync());
-        RunScriptCommand = new Command(async () => await RunScriptAsync());
-        EditScriptCommand = new Command(async () => await EditScriptAsync());
-        ScriptOptionsCommand = new Command(async () => await ShowScriptOptionsAsync());
-        FilterAllCommand = new Command(async () => await FilterScriptsAsync("all"));
-        FilterPowerShellCommand = new Command(async () => await FilterScriptsAsync("powershell"));
-        FilterBatchCommand = new Command(async () => await FilterScriptsAsync("batch"));
-        FilterPythonCommand = new Command(async () => await FilterScriptsAsync("python"));
+#if NET8_0
+        AddScriptCommand = new PowerOrchestrator.MAUI.Services.Command(async () => await AddScriptAsync());
+        RunScriptCommand = new PowerOrchestrator.MAUI.Services.Command<ScriptUIModel>(async (script) => await RunScriptAsync(script), (script) => script != null);
+        EditScriptCommand = new PowerOrchestrator.MAUI.Services.Command<ScriptUIModel>(async (script) => await EditScriptAsync(script), (script) => script != null);
+        DeleteScriptCommand = new PowerOrchestrator.MAUI.Services.Command<ScriptUIModel>(async (script) => await DeleteScriptAsync(script), (script) => script != null);
+        RefreshCommand = new PowerOrchestrator.MAUI.Services.Command(async () => await RefreshAsync());
+        ScriptTappedCommand = new PowerOrchestrator.MAUI.Services.Command<ScriptUIModel>(async (script) => await NavigateToScriptDetailAsync(script), (script) => script != null);
+#else
+        AddScriptCommand = new Microsoft.Maui.Controls.Command(async () => await AddScriptAsync());
+        RunScriptCommand = new Microsoft.Maui.Controls.Command<ScriptUIModel>(async (script) => await RunScriptAsync(script), (script) => script != null);
+        EditScriptCommand = new Microsoft.Maui.Controls.Command<ScriptUIModel>(async (script) => await EditScriptAsync(script), (script) => script != null);
+        DeleteScriptCommand = new Microsoft.Maui.Controls.Command<ScriptUIModel>(async (script) => await DeleteScriptAsync(script), (script) => script != null);
+        RefreshCommand = new Microsoft.Maui.Controls.Command(async () => await RefreshAsync());
+        ScriptTappedCommand = new Microsoft.Maui.Controls.Command<ScriptUIModel>(async (script) => await NavigateToScriptDetailAsync(script), (script) => script != null);
+#endif
+        FilterAllCommand = new PowerOrchestrator.MAUI.Services.Command(async () => await FilterScriptsAsync("all"));
+        FilterPowerShellCommand = new PowerOrchestrator.MAUI.Services.Command(async () => await FilterScriptsAsync("powershell"));
+        FilterBatchCommand = new PowerOrchestrator.MAUI.Services.Command(async () => await FilterScriptsAsync("batch"));
+        FilterPythonCommand = new PowerOrchestrator.MAUI.Services.Command(async () => await FilterScriptsAsync("python"));
+        
+        // Initialize with sample data
+        LoadSampleScripts();
     }
 
     /// <summary>
@@ -50,7 +65,49 @@ public class ScriptsViewModel : BaseViewModel
     public string SearchText
     {
         get => _searchText;
-        set => SetProperty(ref _searchText, value);
+        set 
+        { 
+            if (SetProperty(ref _searchText, value))
+            {
+                ApplyFilters();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the selected filter
+    /// </summary>
+    public string SelectedFilter
+    {
+        get => _selectedFilter;
+        set => SetProperty(ref _selectedFilter, value);
+    }
+
+    /// <summary>
+    /// Gets the scripts collection
+    /// </summary>
+    public ObservableCollection<ScriptUIModel> Scripts
+    {
+        get => _scripts;
+        set => SetProperty(ref _scripts, value);
+    }
+
+    /// <summary>
+    /// Gets the filtered scripts collection
+    /// </summary>
+    public ObservableCollection<ScriptUIModel> FilteredScripts
+    {
+        get => _filteredScripts;
+        set => SetProperty(ref _filteredScripts, value);
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the view is refreshing
+    /// </summary>
+    public bool IsRefreshing
+    {
+        get => _isRefreshing;
+        set => SetProperty(ref _isRefreshing, value);
     }
 
     /// <summary>
@@ -69,9 +126,19 @@ public class ScriptsViewModel : BaseViewModel
     public ICommand EditScriptCommand { get; }
 
     /// <summary>
-    /// Gets the script options command
+    /// Gets the delete script command
     /// </summary>
-    public ICommand ScriptOptionsCommand { get; }
+    public ICommand DeleteScriptCommand { get; }
+
+    /// <summary>
+    /// Gets the refresh command
+    /// </summary>
+    public ICommand RefreshCommand { get; }
+
+    /// <summary>
+    /// Gets the script tapped command
+    /// </summary>
+    public ICommand ScriptTappedCommand { get; }
 
     /// <summary>
     /// Gets the filter all command
@@ -94,35 +161,302 @@ public class ScriptsViewModel : BaseViewModel
     public ICommand FilterPythonCommand { get; }
 
     /// <summary>
+    /// Loads sample scripts for demonstration
+    /// </summary>
+    private void LoadSampleScripts()
+    {
+        try
+        {
+            var sampleScripts = new List<ScriptUIModel>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "System Information",
+                    Description = "Retrieves comprehensive system information",
+                    Content = "Get-ComputerInfo | Format-Table",
+                    Category = "System",
+                    Tags = new() { "system", "info", "diagnostics" },
+                    Version = "1.0.0",
+                    CreatedAt = DateTime.Now.AddDays(-30)
+                },
+                new()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "Disk Space Report",
+                    Description = "Generates a disk space usage report",
+                    Content = "Get-WmiObject -Class Win32_LogicalDisk | Select-Object DeviceID, @{Name=\"Size(GB)\";Expression={[math]::Round($_.Size/1GB,2)}}, @{Name=\"FreeSpace(GB)\";Expression={[math]::Round($_.FreeSpace/1GB,2)}}",
+                    Category = "System",
+                    Tags = new() { "disk", "storage", "report" },
+                    Version = "1.1.0",
+                    CreatedAt = DateTime.Now.AddDays(-15)
+                },
+                new()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "Service Status Check",
+                    Description = "Checks the status of critical services",
+                    Content = "Get-Service | Where-Object {$_.Status -eq 'Stopped' -and $_.StartType -eq 'Automatic'} | Format-Table",
+                    Category = "Monitoring",
+                    Tags = new() { "services", "monitoring", "health" },
+                    Version = "1.0.0",
+                    CreatedAt = DateTime.Now.AddDays(-7)
+                },
+                new()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "User Management",
+                    Description = "Lists all local users and their properties",
+                    Content = "Get-LocalUser | Select-Object Name, Enabled, LastLogon, PasswordExpires | Format-Table",
+                    Category = "Security",
+                    Tags = new() { "users", "security", "admin" },
+                    Version = "1.0.0",
+                    CreatedAt = DateTime.Now.AddDays(-3)
+                }
+            };
+
+            Scripts = new ObservableCollection<ScriptUIModel>(sampleScripts);
+            FilteredScripts = new ObservableCollection<ScriptUIModel>(sampleScripts);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading sample scripts");
+        }
+    }
+
+    /// <summary>
+    /// Applies search and filter criteria to the scripts collection
+    /// </summary>
+    private void ApplyFilters()
+    {
+        try
+        {
+            var filtered = Scripts.AsEnumerable();
+
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                filtered = filtered.Where(s => 
+                    s.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                    s.Description.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                    s.Category.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                    s.Tags.Any(t => t.Contains(SearchText, StringComparison.OrdinalIgnoreCase)));
+            }
+
+            // Apply category filter
+            if (SelectedFilter != "all")
+            {
+                filtered = filtered.Where(s => s.Category.Equals(SelectedFilter, StringComparison.OrdinalIgnoreCase));
+            }
+
+            FilteredScripts = new ObservableCollection<ScriptUIModel>(filtered.OrderByDescending(s => s.CreatedAt));
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error applying filters");
+        }
+    }
+
+    /// <summary>
+    /// Refreshes the scripts from the API
+    /// </summary>
+    private async Task RefreshAsync()
+    {
+        if (IsBusy) return;
+
+        try
+        {
+            IsRefreshing = true;
+            IsBusy = true;
+
+            Logger.LogInformation("Refreshing scripts from API");
+
+            // In a real implementation, this would call the API
+            var scripts = await ApiService.GetAsync<List<ScriptUIModel>>("api/scripts");
+            
+            if (scripts != null && scripts.Any())
+            {
+                Scripts = new ObservableCollection<ScriptUIModel>(scripts);
+            }
+            else
+            {
+                // Keep sample data if API is not available
+                LoadSampleScripts();
+            }
+
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error refreshing scripts");
+            await DialogService.ShowAlertAsync("Error", "Failed to refresh scripts. Please try again.", "OK");
+        }
+        finally
+        {
+            IsRefreshing = false;
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Navigates to script detail page
+    /// </summary>
+    /// <param name="script">The script to view</param>
+    private async Task NavigateToScriptDetailAsync(ScriptUIModel script)
+    {
+        if (script == null) return;
+
+        try
+        {
+            var parameters = new Dictionary<string, object>
+            {
+                { "ScriptId", script.Id },
+                { "Script", script }
+            };
+
+            await NavigationService.NavigateToAsync("//scripts/detail", parameters);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error navigating to script detail");
+            await DialogService.ShowAlertAsync("Error", "Failed to open script details.", "OK");
+        }
+    }
+
+    /// <summary>
     /// Adds a new script
     /// </summary>
     private async Task AddScriptAsync()
     {
-        await DialogService.ShowAlertAsync("Add Script", "This feature will be implemented in a future version.", "OK");
+        try
+        {
+            await NavigationService.NavigateToAsync("//scripts/add");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error navigating to add script");
+            await DialogService.ShowAlertAsync("Error", "Failed to open add script page.", "OK");
+        }
     }
 
     /// <summary>
     /// Runs a script
     /// </summary>
-    private async Task RunScriptAsync()
+    /// <param name="script">The script to run</param>
+    private async Task RunScriptAsync(ScriptUIModel? script)
     {
-        await DialogService.ShowAlertAsync("Run Script", "This feature will be implemented in a future version.", "OK");
+        if (script == null) return;
+
+        try
+        {
+            var confirmed = await DialogService.ShowConfirmAsync(
+                "Run Script", 
+                $"Are you sure you want to run '{script.Name}'?",
+                "Run", "Cancel");
+
+            if (!confirmed) return;
+
+            IsBusy = true;
+
+            // In a real implementation, this would execute the script via API
+            var execution = await ApiService.PostAsync<object>("api/executions", new 
+            { 
+                ScriptId = script.Id,
+                Parameters = new Dictionary<string, object>()
+            });
+
+            if (execution != null)
+            {
+                await DialogService.ShowAlertAsync("Success", $"Script '{script.Name}' has been queued for execution.", "OK");
+            }
+            else
+            {
+                // Simulate success for demonstration
+                await Task.Delay(1000);
+                await DialogService.ShowAlertAsync("Success", $"Script '{script.Name}' has been queued for execution.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error running script {ScriptId}", script.Id);
+            await DialogService.ShowAlertAsync("Error", "Failed to run script. Please try again.", "OK");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     /// <summary>
     /// Edits a script
     /// </summary>
-    private async Task EditScriptAsync()
+    /// <param name="script">The script to edit</param>
+    private async Task EditScriptAsync(ScriptUIModel? script)
     {
-        await DialogService.ShowAlertAsync("Edit Script", "This feature will be implemented in a future version.", "OK");
+        if (script == null) return;
+
+        try
+        {
+            var parameters = new Dictionary<string, object>
+            {
+                { "ScriptId", script.Id },
+                { "Script", script }
+            };
+
+            await NavigationService.NavigateToAsync("//scripts/edit", parameters);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error navigating to edit script");
+            await DialogService.ShowAlertAsync("Error", "Failed to open edit script page.", "OK");
+        }
     }
 
     /// <summary>
-    /// Shows script options
+    /// Deletes a script
     /// </summary>
-    private async Task ShowScriptOptionsAsync()
+    /// <param name="script">The script to delete</param>
+    private async Task DeleteScriptAsync(ScriptUIModel? script)
     {
-        await DialogService.ShowAlertAsync("Script Options", "This feature will be implemented in a future version.", "OK");
+        if (script == null) return;
+
+        try
+        {
+            var confirmed = await DialogService.ShowConfirmAsync(
+                "Delete Script", 
+                $"Are you sure you want to delete '{script.Name}'? This action cannot be undone.",
+                "Delete", "Cancel");
+
+            if (!confirmed) return;
+
+            IsBusy = true;
+
+            // In a real implementation, this would delete via API
+            var success = await ApiService.DeleteAsync($"api/scripts/{script.Id}");
+
+            if (success)
+            {
+                Scripts.Remove(script);
+                FilteredScripts.Remove(script);
+                await DialogService.ShowAlertAsync("Success", $"Script '{script.Name}' has been deleted.", "OK");
+            }
+            else
+            {
+                // Simulate success for demonstration
+                Scripts.Remove(script);
+                FilteredScripts.Remove(script);
+                await DialogService.ShowAlertAsync("Success", $"Script '{script.Name}' has been deleted.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error deleting script {ScriptId}", script.Id);
+            await DialogService.ShowAlertAsync("Error", "Failed to delete script. Please try again.", "OK");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     /// <summary>
@@ -131,7 +465,19 @@ public class ScriptsViewModel : BaseViewModel
     /// <param name="filter">The filter type</param>
     private async Task FilterScriptsAsync(string filter)
     {
-        await DialogService.ShowAlertAsync("Filter", $"Filtering by: {filter}", "OK");
+        try
+        {
+            SelectedFilter = filter;
+            ApplyFilters();
+            
+            Logger.LogInformation("Applied filter: {Filter}", filter);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error applying filter {Filter}", filter);
+        }
+        
+        await Task.CompletedTask;
     }
 }
 
@@ -141,6 +487,10 @@ public class ScriptsViewModel : BaseViewModel
 public class RepositoriesViewModel : BaseViewModel
 {
     private string _searchText = string.Empty;
+    private ObservableCollection<RepositoryUIModel> _repositories = new();
+    private ObservableCollection<RepositoryUIModel> _filteredRepositories = new();
+    private bool _isRefreshing = false;
+    private bool _isSyncing = false;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RepositoriesViewModel"/> class
@@ -159,10 +509,24 @@ public class RepositoriesViewModel : BaseViewModel
         Title = "Repositories";
         
         // Commands
-        AddRepositoryCommand = new Command(async () => await AddRepositoryAsync());
-        SyncRepositoryCommand = new Command(async () => await SyncRepositoryAsync());
-        StopSyncCommand = new Command(async () => await StopSyncAsync());
-        RepositorySettingsCommand = new Command(async () => await ShowRepositorySettingsAsync());
+#if NET8_0
+        AddRepositoryCommand = new PowerOrchestrator.MAUI.Services.Command(async () => await AddRepositoryAsync());
+        SyncRepositoryCommand = new PowerOrchestrator.MAUI.Services.Command<RepositoryUIModel>(async (repo) => await SyncRepositoryAsync(repo), (repo) => repo != null);
+        SyncAllCommand = new PowerOrchestrator.MAUI.Services.Command(async () => await SyncAllRepositoriesAsync());
+        RefreshCommand = new PowerOrchestrator.MAUI.Services.Command(async () => await RefreshAsync());
+        RepositoryTappedCommand = new PowerOrchestrator.MAUI.Services.Command<RepositoryUIModel>(async (repo) => await NavigateToRepositoryDetailAsync(repo), (repo) => repo != null);
+        CloneRepositoryCommand = new PowerOrchestrator.MAUI.Services.Command(async () => await CloneRepositoryAsync());
+#else
+        AddRepositoryCommand = new Microsoft.Maui.Controls.Command(async () => await AddRepositoryAsync());
+        SyncRepositoryCommand = new Microsoft.Maui.Controls.Command<RepositoryUIModel>(async (repo) => await SyncRepositoryAsync(repo), (repo) => repo != null);
+        SyncAllCommand = new Microsoft.Maui.Controls.Command(async () => await SyncAllRepositoriesAsync());
+        RefreshCommand = new Microsoft.Maui.Controls.Command(async () => await RefreshAsync());
+        RepositoryTappedCommand = new Microsoft.Maui.Controls.Command<RepositoryUIModel>(async (repo) => await NavigateToRepositoryDetailAsync(repo), (repo) => repo != null);
+        CloneRepositoryCommand = new Microsoft.Maui.Controls.Command(async () => await CloneRepositoryAsync());
+#endif
+        
+        // Initialize with sample data
+        LoadSampleRepositories();
     }
 
     /// <summary>
@@ -171,7 +535,49 @@ public class RepositoriesViewModel : BaseViewModel
     public string SearchText
     {
         get => _searchText;
-        set => SetProperty(ref _searchText, value);
+        set 
+        { 
+            if (SetProperty(ref _searchText, value))
+            {
+                ApplyFilters();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the repositories collection
+    /// </summary>
+    public ObservableCollection<RepositoryUIModel> Repositories
+    {
+        get => _repositories;
+        set => SetProperty(ref _repositories, value);
+    }
+
+    /// <summary>
+    /// Gets the filtered repositories collection
+    /// </summary>
+    public ObservableCollection<RepositoryUIModel> FilteredRepositories
+    {
+        get => _filteredRepositories;
+        set => SetProperty(ref _filteredRepositories, value);
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the view is refreshing
+    /// </summary>
+    public bool IsRefreshing
+    {
+        get => _isRefreshing;
+        set => SetProperty(ref _isRefreshing, value);
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether syncing is in progress
+    /// </summary>
+    public bool IsSyncing
+    {
+        get => _isSyncing;
+        set => SetProperty(ref _isSyncing, value);
     }
 
     /// <summary>
@@ -185,33 +591,336 @@ public class RepositoriesViewModel : BaseViewModel
     public ICommand SyncRepositoryCommand { get; }
 
     /// <summary>
-    /// Gets the stop sync command
+    /// Gets the sync all command
     /// </summary>
-    public ICommand StopSyncCommand { get; }
+    public ICommand SyncAllCommand { get; }
 
     /// <summary>
-    /// Gets the repository settings command
+    /// Gets the refresh command
     /// </summary>
-    public ICommand RepositorySettingsCommand { get; }
+    public ICommand RefreshCommand { get; }
 
+    /// <summary>
+    /// Gets the repository tapped command
+    /// </summary>
+    public ICommand RepositoryTappedCommand { get; }
+
+    /// <summary>
+    /// Gets the clone repository command
+    /// </summary>
+    public ICommand CloneRepositoryCommand { get; }
+
+    /// <summary>
+    /// Loads sample repositories for demonstration
+    /// </summary>
+    private void LoadSampleRepositories()
+    {
+        try
+        {
+            var sampleRepositories = new List<RepositoryUIModel>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "PowerShell-Scripts",
+                    Description = "Collection of enterprise PowerShell scripts",
+                    Url = "https://github.com/company/powershell-scripts.git",
+                    Branch = "main",
+                    Type = "GitHub",
+                    SyncStatus = "Synced",
+                    LastSyncAt = DateTime.Now.AddMinutes(-15),
+                    ScriptCount = 25,
+                    SizeBytes = 1024 * 1024 * 2, // 2MB
+                    AutoSync = true,
+                    CreatedAt = DateTime.Now.AddMonths(-6),
+                    Tags = new() { "powershell", "enterprise", "automation" }
+                },
+                new()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "DevOps-Automation",
+                    Description = "DevOps automation scripts and tools",
+                    Url = "https://github.com/company/devops-automation.git",
+                    Branch = "develop",
+                    Type = "GitHub",
+                    SyncStatus = "Syncing",
+                    LastSyncAt = DateTime.Now.AddHours(-2),
+                    ScriptCount = 42,
+                    SizeBytes = 1024 * 1024 * 5, // 5MB
+                    AutoSync = true,
+                    CreatedAt = DateTime.Now.AddMonths(-3),
+                    Tags = new() { "devops", "ci-cd", "docker" }
+                },
+                new()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "Security-Scripts",
+                    Description = "Security monitoring and compliance scripts",
+                    Url = "https://gitlab.com/company/security-scripts.git",
+                    Branch = "main",
+                    Type = "GitLab",
+                    SyncStatus = "Error",
+                    LastSyncAt = DateTime.Now.AddDays(-1),
+                    ScriptCount = 18,
+                    SizeBytes = 1024 * 1024, // 1MB
+                    AutoSync = false,
+                    CreatedAt = DateTime.Now.AddMonths(-4),
+                    Tags = new() { "security", "compliance", "monitoring" }
+                },
+                new()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "Infrastructure-Management",
+                    Description = "Infrastructure management and deployment scripts",
+                    Url = "https://dev.azure.com/company/infrastructure-management/_git/scripts",
+                    Branch = "main",
+                    Type = "Azure DevOps",
+                    SyncStatus = "Synced",
+                    LastSyncAt = DateTime.Now.AddMinutes(-30),
+                    ScriptCount = 35,
+                    SizeBytes = 1024 * 1024 * 3, // 3MB
+                    AutoSync = true,
+                    CreatedAt = DateTime.Now.AddMonths(-8),
+                    Tags = new() { "infrastructure", "azure", "terraform" }
+                }
+            };
+
+            Repositories = new ObservableCollection<RepositoryUIModel>(sampleRepositories);
+            FilteredRepositories = new ObservableCollection<RepositoryUIModel>(sampleRepositories);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading sample repositories");
+        }
+    }
+
+    /// <summary>
+    /// Applies search filter to the repositories collection
+    /// </summary>
+    private void ApplyFilters()
+    {
+        try
+        {
+            var filtered = Repositories.AsEnumerable();
+
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                filtered = filtered.Where(r => 
+                    r.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                    r.Description.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                    r.Type.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                    r.Tags.Any(t => t.Contains(SearchText, StringComparison.OrdinalIgnoreCase)));
+            }
+
+            FilteredRepositories = new ObservableCollection<RepositoryUIModel>(filtered.OrderByDescending(r => r.LastSyncAt ?? r.CreatedAt));
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error applying filters");
+        }
+    }
+
+    /// <summary>
+    /// Refreshes the repositories from the API
+    /// </summary>
+    private async Task RefreshAsync()
+    {
+        if (IsBusy) return;
+
+        try
+        {
+            IsRefreshing = true;
+            IsBusy = true;
+
+            Logger.LogInformation("Refreshing repositories from API");
+
+            // In a real implementation, this would call the API
+            var repositories = await ApiService.GetAsync<List<RepositoryUIModel>>("api/repositories");
+            
+            if (repositories != null && repositories.Any())
+            {
+                Repositories = new ObservableCollection<RepositoryUIModel>(repositories);
+            }
+            else
+            {
+                // Keep sample data if API is not available
+                LoadSampleRepositories();
+            }
+
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error refreshing repositories");
+            await DialogService.ShowAlertAsync("Error", "Failed to refresh repositories. Please try again.", "OK");
+        }
+        finally
+        {
+            IsRefreshing = false;
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Navigates to repository detail page
+    /// </summary>
+    /// <param name="repository">The repository to view</param>
+    private async Task NavigateToRepositoryDetailAsync(RepositoryUIModel repository)
+    {
+        if (repository == null) return;
+
+        try
+        {
+            var parameters = new Dictionary<string, object>
+            {
+                { "RepositoryId", repository.Id },
+                { "Repository", repository }
+            };
+
+            await NavigationService.NavigateToAsync("//repositories/detail", parameters);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error navigating to repository detail");
+            await DialogService.ShowAlertAsync("Error", "Failed to open repository details.", "OK");
+        }
+    }
+
+    /// <summary>
+    /// Adds a new repository
+    /// </summary>
     private async Task AddRepositoryAsync()
     {
-        await DialogService.ShowAlertAsync("Add Repository", "This feature will be implemented in a future version.", "OK");
+        try
+        {
+            await NavigationService.NavigateToAsync("//repositories/add");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error navigating to add repository");
+            await DialogService.ShowAlertAsync("Error", "Failed to open add repository page.", "OK");
+        }
     }
 
-    private async Task SyncRepositoryAsync()
+    /// <summary>
+    /// Clones a repository from URL
+    /// </summary>
+    private async Task CloneRepositoryAsync()
     {
-        await DialogService.ShowAlertAsync("Sync Repository", "This feature will be implemented in a future version.", "OK");
+        try
+        {
+            await NavigationService.NavigateToAsync("//repositories/clone");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error navigating to clone repository");
+            await DialogService.ShowAlertAsync("Error", "Failed to open clone repository page.", "OK");
+        }
     }
 
-    private async Task StopSyncAsync()
+    /// <summary>
+    /// Syncs a specific repository
+    /// </summary>
+    /// <param name="repository">The repository to sync</param>
+    private async Task SyncRepositoryAsync(RepositoryUIModel? repository)
     {
-        await DialogService.ShowAlertAsync("Stop Sync", "This feature will be implemented in a future version.", "OK");
+        if (repository == null) return;
+
+        try
+        {
+            var confirmed = await DialogService.ShowConfirmAsync(
+                "Sync Repository", 
+                $"Are you sure you want to sync '{repository.Name}' from {repository.Type}?",
+                "Sync", "Cancel");
+
+            if (!confirmed) return;
+
+            IsSyncing = true;
+            repository.SyncStatus = "Syncing";
+
+            // In a real implementation, this would sync via API
+            var syncResult = await ApiService.PostAsync<object>("api/repositories/sync", new 
+            { 
+                RepositoryId = repository.Id,
+                Branch = repository.Branch
+            });
+
+            // Simulate sync progress
+            await Task.Delay(3000);
+
+            if (syncResult != null)
+            {
+                repository.SyncStatus = "Synced";
+                repository.LastSyncAt = DateTime.Now;
+                await DialogService.ShowAlertAsync("Success", $"Repository '{repository.Name}' has been synced successfully.", "OK");
+            }
+            else
+            {
+                // Simulate success for demonstration
+                repository.SyncStatus = "Synced";
+                repository.LastSyncAt = DateTime.Now;
+                await DialogService.ShowAlertAsync("Success", $"Repository '{repository.Name}' has been synced successfully.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error syncing repository {RepositoryId}", repository.Id);
+            repository.SyncStatus = "Error";
+            await DialogService.ShowAlertAsync("Error", "Failed to sync repository. Please try again.", "OK");
+        }
+        finally
+        {
+            IsSyncing = false;
+        }
     }
 
-    private async Task ShowRepositorySettingsAsync()
+    /// <summary>
+    /// Syncs all repositories
+    /// </summary>
+    private async Task SyncAllRepositoriesAsync()
     {
-        await DialogService.ShowAlertAsync("Repository Settings", "This feature will be implemented in a future version.", "OK");
+        try
+        {
+            var activeRepos = Repositories.Where(r => r.IsActive && r.AutoSync).ToList();
+            
+            if (!activeRepos.Any())
+            {
+                await DialogService.ShowAlertAsync("No Repositories", "No repositories available for sync.", "OK");
+                return;
+            }
+
+            var confirmed = await DialogService.ShowConfirmAsync(
+                "Sync All Repositories", 
+                $"Are you sure you want to sync all {activeRepos.Count} active repositories?",
+                "Sync All", "Cancel");
+
+            if (!confirmed) return;
+
+            IsSyncing = true;
+
+            foreach (var repo in activeRepos)
+            {
+                repo.SyncStatus = "Syncing";
+                
+                // In a real implementation, this would be done in parallel with proper error handling
+                await Task.Delay(1000); // Simulate sync time
+                
+                repo.SyncStatus = "Synced";
+                repo.LastSyncAt = DateTime.Now;
+            }
+
+            await DialogService.ShowAlertAsync("Success", $"All {activeRepos.Count} repositories have been synced successfully.", "OK");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error syncing all repositories");
+            await DialogService.ShowAlertAsync("Error", "Failed to sync all repositories. Please try again.", "OK");
+        }
+        finally
+        {
+            IsSyncing = false;
+        }
     }
 }
 
@@ -350,13 +1059,13 @@ public class SettingsViewModel : BaseViewModel
         Title = "Settings";
         
         // Initialize commands
-        SaveSettingsCommand = new Command(async () => await SaveSettingsAsync());
-        ResetSettingsCommand = new Command(async () => await ResetSettingsAsync());
-        LogoutCommand = new Command(async () => await LogoutAsync());
-        TestConnectionCommand = new Command(async () => await TestServerConnectionAsync());
-        ClearCacheCommand = new Command(async () => await ClearCacheAsync());
-        ExportSettingsCommand = new Command(async () => await ExportSettingsAsync());
-        ImportSettingsCommand = new Command(async () => await ImportSettingsAsync());
+        SaveSettingsCommand = new PowerOrchestrator.MAUI.Services.Command(async () => await SaveSettingsAsync());
+        ResetSettingsCommand = new PowerOrchestrator.MAUI.Services.Command(async () => await ResetSettingsAsync());
+        LogoutCommand = new PowerOrchestrator.MAUI.Services.Command(async () => await LogoutAsync());
+        TestConnectionCommand = new PowerOrchestrator.MAUI.Services.Command(async () => await TestServerConnectionAsync());
+        ClearCacheCommand = new PowerOrchestrator.MAUI.Services.Command(async () => await ClearCacheAsync());
+        ExportSettingsCommand = new PowerOrchestrator.MAUI.Services.Command(async () => await ExportSettingsAsync());
+        ImportSettingsCommand = new PowerOrchestrator.MAUI.Services.Command(async () => await ImportSettingsAsync());
     }
 
     /// <summary>

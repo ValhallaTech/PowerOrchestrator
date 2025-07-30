@@ -31,7 +31,7 @@ public interface ISecureStorageService
     /// </summary>
     /// <param name="key">The storage key</param>
     /// <returns>A task representing the operation</returns>
-    Task<bool> RemoveAsync(string key);
+    Task RemoveAsync(string key);
 
     /// <summary>
     /// Removes all values from secure storage
@@ -106,7 +106,7 @@ public class SecureStorageService : ISecureStorageService
     }
 
     /// <inheritdoc/>
-    public async Task<bool> RemoveAsync(string key)
+    public async Task RemoveAsync(string key)
     {
         try
         {
@@ -115,19 +115,19 @@ public class SecureStorageService : ISecureStorageService
             var removed = _consoleStorage.Remove(key);
             _logger.LogDebug("Console mode: Removed value for key: {Key}, Success: {Success}", key, removed);
             await Task.CompletedTask;
-            return removed;
+            await Task.CompletedTask;
 #else
             // MAUI mode - use platform secure storage
             var removed = SecureStorage.Remove(key);
             _logger.LogDebug("Removed secure value for key: {Key}, Success: {Success}", key, removed);
             await Task.CompletedTask;
-            return removed;
+            await Task.CompletedTask;
 #endif
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing secure value for key: {Key}", key);
-            return false;
+            await Task.CompletedTask;
         }
     }
 
@@ -169,6 +169,20 @@ public interface IAuthorizationService
     Task<bool> HasPermissionAsync(string permission);
 
     /// <summary>
+    /// Checks if the current user has any of the specified permissions
+    /// </summary>
+    /// <param name="permissions">The permissions to check</param>
+    /// <returns>True if the user has any of the permissions</returns>
+    Task<bool> HasAnyPermissionAsync(params string[] permissions);
+
+    /// <summary>
+    /// Checks if the current user has all of the specified permissions
+    /// </summary>
+    /// <param name="permissions">The permissions to check</param>
+    /// <returns>True if the user has all permissions</returns>
+    Task<bool> HasAllPermissionsAsync(params string[] permissions);
+
+    /// <summary>
     /// Checks if the current user has the specified role
     /// </summary>
     /// <param name="role">The role to check</param>
@@ -185,7 +199,7 @@ public interface IAuthorizationService
     /// Gets the current user's permissions
     /// </summary>
     /// <returns>A list of the user's permissions</returns>
-    Task<List<string>> GetUserPermissionsAsync();
+    Task<IEnumerable<string>> GetUserPermissionsAsync();
 
     /// <summary>
     /// Checks if a UI element should be visible based on user permissions
@@ -357,6 +371,66 @@ public class AuthorizationService : IAuthorizationService
         {
             _logger.LogError(ex, "Error getting user permissions");
             return new List<string>();
+        }
+    }
+
+    /// <summary>
+    /// Gets the current user's permissions (interface-compatible version)
+    /// </summary>
+    /// <returns>The user's permissions</returns>
+    async Task<IEnumerable<string>> IAuthorizationService.GetUserPermissionsAsync()
+    {
+        var permissions = await GetUserPermissionsAsync();
+        return permissions;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> HasAnyPermissionAsync(params string[] permissions)
+    {
+        try
+        {
+            if (!_authenticationService.IsAuthenticated)
+            {
+                return false;
+            }
+
+            if (!permissions.Any())
+            {
+                return true;
+            }
+
+            var userPermissions = await GetUserPermissionsAsync();
+            return permissions.Any(perm => userPermissions.Contains(perm));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking any permissions: {Permissions}", string.Join(", ", permissions));
+            return false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> HasAllPermissionsAsync(params string[] permissions)
+    {
+        try
+        {
+            if (!_authenticationService.IsAuthenticated)
+            {
+                return false;
+            }
+
+            if (!permissions.Any())
+            {
+                return true;
+            }
+
+            var userPermissions = await GetUserPermissionsAsync();
+            return permissions.All(perm => userPermissions.Contains(perm));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking all permissions: {Permissions}", string.Join(", ", permissions));
+            return false;
         }
     }
 
