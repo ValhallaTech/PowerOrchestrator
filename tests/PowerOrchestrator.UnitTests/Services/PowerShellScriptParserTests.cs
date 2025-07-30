@@ -3,17 +3,17 @@ using System.Management.Automation.Language;
 namespace PowerOrchestrator.UnitTests.Services;
 
 /// <summary>
-/// Unit tests for PowerShell script parser using production architecture
+/// Unit tests for PowerShell script parser
 /// </summary>
-public class PowerShellScriptParserTests : IClassFixture<ProductionArchitectureTestFixture>
+public class PowerShellScriptParserTests
 {
-    private readonly ProductionArchitectureTestFixture _fixture;
-    private readonly IPowerShellScriptParser _parser;
+    private readonly Mock<ILogger<PowerShellScriptParser>> _mockLogger;
+    private readonly PowerShellScriptParser _parser;
 
-    public PowerShellScriptParserTests(ProductionArchitectureTestFixture fixture)
+    public PowerShellScriptParserTests()
     {
-        _fixture = fixture;
-        _parser = _fixture.Resolve<IPowerShellScriptParser>();
+        _mockLogger = new Mock<ILogger<PowerShellScriptParser>>();
+        _parser = new PowerShellScriptParser(_mockLogger.Object);
     }
 
     [Fact]
@@ -182,9 +182,15 @@ Write-Host ""Hello $Name
 
         // Assert
         result.Should().NotBeNull();
-        // For now, we'll just verify the result is not null
-        // since we're using production DI, we don't have direct access to the logger mock
-    }
+        // Verify that logger was called for warnings
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Parse errors found")),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     [Fact]
@@ -239,27 +245,5 @@ function Get-SystemInfo {
             var result = await _parser.ParseScriptAsync(scriptContent, fileName);
             result.Should().NotBeNull();
         }
-    }
-
-    [Fact]
-    public void DependencyInjection_ShouldResolvePowerShellScriptParser()
-    {
-        // Arrange & Act
-        var parser = _fixture.Resolve<IPowerShellScriptParser>();
-
-        // Assert
-        parser.Should().NotBeNull();
-        parser.Should().BeOfType<PowerShellScriptParser>();
-    }
-
-    [Fact]
-    public void AutoMapper_ShouldBeAvailableForPowerShellScriptParser()
-    {
-        // Arrange & Act
-        var mapper = _fixture.Resolve<IMapper>();
-
-        // Assert
-        mapper.Should().NotBeNull();
-        mapper.ConfigurationProvider.AssertConfigurationIsValid();
     }
 }

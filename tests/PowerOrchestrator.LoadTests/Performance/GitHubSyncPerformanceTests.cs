@@ -4,7 +4,9 @@ using BenchmarkDotNet.Running;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using PowerOrchestrator.Application.Interfaces;
 using PowerOrchestrator.Application.Interfaces.Services;
+using PowerOrchestrator.Domain.ValueObjects;
 using PowerOrchestrator.Infrastructure.Configuration;
 using PowerOrchestrator.Infrastructure.Services;
 
@@ -22,6 +24,7 @@ public class GitHubSyncPerformanceTests
     private Mock<IGitHubService> _mockGitHubService;
     private Mock<IPowerShellScriptParser> _mockParser;
     private Mock<IUnitOfWork> _mockUnitOfWork;
+    private Mock<IRepositoryManager> _mockRepositoryManager;
     private RepositorySyncService _syncService;
     private List<GitHubFile> _smallRepositoryFiles;
     private List<GitHubFile> _largeRepositoryFiles;
@@ -33,6 +36,7 @@ public class GitHubSyncPerformanceTests
         _mockGitHubService = new Mock<IGitHubService>();
         _mockParser = new Mock<IPowerShellScriptParser>();
         _mockUnitOfWork = new Mock<IUnitOfWork>();
+        _mockRepositoryManager = new Mock<IRepositoryManager>();
 
         // Create test data for different repository sizes
         _smallRepositoryFiles = GenerateTestFiles(10);
@@ -43,9 +47,10 @@ public class GitHubSyncPerformanceTests
 
         _syncService = new RepositorySyncService(
             _mockLogger.Object,
+            _mockUnitOfWork.Object,
             _mockGitHubService.Object,
             _mockParser.Object,
-            _mockUnitOfWork.Object);
+            _mockRepositoryManager.Object);
     }
 
     [Benchmark]
@@ -58,7 +63,7 @@ public class GitHubSyncPerformanceTests
         var files = GenerateTestFiles(fileCount);
         var repositoryName = $"test/repo-{fileCount}-files";
 
-        _mockGitHubService.Setup(x => x.GetScriptFilesAsync("test", $"repo-{fileCount}-files", It.IsAny<CancellationToken>()))
+        _mockGitHubService.Setup(x => x.GetScriptFilesAsync("test", $"repo-{fileCount}-files", null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(files);
 
         // Act
@@ -115,7 +120,9 @@ public class GitHubSyncPerformanceTests
     {
         // Test rate limiting performance with different request volumes
         var mockLogger = new Mock<ILogger<GitHubRateLimitService>>();
-        var rateLimitService = new GitHubRateLimitService(mockLogger.Object);
+        var mockOptions = new Mock<IOptions<GitHubOptions>>();
+        mockOptions.Setup(x => x.Value).Returns(new GitHubOptions());
+        var rateLimitService = new GitHubRateLimitService(mockLogger.Object, mockOptions.Object);
 
         // Simulate multiple rate limit checks
         var tasks = new List<Task>();
@@ -133,7 +140,7 @@ public class GitHubSyncPerformanceTests
         // Test memory usage during large repository sync
         var files = GenerateTestFiles(500); // Large repository
 
-        _mockGitHubService.Setup(x => x.GetScriptFilesAsync("test", "large-repo", It.IsAny<CancellationToken>()))
+        _mockGitHubService.Setup(x => x.GetScriptFilesAsync("test", "large-repo", null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(files);
 
         await _syncService.SynchronizeRepositoryAsync("test/large-repo");
@@ -144,13 +151,15 @@ public class GitHubSyncPerformanceTests
         var files = new List<GitHubFile>();
         for (int i = 0; i < count; i++)
         {
-            files.Add(new GitHubFile(
-                path: $"scripts/script{i}.ps1",
-                content: GenerateTestScript(i),
-                branch: "main",
-                sha: $"sha{i:D10}",
-                lastModified: DateTime.UtcNow.AddDays(-i)
-            ));
+            files.Add(new GitHubFile
+            {
+                Path = $"scripts/script{i}.ps1",
+                Name = $"script{i}.ps1",
+                Content = GenerateTestScript(i),
+                Sha = $"sha{i:D10}",
+                Size = 1000 + i,
+                Encoding = "utf-8"
+            });
         }
         return files;
     }
@@ -235,7 +244,9 @@ public class GitHubRateLimitBenchmarks
     public void Setup()
     {
         var mockLogger = new Mock<ILogger<GitHubRateLimitService>>();
-        _rateLimitService = new GitHubRateLimitService(mockLogger.Object);
+        var mockOptions = new Mock<IOptions<GitHubOptions>>();
+        mockOptions.Setup(x => x.Value).Returns(new GitHubOptions());
+        _rateLimitService = new GitHubRateLimitService(mockLogger.Object, mockOptions.Object);
     }
 
     [Benchmark]
@@ -259,25 +270,17 @@ public class GitHubRateLimitBenchmarks
         // Test the performance of updating rate limit information
         for (int i = 0; i < 1000; i++)
         {
-            _rateLimitService.UpdateRateLimit(5000 - i, DateTimeOffset.UtcNow.AddMinutes(60));
+            _rateLimitService.UpdateRateLimitInfo(5000 - i, 5000, DateTime.UtcNow.AddMinutes(60));
         }
     }
 }
 
 /// <summary>
 /// Program entry point for running benchmarks
+/// To run manually: dotnet run --project PowerOrchestrator.LoadTests -c Release --framework net8.0
 /// </summary>
-public class GitHubPerformanceProgram
+internal class GitHubPerformanceProgram
 {
-    public static void Main(string[] args)
-    {
-        var config = DefaultConfig.Instance
-            .WithOptions(ConfigOptions.DisableOptimizationsValidator);
-
-        // Run GitHub sync performance tests
-        BenchmarkRunner.Run<GitHubSyncPerformanceTests>(config);
-        
-        // Run rate limiting benchmarks
-        BenchmarkRunner.Run<GitHubRateLimitBenchmarks>(config);
-    }
+    // Entry point removed to avoid conflicts with test runner
+    // Use: dotnet run with BenchmarkDotNet.Tool for execution
 }
