@@ -248,3 +248,114 @@ public interface IPerformanceTracker : IDisposable
     /// <param name="value">The property value</param>
     void AddProperty(string key, object value);
 }
+
+/// <summary>
+/// Real-time communication service interface for SignalR foundation
+/// </summary>
+public interface IRealTimeService
+{
+    /// <summary>
+    /// Gets a value indicating whether the connection is active
+    /// </summary>
+    bool IsConnected { get; }
+
+    /// <summary>
+    /// Connects to the SignalR hub
+    /// </summary>
+    /// <returns>A task representing the connection operation</returns>
+    Task ConnectAsync();
+
+    /// <summary>
+    /// Disconnects from the SignalR hub
+    /// </summary>
+    /// <returns>A task representing the disconnection operation</returns>
+    Task DisconnectAsync();
+
+    /// <summary>
+    /// Sends a message to the hub
+    /// </summary>
+    /// <param name="method">The hub method name</param>
+    /// <param name="parameters">The method parameters</param>
+    /// <returns>A task representing the send operation</returns>
+    Task SendAsync(string method, params object[] parameters);
+
+    /// <summary>
+    /// Registers a handler for hub messages
+    /// </summary>
+    /// <param name="method">The hub method name</param>
+    /// <param name="handler">The message handler</param>
+    void On(string method, Func<object[], Task> handler);
+
+    /// <summary>
+    /// Removes a handler for hub messages
+    /// </summary>
+    /// <param name="method">The hub method name</param>
+    void Off(string method);
+
+    /// <summary>
+    /// Event fired when connection state changes
+    /// </summary>
+    event EventHandler<bool>? ConnectionStateChanged;
+}
+
+/// <summary>
+/// Platform service interface for platform-specific functionality
+/// </summary>
+public interface IPlatformService
+{
+    /// <summary>
+    /// Gets the current platform type
+    /// </summary>
+    PlatformType CurrentPlatform { get; }
+
+    /// <summary>
+    /// Gets the device idiom (Phone, Tablet, Desktop, etc.)
+    /// </summary>
+    DeviceIdiomType DeviceIdiom { get; }
+
+    /// <summary>
+    /// Gets platform-specific configuration
+    /// </summary>
+    /// <typeparam name="T">Configuration type</typeparam>
+    /// <param name="key">Configuration key</param>
+    /// <param name="defaultValue">Default value</param>
+    /// <returns>Platform-specific configuration value</returns>
+    T GetPlatformConfiguration<T>(string key, T defaultValue = default!);
+
+    /// <summary>
+    /// Performs platform-specific action
+    /// </summary>
+    /// <param name="action">Action to perform</param>
+    /// <returns>A task representing the operation</returns>
+    Task ExecutePlatformActionAsync(string action);
+
+    /// <summary>
+    /// Gets platform-specific UI scaling factor
+    /// </summary>
+    /// <returns>UI scaling factor</returns>
+    double GetDisplayScaling();
+}
+
+/// <summary>
+/// Platform types enumeration
+/// </summary>
+public enum PlatformType
+{
+    Windows,
+    Android,
+    iOS,
+    macOS,
+    Unknown
+}
+
+/// <summary>
+/// Device idiom types enumeration  
+/// </summary>
+public enum DeviceIdiomType
+{
+    Phone,
+    Tablet,
+    Desktop,
+    Watch,
+    Unknown
+}

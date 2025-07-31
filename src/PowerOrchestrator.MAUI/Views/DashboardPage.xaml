@@ -35,48 +35,64 @@
             <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="15" RowSpacing="15">
                 
                 <!-- Total Scripts Card -->
-                <material:CardView Grid.Row="0" Grid.Column="0" BackgroundColor="{DynamicResource SecondaryContainer}" CornerRadius="12">
+                <material:CardView Grid.Row="0" Grid.Column="0" BackgroundColor="{DynamicResource SecondaryContainer}" CornerRadius="12"
+                                 SemanticProperties.Description="Total scripts statistics card"
+                                 SemanticProperties.Hint="Shows the total number of scripts in the system"
+                                 AutomationProperties.Name="Total Scripts"
+                                 AutomationProperties.HelpText="This card displays the total number of scripts available in PowerOrchestrator">
                     <StackLayout Padding="15" Spacing="5">
                         <Label 
                             Text="{x:Static m:MaterialIcons.Description}"
                             FontFamily="MaterialRegular"
                             FontSize="32"
                             TextColor="{DynamicResource OnSecondaryContainer}"
-                            HorizontalOptions="Center" />
+                            HorizontalOptions="Center"
+                            SemanticProperties.Description="Scripts icon" />
                         <Label 
-                            Text="0"
+                            Text="{Binding TotalScripts}"
                             FontSize="24"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource OnSecondaryContainer}"
-                            HorizontalOptions="Center" />
+                            HorizontalOptions="Center"
+                            SemanticProperties.Description="{Binding TotalScripts, StringFormat='Total scripts count: {0}'}"
+                            AutomationProperties.Name="Scripts Count" />
                         <Label 
                             Text="Scripts"
                             FontSize="14"
                             TextColor="{DynamicResource OnSecondaryContainer}"
-                            HorizontalOptions="Center" />
+                            HorizontalOptions="Center"
+                            SemanticProperties.Description="Scripts label" />
                     </StackLayout>
                 </material:CardView>
 
                 <!-- Active Executions Card -->
-                <material:CardView Grid.Row="0" Grid.Column="1" BackgroundColor="{DynamicResource TertiaryContainer}" CornerRadius="12">
+                <material:CardView Grid.Row="0" Grid.Column="1" BackgroundColor="{DynamicResource TertiaryContainer}" CornerRadius="12"
+                                 SemanticProperties.Description="Active executions statistics card"
+                                 SemanticProperties.Hint="Shows the number of currently running script executions"
+                                 AutomationProperties.Name="Active Executions"
+                                 AutomationProperties.HelpText="This card displays the number of script executions currently running">
                     <StackLayout Padding="15" Spacing="5">
                         <Label 
                             Text="{x:Static m:MaterialIcons.PlayArrow}"
                             FontFamily="MaterialRegular"
                             FontSize="32"
                             TextColor="{DynamicResource OnTertiaryContainer}"
-                            HorizontalOptions="Center" />
+                            HorizontalOptions="Center"
+                            SemanticProperties.Description="Play arrow icon for active executions" />
                         <Label 
-                            Text="0"
+                            Text="{Binding ActiveExecutions}"
                             FontSize="24"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource OnTertiaryContainer}"
-                            HorizontalOptions="Center" />
+                            HorizontalOptions="Center"
+                            SemanticProperties.Description="{Binding ActiveExecutions, StringFormat='Active executions count: {0}'}"
+                            AutomationProperties.Name="Active Executions Count" />
                         <Label 
                             Text="Active"
                             FontSize="14"
                             TextColor="{DynamicResource OnTertiaryContainer}"
-                            HorizontalOptions="Center" />
+                            HorizontalOptions="Center"
+                            SemanticProperties.Description="Active executions label" />
                     </StackLayout>
                 </material:CardView>
 

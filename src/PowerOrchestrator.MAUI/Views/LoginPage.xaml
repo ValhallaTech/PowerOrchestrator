@@ -60,7 +60,11 @@
                         Keyboard="Default"
                         ReturnType="Next"
                         Style="{DynamicResource FilledTextFieldStyle}"
-                        BackgroundColor="{DynamicResource SurfaceContainerHigh}" />
+                        BackgroundColor="{DynamicResource SurfaceContainerHigh}"
+                        SemanticProperties.Description="Enter your username to log in"
+                        SemanticProperties.Hint="Username input field"
+                        AutomationProperties.Name="Username"
+                        AutomationProperties.HelpText="Enter your username to log in" />
 
                     <!-- Password Field -->
                     <material:TextField
@@ -70,14 +74,22 @@
                         IsPassword="True"
                         ReturnType="Done"
                         Style="{DynamicResource FilledTextFieldStyle}"
-                        BackgroundColor="{DynamicResource SurfaceContainerHigh}" />
+                        BackgroundColor="{DynamicResource SurfaceContainerHigh}"
+                        SemanticProperties.Description="Enter your password to log in"
+                        SemanticProperties.Hint="Password input field"
+                        AutomationProperties.Name="Password"
+                        AutomationProperties.HelpText="Enter your password to log in" />
 
                     <!-- Remember Me -->
                     <material:CheckBox 
                         Text="Remember me"
                         IsChecked="{Binding RememberMe}"
                         TextColor="{DynamicResource OnSurface}"
-                        CheckedColor="{DynamicResource Primary}" />
+                        CheckedColor="{DynamicResource Primary}"
+                        SemanticProperties.Description="Check to remember login credentials"
+                        SemanticProperties.Hint="Remember me checkbox"
+                        AutomationProperties.Name="Remember Me"
+                        AutomationProperties.HelpText="Check this to remember your login credentials" />
 
                     <!-- Login Button -->
                     <material:Button 
@@ -86,7 +98,11 @@
                         Command="{Binding LoginCommand}"
                         Style="{DynamicResource FilledButtonStyle}"
                         IsLoading="{Binding IsBusy}"
-                        Margin="0,10,0,0" />
+                        Margin="0,10,0,0"
+                        SemanticProperties.Description="Sign in to PowerOrchestrator"
+                        SemanticProperties.Hint="Login button"
+                        AutomationProperties.Name="Sign In"
+                        AutomationProperties.HelpText="Tap to sign in to PowerOrchestrator" />
 
                     <!-- Forgot Password Link -->
                     <Label 

@@ -170,6 +170,13 @@ public static class Program
         containerBuilder.RegisterType<SecureStorageService>().As<ISecureStorageService>().SingleInstance();
         containerBuilder.RegisterType<NavigationService>().As<INavigationService>().SingleInstance();
         containerBuilder.RegisterType<DialogService>().As<IDialogService>().SingleInstance();
+        
+        // Register Phase 3F services - Advanced Features and Cross-Platform
+        containerBuilder.RegisterType<PerformanceMonitoringService>().As<IPerformanceMonitoringService>().SingleInstance();
+        containerBuilder.RegisterType<RealTimeService>().As<IRealTimeService>().SingleInstance();
+        containerBuilder.RegisterType<PlatformService>().As<IPlatformService>().SingleInstance();
+        containerBuilder.RegisterType<ResponsiveDesignService>().As<IResponsiveDesignService>().SingleInstance();
+        containerBuilder.RegisterType<OfflineService>().As<IOfflineService>().SingleInstance();
 
 #if !NET8_0
         // Register API and authentication services only in MAUI mode to avoid circular dependencies

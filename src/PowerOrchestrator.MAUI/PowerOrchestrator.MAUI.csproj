@@ -87,6 +87,9 @@
     <!-- JSON Serialization -->
     <PackageReference Include="Newtonsoft.Json" />
     
+    <!-- SignalR Foundation (for real-time updates) -->
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    
     <!-- Configuration -->
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
