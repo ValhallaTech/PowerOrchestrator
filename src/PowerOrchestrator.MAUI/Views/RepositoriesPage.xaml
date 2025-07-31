@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="PowerOrchestrator.MAUI.Views.RepositoriesPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:material="http://schemas.enisn-projects.io/dotnet/maui/uraniumui/material"
+    xmlns:m="clr-namespace:UraniumUI.Icons.MaterialIcons;assembly=UraniumUI.Icons.MaterialIcons"
+    xmlns:viewmodels="clr-namespace:PowerOrchestrator.MAUI.ViewModels"
+    x:DataType="viewmodels:RepositoriesViewModel"
+    Title="{Binding Title}"
+    BackgroundColor="{DynamicResource Surface}">
+
+    <Grid RowDefinitions="Auto,*">
+        
+        <!-- Header -->
+        <material:CardView Grid.Row="0" BackgroundColor="{DynamicResource SurfaceContainer}" CornerRadius="0" Margin="0">
+            <StackLayout Padding="20" Spacing="15">
+                
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                    <Label 
+                        Grid.Column="0"
+                        Text="Git Repositories" 
+                        FontSize="24" 
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource OnSurface}"
+                        VerticalOptions="Center" />
+                    
+                    <material:Button 
+                        Grid.Column="1"
+                        Text="Add Repository"
+                        Icon="{x:Static m:MaterialIcons.Add}"
+                        Style="{DynamicResource FilledButtonStyle}"
+                        Command="{Binding AddRepositoryCommand}" />
+                </Grid>
+
+                <!-- Search -->
+                <material:TextField
+                    Title="Search repositories..."
+                    Icon="{x:Static m:MaterialIcons.Search}"
+                    Text="{Binding SearchText}"
+                    BackgroundColor="{DynamicResource SurfaceContainerHigh}"
+                    Style="{DynamicResource OutlinedTextFieldStyle}" />
+
+            </StackLayout>
+        </material:CardView>
+
+        <!-- Repositories List -->
+        <ScrollView Grid.Row="1" Padding="20,10">
+            <StackLayout Spacing="15">
+                
+                <!-- Repository Card 1 -->
+                <material:CardView BackgroundColor="{DynamicResource SurfaceContainer}" CornerRadius="12">
+                    <StackLayout Padding="20" Spacing="10">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="15">
+                            
+                            <!-- Status Indicator -->
+                            <Ellipse Grid.Column="0" 
+                                Fill="{DynamicResource Primary}" 
+                                WidthRequest="12" 
+                                HeightRequest="12"
+                                VerticalOptions="Center" />
+                            
+                            <!-- Repository Info -->
+                            <StackLayout Grid.Column="1" Spacing="5">
+                                <Label 
+                                    Text="PowerShell-Scripts"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource OnSurface}" />
+                                <Label 
+                                    Text="https://github.com/company/powershell-scripts.git"
+                                    FontSize="14"
+                                    TextColor="{DynamicResource Outline}" />
+                                <StackLayout Orientation="Horizontal" Spacing="15">
+                                    <Label 
+                                        Text="✓ Connected"
+                                        FontSize="12"
+                                        TextColor="{DynamicResource Primary}" />
+                                    <Label 
+                                        Text="Last sync: 1 hour ago"
+                                        FontSize="12"
+                                        TextColor="{DynamicResource Outline}" />
+                                    <Label 
+                                        Text="15 scripts"
+                                        FontSize="12"
+                                        TextColor="{DynamicResource Outline}" />
+                                </StackLayout>
+                            </StackLayout>
+                            
+                            <!-- Actions -->
+                            <StackLayout Grid.Column="2" Orientation="Horizontal" Spacing="5">
+                                <material:Button 
+                                    Icon="{x:Static m:MaterialIcons.Sync}"
+                                    Style="{DynamicResource IconButtonStyle}"
+                                    Command="{Binding SyncRepositoryCommand}" />
+                                <material:Button 
+                                    Icon="{x:Static m:MaterialIcons.Settings}"
+                                    Style="{DynamicResource IconButtonStyle}"
+                                    Command="{Binding RepositorySettingsCommand}" />
+                            </StackLayout>
+                        </Grid>
+                    </StackLayout>
+                </material:CardView>
+
+                <!-- Repository Card 2 -->
+                <material:CardView BackgroundColor="{DynamicResource SurfaceContainer}" CornerRadius="12">
+                    <StackLayout Padding="20" Spacing="10">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="15">
+                            
+                            <!-- Status Indicator -->
+                            <Ellipse Grid.Column="0" 
+                                Fill="{DynamicResource Error}" 
+                                WidthRequest="12" 
+                                HeightRequest="12"
+                                VerticalOptions="Center" />
+                            
+                            <!-- Repository Info -->
+                            <StackLayout Grid.Column="1" Spacing="5">
+                                <Label 
+                                    Text="Automation-Tools"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource OnSurface}" />
+                                <Label 
+                                    Text="https://github.com/company/automation-tools.git"
+                                    FontSize="14"
+                                    TextColor="{DynamicResource Outline}" />
+                                <StackLayout Orientation="Horizontal" Spacing="15">
+                                    <Label 
+                                        Text="⚠ Connection Error"
+                                        FontSize="12"
+                                        TextColor="{DynamicResource Error}" />
+                                    <Label 
+                                        Text="Last sync: 3 days ago"
+                                        FontSize="12"
+                                        TextColor="{DynamicResource Outline}" />
+                                    <Label 
+                                        Text="8 scripts"
+                                        FontSize="12"
+                                        TextColor="{DynamicResource Outline}" />
+                                </StackLayout>
+                            </StackLayout>
+                            
+                            <!-- Actions -->
+                            <StackLayout Grid.Column="2" Orientation="Horizontal" Spacing="5">
+                                <material:Button 
+                                    Icon="{x:Static m:MaterialIcons.Sync}"
+                                    Style="{DynamicResource IconButtonStyle}"
+                                    Command="{Binding SyncRepositoryCommand}" />
+                                <material:Button 
+                                    Icon="{x:Static m:MaterialIcons.Settings}"
+                                    Style="{DynamicResource IconButtonStyle}"
+                                    Command="{Binding RepositorySettingsCommand}" />
+                            </StackLayout>
+                        </Grid>
+                    </StackLayout>
+                </material:CardView>
+
+                <!-- Repository Card 3 -->
+                <material:CardView BackgroundColor="{DynamicResource SurfaceContainer}" CornerRadius="12">
+                    <StackLayout Padding="20" Spacing="10">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="15">
+                            
+                            <!-- Status Indicator -->
+                            <Ellipse Grid.Column="0" 
+                                Fill="{DynamicResource Secondary}" 
+                                WidthRequest="12" 
+                                HeightRequest="12"
+                                VerticalOptions="Center" />
+                            
+                            <!-- Repository Info -->
+                            <StackLayout Grid.Column="1" Spacing="5">
+                                <Label 
+                                    Text="Development-Scripts"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource OnSurface}" />
+                                <Label 
+                                    Text="https://github.com/company/dev-scripts.git"
+                                    FontSize="14"
+                                    TextColor="{DynamicResource Outline}" />
+                                <StackLayout Orientation="Horizontal" Spacing="15">
+                                    <Label 
+                                        Text="⏳ Syncing..."
+                                        FontSize="12"
+                                        TextColor="{DynamicResource Secondary}" />
+                                    <Label 
+                                        Text="Started: 2 minutes ago"
+                                        FontSize="12"
+                                        TextColor="{DynamicResource Outline}" />
+                                    <Label 
+                                        Text="12 scripts"
+                                        FontSize="12"
+                                        TextColor="{DynamicResource Outline}" />
+                                </StackLayout>
+                            </StackLayout>
+                            
+                            <!-- Actions -->
+                            <StackLayout Grid.Column="2" Orientation="Horizontal" Spacing="5">
+                                <material:Button 
+                                    Icon="{x:Static m:MaterialIcons.Stop}"
+                                    Style="{DynamicResource IconButtonStyle}"
+                                    Command="{Binding StopSyncCommand}" />
+                                <material:Button 
+                                    Icon="{x:Static m:MaterialIcons.Settings}"
+                                    Style="{DynamicResource IconButtonStyle}"
+                                    Command="{Binding RepositorySettingsCommand}" />
+                            </StackLayout>
+                        </Grid>
+                    </StackLayout>
+                </material:CardView>
+
+                <!-- Empty State -->
+                <material:CardView BackgroundColor="{DynamicResource SurfaceContainer}" CornerRadius="12" IsVisible="False">
+                    <StackLayout Padding="40" Spacing="15" HorizontalOptions="Center">
+                        <Label 
+                            Text="{x:Static m:MaterialIcons.FolderOpen}"
+                            FontFamily="MaterialRegular"
+                            FontSize="48"
+                            TextColor="{DynamicResource Outline}"
+                            HorizontalOptions="Center" />
+                        <Label 
+                            Text="No Repositories"
+                            FontSize="20"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource OnSurface}"
+                            HorizontalOptions="Center" />
+                        <Label 
+                            Text="Connect your Git repositories to manage scripts"
+                            FontSize="14"
+                            TextColor="{DynamicResource Outline}"
+                            HorizontalOptions="Center"
+                            HorizontalTextAlignment="Center" />
+                        <material:Button 
+                            Text="Add Repository"
+                            Icon="{x:Static m:MaterialIcons.Add}"
+                            Style="{DynamicResource FilledButtonStyle}"
+                            Command="{Binding AddRepositoryCommand}"
+                            HorizontalOptions="Center"
+                            Margin="0,10,0,0" />
+                    </StackLayout>
+                </material:CardView>
+
+            </StackLayout>
+        </ScrollView>
+
+    </Grid>
+
+</ContentPage>

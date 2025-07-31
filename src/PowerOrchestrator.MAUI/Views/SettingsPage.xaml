@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="PowerOrchestrator.MAUI.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:material="http://schemas.enisn-projects.io/dotnet/maui/uraniumui/material"
+    xmlns:m="clr-namespace:UraniumUI.Icons.MaterialIcons;assembly=UraniumUI.Icons.MaterialIcons"
+    xmlns:viewmodels="clr-namespace:PowerOrchestrator.MAUI.ViewModels"
+    x:DataType="viewmodels:SettingsViewModel"
+    Title="{Binding Title}"
+    BackgroundColor="{DynamicResource Surface}">
+
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="20">
+            
+            <!-- Application Settings -->
+            <material:CardView BackgroundColor="{DynamicResource SurfaceContainer}" CornerRadius="12">
+                <StackLayout Padding="20" Spacing="15">
+                    <Label 
+                        Text="Application Settings"
+                        FontSize="18"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource OnSurface}" />
+                    
+                    <StackLayout Spacing="10">
+                        <material:CheckBox 
+                            Text="Enable notifications"
+                            IsChecked="True"
+                            TextColor="{DynamicResource OnSurface}" />
+                        <material:CheckBox 
+                            Text="Auto-sync repositories"
+                            IsChecked="True"
+                            TextColor="{DynamicResource OnSurface}" />
+                        <material:CheckBox 
+                            Text="Dark mode"
+                            IsChecked="False"
+                            TextColor="{DynamicResource OnSurface}" />
+                    </StackLayout>
+                </StackLayout>
+            </material:CardView>
+
+            <!-- Server Configuration -->
+            <material:CardView BackgroundColor="{DynamicResource SurfaceContainer}" CornerRadius="12">
+                <StackLayout Padding="20" Spacing="15">
+                    <Label 
+                        Text="Server Configuration"
+                        FontSize="18"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource OnSurface}" />
+                    
+                    <material:TextField
+                        Title="API Server URL"
+                        Text="https://api.powerorchestrator.local"
+                        Style="{DynamicResource OutlinedTextFieldStyle}" />
+                        
+                    <material:TextField
+                        Title="Connection Timeout (seconds)"
+                        Text="30"
+                        Keyboard="Numeric"
+                        Style="{DynamicResource OutlinedTextFieldStyle}" />
+                </StackLayout>
+            </material:CardView>
+
+            <!-- About -->
+            <material:CardView BackgroundColor="{DynamicResource SurfaceContainer}" CornerRadius="12">
+                <StackLayout Padding="20" Spacing="15">
+                    <Label 
+                        Text="About PowerOrchestrator"
+                        FontSize="18"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource OnSurface}" />
+                    
+                    <StackLayout Spacing="5">
+                        <Label 
+                            Text="Version: 1.0.0"
+                            FontSize="14"
+                            TextColor="{DynamicResource OnSurface}" />
+                        <Label 
+                            Text="Build: 2025.01.01.001"
+                            FontSize="14"
+                            TextColor="{DynamicResource Outline}" />
+                        <Label 
+                            Text="© 2025 PowerOrchestrator Team"
+                            FontSize="14"
+                            TextColor="{DynamicResource Outline}" />
+                    </StackLayout>
+                </StackLayout>
+            </material:CardView>
+
+            <!-- Actions -->
+            <StackLayout Spacing="10">
+                <material:Button 
+                    Text="Export Settings"
+                    Icon="{x:Static m:MaterialIcons.Download}"
+                    Style="{DynamicResource OutlinedButtonStyle}" />
+                
+                <material:Button 
+                    Text="Reset to Defaults"
+                    Icon="{x:Static m:MaterialIcons.RestartAlt}"
+                    Style="{DynamicResource OutlinedButtonStyle}" />
+            </StackLayout>
+
+        </StackLayout>
+    </ScrollView>
+
+</ContentPage>
