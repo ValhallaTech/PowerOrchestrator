@@ -1,23 +1,29 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using FluentAssertions;
 using System.Net.Http.Headers;
 using System.Text;
 using Newtonsoft.Json;
 using PowerOrchestrator.MAUI.Services;
 using PowerOrchestrator.MAUI.Models;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using PowerOrchestrator.API.Modules;
 
 namespace PowerOrchestrator.IntegrationTests.MAUI;
 
 /// <summary>
-/// Integration tests for MAUI API communication using WebApplicationFactory patterns
+/// Integration tests for MAUI API communication using Autofac container resolution
 /// </summary>
-public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>, IDisposable
 {
     private readonly WebApplicationFactory<Program> _factory;
     private readonly HttpClient _client;
+    private readonly IContainer _container;
+    private readonly ILifetimeScope _scope;
 
     public ApiIntegrationTests(WebApplicationFactory<Program> factory)
     {
@@ -25,12 +31,40 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
         {
             builder.ConfigureServices(services =>
             {
-                // Configure test-specific services if needed
+                // Configure test-specific services for web host compatibility
                 services.AddLogging(logging => logging.AddConsole());
             });
         });
 
         _client = _factory.CreateClient();
+        
+        // Set up Autofac container for service resolution (matching production architecture)
+        var builder = new ContainerBuilder();
+        
+        // Configure test configuration
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=PowerOrchestratorTest;Username=test;Password=test",
+                ["ConnectionStrings:Redis"] = "localhost:6379"
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddLogging(logging => logging.AddConsole());
+        services.AddHttpClient();
+        
+        // Populate Autofac with framework services
+        builder.Populate(services);
+        
+        // Register MAUI services using Autofac (production architecture)
+        builder.RegisterType<ApiService>().As<IApiService>().InstancePerLifetimeScope();
+        builder.RegisterType<OfflineService>().As<IOfflineService>().InstancePerLifetimeScope();
+        builder.RegisterType<PerformanceMonitoringService>().As<IPerformanceMonitoringService>().InstancePerLifetimeScope();
+        
+        _container = builder.Build();
+        _scope = _container.BeginLifetimeScope();
     }
 
     [Fact]
@@ -224,7 +258,7 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 
     private ApiService CreateApiService(IAuthenticationService? authService = null)
     {
-        var logger = _factory.Services.GetRequiredService<ILogger<ApiService>>();
+        var logger = _scope.Resolve<ILogger<ApiService>>();
         var httpClient = _factory.CreateClient();
         
         return new ApiService(httpClient, logger, authService);
@@ -232,7 +266,7 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 
     private OfflineService CreateOfflineService()
     {
-        var logger = _factory.Services.GetRequiredService<ILogger<OfflineService>>();
+        var logger = _scope.Resolve<ILogger<OfflineService>>();
         var settingsService = new TestSettingsService();
         
         return new OfflineService(logger, settingsService);
@@ -240,9 +274,16 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 
     private PerformanceMonitoringService CreatePerformanceMonitoringService()
     {
-        var logger = _factory.Services.GetRequiredService<ILogger<PerformanceMonitoringService>>();
+        var logger = _scope.Resolve<ILogger<PerformanceMonitoringService>>();
         
         return new PerformanceMonitoringService(logger);
+    }
+
+    public void Dispose()
+    {
+        _scope?.Dispose();
+        _container?.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
 
