@@ -26,7 +26,6 @@
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
     <PackageReference Include="Octokit" />
     <PackageReference Include="System.Management.Automation" />
-    <PackageReference Include="Microsoft.PowerShell.SDK" />
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection" />
   </ItemGroup>

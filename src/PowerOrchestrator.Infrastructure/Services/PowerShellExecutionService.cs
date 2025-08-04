@@ -288,9 +288,8 @@ public class PowerShellExecutionService : IPowerShellExecutionService
             // Notify status change
             await _notificationService.NotifyExecutionStatusChanged(executionId, ExecutionStatus.Running, cancellationToken);
 
-            // Create PowerShell runspace with constraints
-            var runspaceConfig = RunspaceConfiguration.Create();
-            using var runspace = RunspaceFactory.CreateRunspace(runspaceConfig);
+            // Create PowerShell runspace
+            using var runspace = RunspaceFactory.CreateRunspace();
             
             // Set execution policy and constraints
             runspace.Open();

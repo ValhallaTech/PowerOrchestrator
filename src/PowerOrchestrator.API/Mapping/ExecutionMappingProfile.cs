@@ -1,6 +1,7 @@
 using AutoMapper;
 using PowerOrchestrator.API.DTOs;
 using PowerOrchestrator.Domain.Entities;
+using PowerOrchestrator.Domain.ValueObjects;
 
 namespace PowerOrchestrator.API.Mapping;
 
@@ -21,5 +22,8 @@ public class ExecutionMappingProfile : Profile
             .ForMember(dest => dest.StartedAt, opt => opt.MapFrom(src => src.StartedAt ?? DateTime.MinValue))
             .ForMember(dest => dest.Environment, opt => opt.MapFrom(src => src.ExecutedOn ?? string.Empty))
             .ForMember(dest => dest.TriggeredBy, opt => opt.MapFrom(src => src.CreatedBy ?? string.Empty));
+
+        // ExecutionMetrics to ExecutionMetricsDto
+        CreateMap<ExecutionMetrics, ExecutionMetricsDto>();
     }
 }
