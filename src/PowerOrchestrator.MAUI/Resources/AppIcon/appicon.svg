@@ -1,0 +1,6 @@
+<svg width="456" height="456" viewBox="0 0 456 456" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="456" height="456" rx="72" fill="#512BD4"/>
+    <path d="M228 84L352 156V300L228 372L104 300V156L228 84Z" fill="white"/>
+    <path d="M228 124L320 172V284L228 332L136 284V172L228 124Z" fill="#512BD4"/>
+    <text x="228" y="240" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="Arial, sans-serif" font-size="48" font-weight="bold">⚡</text>
+</svg>

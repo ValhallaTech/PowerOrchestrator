@@ -1,0 +1,5 @@
+<svg width="432" height="432" viewBox="0 0 432 432" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M216 40L340 112V256L216 328L92 256V112L216 40Z" fill="white"/>
+    <path d="M216 80L304 128V240L216 288L128 240V128L216 80Z" fill="#512BD4"/>
+    <text x="216" y="200" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="Arial, sans-serif" font-size="64" font-weight="bold">⚡</text>
+</svg>

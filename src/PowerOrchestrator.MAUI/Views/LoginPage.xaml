@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="PowerOrchestrator.MAUI.Views.LoginPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:material="http://schemas.enisn-projects.io/dotnet/maui/uraniumui/material"
+    xmlns:m="clr-namespace:UraniumUI.Icons.MaterialIcons;assembly=UraniumUI.Icons.MaterialIcons"
+    xmlns:viewmodels="clr-namespace:PowerOrchestrator.MAUI.ViewModels"
+    x:DataType="viewmodels:LoginViewModel"
+    Title="Login"
+    BackgroundColor="{DynamicResource Surface}"
+    Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <Grid RowDefinitions="Auto,*,Auto" Padding="30" RowSpacing="20">
+            
+            <!-- Logo and Branding -->
+            <StackLayout Grid.Row="0" Spacing="20" HorizontalOptions="Center" VerticalOptions="Center" Margin="0,40,0,20">
+                
+                <!-- App Icon -->
+                <Ellipse 
+                    Fill="{DynamicResource Primary}"
+                    WidthRequest="80"
+                    HeightRequest="80"
+                    HorizontalOptions="Center" />
+                
+                <StackLayout Spacing="5" HorizontalOptions="Center">
+                    <Label 
+                        Text="⚡ PowerOrchestrator"
+                        FontSize="28"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource OnSurface}"
+                        HorizontalOptions="Center" />
+                    <Label 
+                        Text="Secure PowerShell Management"
+                        FontSize="16"
+                        TextColor="{DynamicResource Outline}"
+                        HorizontalOptions="Center" />
+                </StackLayout>
+                
+            </StackLayout>
+
+            <!-- Login Form -->
+            <material:CardView Grid.Row="1" BackgroundColor="{DynamicResource SurfaceContainer}" CornerRadius="16" Padding="0">
+                <StackLayout Padding="30" Spacing="20">
+                    
+                    <Label 
+                        Text="Welcome Back"
+                        FontSize="24"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource OnSurface}"
+                        HorizontalOptions="Center"
+                        Margin="0,0,0,10" />
+
+                    <!-- Username Field -->
+                    <material:TextField
+                        Title="Username"
+                        Icon="{x:Static m:MaterialIcons.Person}"
+                        Text="{Binding Username}"
+                        Keyboard="Default"
+                        ReturnType="Next"
+                        Style="{DynamicResource FilledTextFieldStyle}"
+                        BackgroundColor="{DynamicResource SurfaceContainerHigh}"
+                        SemanticProperties.Description="Enter your username to log in"
+                        SemanticProperties.Hint="Username input field"
+                        AutomationProperties.Name="Username"
+                        AutomationProperties.HelpText="Enter your username to log in" />
+
+                    <!-- Password Field -->
+                    <material:TextField
+                        Title="Password"
+                        Icon="{x:Static m:MaterialIcons.Lock}"
+                        Text="{Binding Password}"
+                        IsPassword="True"
+                        ReturnType="Done"
+                        Style="{DynamicResource FilledTextFieldStyle}"
+                        BackgroundColor="{DynamicResource SurfaceContainerHigh}"
+                        SemanticProperties.Description="Enter your password to log in"
+                        SemanticProperties.Hint="Password input field"
+                        AutomationProperties.Name="Password"
+                        AutomationProperties.HelpText="Enter your password to log in" />
+
+                    <!-- Remember Me -->
+                    <material:CheckBox 
+                        Text="Remember me"
+                        IsChecked="{Binding RememberMe}"
+                        TextColor="{DynamicResource OnSurface}"
+                        CheckedColor="{DynamicResource Primary}"
+                        SemanticProperties.Description="Check to remember login credentials"
+                        SemanticProperties.Hint="Remember me checkbox"
+                        AutomationProperties.Name="Remember Me"
+                        AutomationProperties.HelpText="Check this to remember your login credentials" />
+
+                    <!-- Login Button -->
+                    <material:Button 
+                        Text="Sign In"
+                        Icon="{x:Static m:MaterialIcons.Login}"
+                        Command="{Binding LoginCommand}"
+                        Style="{DynamicResource FilledButtonStyle}"
+                        IsLoading="{Binding IsBusy}"
+                        Margin="0,10,0,0"
+                        SemanticProperties.Description="Sign in to PowerOrchestrator"
+                        SemanticProperties.Hint="Login button"
+                        AutomationProperties.Name="Sign In"
+                        AutomationProperties.HelpText="Tap to sign in to PowerOrchestrator" />
+
+                    <!-- Forgot Password Link -->
+                    <Label 
+                        Text="Forgot your password?"
+                        FontSize="14"
+                        TextColor="{DynamicResource Primary}"
+                        HorizontalOptions="Center"
+                        Margin="0,10,0,0">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ForgotPasswordCommand}" />
+                        </Label.GestureRecognizers>
+                    </Label>
+
+                </StackLayout>
+            </material:CardView>
+
+            <!-- Register Link -->
+            <StackLayout Grid.Row="2" Orientation="Horizontal" HorizontalOptions="Center" Spacing="5" Margin="0,20,0,0">
+                <Label 
+                    Text="Don't have an account?"
+                    FontSize="14"
+                    TextColor="{DynamicResource OnSurface}" />
+                <Label 
+                    Text="Sign up"
+                    FontSize="14"
+                    FontAttributes="Bold"
+                    TextColor="{DynamicResource Primary}">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding NavigateToRegisterCommand}" />
+                    </Label.GestureRecognizers>
+                </Label>
+            </StackLayout>
+
+        </Grid>
+    </ScrollView>
+
+</ContentPage>

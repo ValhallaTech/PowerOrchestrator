@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="PowerOrchestrator.MAUI.Views.ExecutionDetailPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:material="http://schemas.enisn-projects.io/dotnet/maui/uraniumui/material"
+    xmlns:m="clr-namespace:UraniumUI.Icons.MaterialIcons;assembly=UraniumUI.Icons.MaterialIcons"
+    Title="Execution Details"
+    BackgroundColor="{DynamicResource Surface}">
+
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="20">
+            
+            <!-- Header -->
+            <material:CardView BackgroundColor="{DynamicResource PrimaryContainer}" CornerRadius="12">
+                <StackLayout Padding="20" Spacing="10">
+                    <Label 
+                        Text="▶️ Execution Details" 
+                        FontSize="24" 
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource OnPrimaryContainer}" 
+                        HorizontalOptions="Center" />
+                </StackLayout>
+            </material:CardView>
+
+            <!-- Placeholder content -->
+            <material:CardView CornerRadius="12">
+                <StackLayout Padding="20" Spacing="15">
+                    <Label 
+                        Text="Execution Details"
+                        Style="{StaticResource TitleMedium}" />
+                    <Label 
+                        Text="This page will contain detailed script execution logs and results."
+                        Style="{StaticResource BodyMedium}" />
+                </StackLayout>
+            </material:CardView>
+
+        </StackLayout>
+    </ScrollView>
+
+</ContentPage>

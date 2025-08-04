@@ -70,9 +70,12 @@ jobs:
 
     - name: Create test database and role
       run: |
-        psql -U powerorch -h localhost -d powerorchestrator_test -c "CREATE DATABASE powerorchestrator_dev;"
-        psql -U powerorch -h localhost -d powerorchestrator_test -c "CREATE ROLE root WITH LOGIN PASSWORD 'password';"
-        psql -U powerorch -h localhost -d powerorchestrator_dev -f scripts/database/init.sql
+        # Create the test database if it doesn't exist (it should already exist from postgres service)
+        psql -U powerorch -h localhost -d powerorchestrator_test -c "SELECT 1;" || echo "Database already exists"
+        # Create root role for tests
+        psql -U powerorch -h localhost -d powerorchestrator_test -c "CREATE ROLE root WITH LOGIN PASSWORD 'password';" || echo "Role already exists"
+        # Initialize the test database schema
+        psql -U powerorch -h localhost -d powerorchestrator_test -f scripts/database/init.sql
       env:
         PGPASSWORD: PowerOrch2025!
 

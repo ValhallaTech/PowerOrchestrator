@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- Base Styles -->
+    <Style TargetType="Page" ApplyToDerivedTypes="True">
+        <Setter Property="Shell.BackgroundColor" Value="{DynamicResource Primary}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource Background}" />
+    </Style>
+
+    <Style TargetType="NavigationPage">
+        <Setter Property="BarBackgroundColor" Value="{DynamicResource Primary}" />
+        <Setter Property="BarTextColor" Value="{DynamicResource OnPrimary}" />
+    </Style>
+
+    <!-- Button Styles -->
+    <Style x:Key="PrimaryButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{DynamicResource Primary}" />
+        <Setter Property="TextColor" Value="{DynamicResource OnPrimary}" />
+        <Setter Property="CornerRadius" Value="24" />
+        <Setter Property="HeightRequest" Value="48" />
+        <Setter Property="MinimumWidthRequest" Value="64" />
+        <Setter Property="Padding" Value="24,0" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontAttributes" Value="Bold" />
+    </Style>
+
+    <Style x:Key="SecondaryButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{DynamicResource SecondaryContainer}" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSecondaryContainer}" />
+        <Setter Property="CornerRadius" Value="24" />
+        <Setter Property="HeightRequest" Value="48" />
+        <Setter Property="MinimumWidthRequest" Value="64" />
+        <Setter Property="Padding" Value="24,0" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontAttributes" Value="Bold" />
+    </Style>
+
+    <Style x:Key="OutlinedButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{DynamicResource Primary}" />
+        <Setter Property="BorderColor" Value="{DynamicResource Outline}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="CornerRadius" Value="24" />
+        <Setter Property="HeightRequest" Value="48" />
+        <Setter Property="MinimumWidthRequest" Value="64" />
+        <Setter Property="Padding" Value="24,0" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontAttributes" Value="Bold" />
+    </Style>
+
+    <Style x:Key="TextButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{DynamicResource Primary}" />
+        <Setter Property="HeightRequest" Value="48" />
+        <Setter Property="MinimumWidthRequest" Value="48" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontAttributes" Value="Bold" />
+    </Style>
+
+    <!-- Label Styles -->
+    <Style x:Key="HeadlineLarge" TargetType="Label">
+        <Setter Property="FontSize" Value="32" />
+        <Setter Property="FontAttributes" Value="None" />
+        <Setter Property="LineHeight" Value="40" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurface}" />
+    </Style>
+
+    <Style x:Key="HeadlineMedium" TargetType="Label">
+        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontAttributes" Value="None" />
+        <Setter Property="LineHeight" Value="36" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurface}" />
+    </Style>
+
+    <Style x:Key="HeadlineSmall" TargetType="Label">
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontAttributes" Value="None" />
+        <Setter Property="LineHeight" Value="32" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurface}" />
+    </Style>
+
+    <Style x:Key="TitleLarge" TargetType="Label">
+        <Setter Property="FontSize" Value="22" />
+        <Setter Property="FontAttributes" Value="None" />
+        <Setter Property="LineHeight" Value="28" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurface}" />
+    </Style>
+
+    <Style x:Key="TitleMedium" TargetType="Label">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="LineHeight" Value="24" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurface}" />
+    </Style>
+
+    <Style x:Key="TitleSmall" TargetType="Label">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="LineHeight" Value="20" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurfaceVariant}" />
+    </Style>
+
+    <Style x:Key="BodyLarge" TargetType="Label">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontAttributes" Value="None" />
+        <Setter Property="LineHeight" Value="24" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurface}" />
+    </Style>
+
+    <Style x:Key="BodyMedium" TargetType="Label">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontAttributes" Value="None" />
+        <Setter Property="LineHeight" Value="20" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurface}" />
+    </Style>
+
+    <Style x:Key="BodySmall" TargetType="Label">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontAttributes" Value="None" />
+        <Setter Property="LineHeight" Value="16" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurfaceVariant}" />
+    </Style>
+
+    <!-- Entry Styles -->
+    <Style x:Key="MaterialEntry" TargetType="Entry">
+        <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceVariant}" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurface}" />
+        <Setter Property="PlaceholderColor" Value="{DynamicResource OnSurfaceVariant}" />
+        <Setter Property="MinimumHeightRequest" Value="56" />
+        <Setter Property="Margin" Value="0,8" />
+    </Style>
+
+    <!-- Card Style -->
+    <Style x:Key="MaterialCard" TargetType="Frame">
+        <Setter Property="BackgroundColor" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderColor" Value="Transparent" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="HasShadow" Value="True" />
+        <Setter Property="Padding" Value="16" />
+        <Setter Property="Margin" Value="8" />
+    </Style>
+
+    <!-- List Item Style -->
+    <Style x:Key="ListItem" TargetType="Grid">
+        <Setter Property="BackgroundColor" Value="{DynamicResource Surface}" />
+        <Setter Property="Padding" Value="16,12" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
+    </Style>
+
+    <!-- Status Indicator Styles -->
+    <Style x:Key="SuccessIndicator" TargetType="Ellipse">
+        <Setter Property="Fill" Value="{DynamicResource Success}" />
+        <Setter Property="WidthRequest" Value="8" />
+        <Setter Property="HeightRequest" Value="8" />
+    </Style>
+
+    <Style x:Key="ErrorIndicator" TargetType="Ellipse">
+        <Setter Property="Fill" Value="{DynamicResource Error}" />
+        <Setter Property="WidthRequest" Value="8" />
+        <Setter Property="HeightRequest" Value="8" />
+    </Style>
+
+    <Style x:Key="WarningIndicator" TargetType="Ellipse">
+        <Setter Property="Fill" Value="{DynamicResource Warning}" />
+        <Setter Property="WidthRequest" Value="8" />
+        <Setter Property="HeightRequest" Value="8" />
+    </Style>
+
+</ResourceDictionary>
