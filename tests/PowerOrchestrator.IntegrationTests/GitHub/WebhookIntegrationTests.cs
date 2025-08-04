@@ -27,7 +27,7 @@ public class WebhookTestApplicationFactory : WebApplicationFactory<Program>
                 ["GitHub:WebhookEndpointBaseUrl"] = "https://localhost:5001",
                 ["GitHub:RateLimit:RequestsPerHour"] = "5000",
                 ["GitHub:RateLimit:SafetyThreshold"] = "0.8",
-                ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Port=5432;Database=powerorchestrator_test;Username=postgres;Password=postgres",
+                ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Port=5432;Database=powerorchestrator_test;Username=powerorch;Password=PowerOrch2025!",
                 ["ConnectionStrings:Redis"] = "localhost:6379"
             };
             

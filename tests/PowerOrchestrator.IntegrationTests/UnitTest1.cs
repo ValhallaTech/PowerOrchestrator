@@ -9,7 +9,7 @@ namespace PowerOrchestrator.IntegrationTests;
 /// </summary>
 public class DevelopmentEnvironmentTests : IDisposable
 {
-    private readonly string _postgresConnection = "Host=localhost;Port=5432;Database=powerorchestrator_dev;Username=powerorch;Password=PowerOrch2025!";
+    private readonly string _postgresConnection = "Host=localhost;Port=5432;Database=powerorchestrator_test;Username=powerorch;Password=PowerOrch2025!";
     private readonly string _redisConnection = "localhost:6379,password=PowerOrchRedis2025!";
 
     [Fact]

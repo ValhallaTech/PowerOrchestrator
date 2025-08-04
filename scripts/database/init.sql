@@ -171,6 +171,11 @@ CREATE TABLE IF NOT EXISTS powerorchestrator.health_checks (
 );
 
 -- Create indexes for performance
+-- Add unique constraints required for ON CONFLICT clauses
+ALTER TABLE powerorchestrator.users ADD CONSTRAINT IF NOT EXISTS uq_users_normalized_email UNIQUE (normalized_email);
+ALTER TABLE powerorchestrator.users ADD CONSTRAINT IF NOT EXISTS uq_users_normalized_user_name UNIQUE (normalized_user_name);
+ALTER TABLE powerorchestrator.roles ADD CONSTRAINT IF NOT EXISTS uq_roles_normalized_name UNIQUE (normalized_name);
+
 CREATE INDEX IF NOT EXISTS idx_users_email ON powerorchestrator.users(email);
 CREATE INDEX IF NOT EXISTS idx_users_normalized_email ON powerorchestrator.users(normalized_email);
 CREATE INDEX IF NOT EXISTS idx_users_normalized_user_name ON powerorchestrator.users(normalized_user_name);
