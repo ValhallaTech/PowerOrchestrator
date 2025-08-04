@@ -123,6 +123,7 @@ CREATE TABLE IF NOT EXISTS powerorchestrator.scripts (
     status powerorchestrator.script_status NOT NULL DEFAULT 'draft',
     is_active BOOLEAN NOT NULL DEFAULT true,
     timeout_seconds INTEGER NOT NULL DEFAULT 300,
+    parameters_schema JSONB,
     tags JSONB,
     metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -130,6 +131,17 @@ CREATE TABLE IF NOT EXISTS powerorchestrator.scripts (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_by UUID NOT NULL,
     CONSTRAINT scripts_name_version_unique UNIQUE (name, version)
+);
+
+-- Repository scripts junction table
+CREATE TABLE IF NOT EXISTS powerorchestrator.repository_scripts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    repository_id UUID NOT NULL REFERENCES powerorchestrator.github_repositories(id) ON DELETE CASCADE,
+    script_id UUID NOT NULL REFERENCES powerorchestrator.scripts(id) ON DELETE CASCADE,
+    relative_path VARCHAR(500) NOT NULL,
+    discovered_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT repository_scripts_unique UNIQUE (repository_id, script_id, relative_path)
 );
 
 -- Executions table
@@ -171,10 +183,48 @@ CREATE TABLE IF NOT EXISTS powerorchestrator.health_checks (
 );
 
 -- Create indexes for performance
--- Add unique constraints required for ON CONFLICT clauses
-ALTER TABLE powerorchestrator.users ADD CONSTRAINT IF NOT EXISTS uq_users_normalized_email UNIQUE (normalized_email);
-ALTER TABLE powerorchestrator.users ADD CONSTRAINT IF NOT EXISTS uq_users_normalized_user_name UNIQUE (normalized_user_name);
-ALTER TABLE powerorchestrator.roles ADD CONSTRAINT IF NOT EXISTS uq_roles_normalized_name UNIQUE (normalized_name);
+-- Add unique constraints required for ON CONFLICT clauses using proper PostgreSQL syntax
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_name = 'uq_users_normalized_email'
+        AND table_name = 'users'
+        AND table_schema = 'powerorchestrator'
+    ) THEN
+        ALTER TABLE powerorchestrator.users ADD CONSTRAINT uq_users_normalized_email UNIQUE (normalized_email);
+    END IF;
+END
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_name = 'uq_users_normalized_user_name'
+        AND table_name = 'users'
+        AND table_schema = 'powerorchestrator'
+    ) THEN
+        ALTER TABLE powerorchestrator.users ADD CONSTRAINT uq_users_normalized_user_name UNIQUE (normalized_user_name);
+    END IF;
+END
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_name = 'uq_roles_normalized_name'
+        AND table_name = 'roles'
+        AND table_schema = 'powerorchestrator'
+    ) THEN
+        ALTER TABLE powerorchestrator.roles ADD CONSTRAINT uq_roles_normalized_name UNIQUE (normalized_name);
+    END IF;
+END
+$$;
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON powerorchestrator.users(email);
 CREATE INDEX IF NOT EXISTS idx_users_normalized_email ON powerorchestrator.users(normalized_email);
@@ -195,6 +245,10 @@ CREATE INDEX IF NOT EXISTS idx_executions_script_id ON powerorchestrator.executi
 CREATE INDEX IF NOT EXISTS idx_executions_status ON powerorchestrator.executions(status);
 CREATE INDEX IF NOT EXISTS idx_executions_created_at ON powerorchestrator.executions(created_at);
 CREATE INDEX IF NOT EXISTS idx_executions_completed_at ON powerorchestrator.executions(completed_at);
+
+CREATE INDEX IF NOT EXISTS idx_repository_scripts_repository_id ON powerorchestrator.repository_scripts(repository_id);
+CREATE INDEX IF NOT EXISTS idx_repository_scripts_script_id ON powerorchestrator.repository_scripts(script_id);
+CREATE INDEX IF NOT EXISTS idx_repository_scripts_path ON powerorchestrator.repository_scripts(relative_path);
 
 CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON powerorchestrator.audit_logs(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON powerorchestrator.audit_logs(timestamp);
