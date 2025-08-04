@@ -9,7 +9,7 @@ using System.Diagnostics;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Text;
-using System.Text.Json;
+using Newtonsoft.Json;
 
 namespace PowerOrchestrator.Infrastructure.Services;
 
@@ -79,7 +79,7 @@ public class PowerShellExecutionService : IPowerShellExecutionService
             Id = Guid.NewGuid(),
             ScriptId = Guid.Empty, // Will be set if we have a script ID
             Status = ExecutionStatus.Pending,
-            Parameters = parameters != null ? JsonSerializer.Serialize(parameters) : null,
+            Parameters = parameters != null ? JsonConvert.SerializeObject(parameters) : null,
             CreatedAt = DateTime.UtcNow,
             ExecutedOn = Environment.MachineName,
             PowerShellVersion = GetPowerShellVersion()
@@ -231,20 +231,29 @@ public class PowerShellExecutionService : IPowerShellExecutionService
         {
             try
             {
-                var additionalData = JsonSerializer.Deserialize<Dictionary<string, object>>(execution.Metadata);
+                var additionalData = JsonConvert.DeserializeObject<Dictionary<string, object>>(execution.Metadata);
                 if (additionalData != null)
                 {
-                    if (additionalData.TryGetValue("PeakMemoryUsage", out var memoryUsage) && memoryUsage is JsonElement element && element.ValueKind == JsonValueKind.Number)
+                    if (additionalData.TryGetValue("PeakMemoryUsage", out var memoryUsage) && memoryUsage != null)
                     {
-                        metrics.PeakMemoryUsage = element.GetInt64();
+                        if (long.TryParse(memoryUsage.ToString(), out var memoryValue))
+                        {
+                            metrics.PeakMemoryUsage = memoryValue;
+                        }
                     }
-                    if (additionalData.TryGetValue("AverageCpuUsage", out var cpuUsage) && cpuUsage is JsonElement cpuElement && cpuElement.ValueKind == JsonValueKind.Number)
+                    if (additionalData.TryGetValue("AverageCpuUsage", out var cpuUsage) && cpuUsage != null)
                     {
-                        metrics.AverageCpuUsage = cpuElement.GetDouble();
+                        if (double.TryParse(cpuUsage.ToString(), out var cpuValue))
+                        {
+                            metrics.AverageCpuUsage = cpuValue;
+                        }
                     }
-                    if (additionalData.TryGetValue("CommandCount", out var commandCount) && commandCount is JsonElement cmdElement && cmdElement.ValueKind == JsonValueKind.Number)
+                    if (additionalData.TryGetValue("CommandCount", out var commandCount) && commandCount != null)
                     {
-                        metrics.CommandCount = cmdElement.GetInt32();
+                        if (int.TryParse(commandCount.ToString(), out var cmdValue))
+                        {
+                            metrics.CommandCount = cmdValue;
+                        }
                     }
                 }
             }
@@ -363,7 +372,7 @@ public class PowerShellExecutionService : IPowerShellExecutionService
                 AverageCpuUsage = 0.0, // Would need more sophisticated monitoring
                 CommandCount = results.Count
             };
-            execution.Metadata = JsonSerializer.Serialize(metrics);
+            execution.Metadata = JsonConvert.SerializeObject(metrics);
 
             _unitOfWork.Executions.Update(execution);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
