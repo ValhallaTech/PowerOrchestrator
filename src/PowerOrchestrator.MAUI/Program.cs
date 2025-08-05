@@ -172,7 +172,7 @@ public static class Program
         containerBuilder.RegisterType<DialogService>().As<IDialogService>().SingleInstance();
         
         // Register Phase 3F services - Advanced Features and Cross-Platform
-        containerBuilder.RegisterType<PerformanceMonitoringService>().As<IPerformanceMonitoringService>().SingleInstance();
+        containerBuilder.RegisterType<PerformanceMonitoringService>().As<PowerOrchestrator.MAUI.Services.IPerformanceMonitoringService>().SingleInstance();
         containerBuilder.RegisterType<RealTimeService>().As<IRealTimeService>().SingleInstance();
         containerBuilder.RegisterType<PlatformService>().As<IPlatformService>().SingleInstance();
         containerBuilder.RegisterType<ResponsiveDesignService>().As<IResponsiveDesignService>().SingleInstance();

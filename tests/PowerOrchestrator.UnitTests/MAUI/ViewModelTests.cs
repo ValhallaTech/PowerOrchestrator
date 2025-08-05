@@ -5,6 +5,8 @@ using Moq;
 using PowerOrchestrator.MAUI.Models;
 using PowerOrchestrator.MAUI.Services;
 using PowerOrchestrator.MAUI.ViewModels;
+using MAUIPerformanceService = PowerOrchestrator.MAUI.Services.IPerformanceMonitoringService;
+using MAUIPerformanceServiceImpl = PowerOrchestrator.MAUI.Services.PerformanceMonitoringService;
 
 namespace PowerOrchestrator.UnitTests.MAUI;
 
@@ -20,7 +22,7 @@ public class ViewModelTests : IDisposable
     private readonly Mock<IAuthenticationService> _authenticationServiceMock;
     private readonly Mock<IAuthorizationService> _authorizationServiceMock;
     private readonly Mock<IOfflineService> _offlineServiceMock;
-    private readonly Mock<IPerformanceMonitoringService> _performanceMonitoringServiceMock;
+    private readonly Mock<MAUIPerformanceService> _performanceMonitoringServiceMock;
 
     public ViewModelTests()
     {
@@ -31,7 +33,7 @@ public class ViewModelTests : IDisposable
         _authenticationServiceMock = new Mock<IAuthenticationService>();
         _authorizationServiceMock = new Mock<IAuthorizationService>();
         _offlineServiceMock = new Mock<IOfflineService>();
-        _performanceMonitoringServiceMock = new Mock<IPerformanceMonitoringService>();
+        _performanceMonitoringServiceMock = new Mock<MAUIPerformanceService>();
 
         // Configure Autofac container
         var builder = new ContainerBuilder();
@@ -43,7 +45,7 @@ public class ViewModelTests : IDisposable
         builder.RegisterInstance(_authenticationServiceMock.Object).As<IAuthenticationService>();
         builder.RegisterInstance(_authorizationServiceMock.Object).As<IAuthorizationService>();
         builder.RegisterInstance(_offlineServiceMock.Object).As<IOfflineService>();
-        builder.RegisterInstance(_performanceMonitoringServiceMock.Object).As<IPerformanceMonitoringService>();
+        builder.RegisterInstance(_performanceMonitoringServiceMock.Object).As<MAUIPerformanceService>();
         builder.RegisterInstance(Mock.Of<AutoMapper.IMapper>()).As<AutoMapper.IMapper>();
 
         // Register logger factory
@@ -352,11 +354,11 @@ public class ServiceTests : IDisposable
         // Register mocks and services
         builder.RegisterInstance(_loggerMock.Object).As<ILogger<OfflineService>>();
         builder.RegisterInstance(_settingsServiceMock.Object).As<ISettingsService>();
-        builder.RegisterInstance(Mock.Of<ILogger<PerformanceMonitoringService>>()).As<ILogger<PerformanceMonitoringService>>();
+        builder.RegisterInstance(Mock.Of<ILogger<MAUIPerformanceServiceImpl>>()).As<ILogger<MAUIPerformanceServiceImpl>>();
 
         // Register services
         builder.RegisterType<OfflineService>().As<IOfflineService>();
-        builder.RegisterType<PerformanceMonitoringService>().As<IPerformanceMonitoringService>();
+        builder.RegisterType<MAUIPerformanceServiceImpl>().As<IMAUIPerformanceServiceImpl>();
 
         _container = builder.Build();
     }
@@ -373,10 +375,10 @@ public class ServiceTests : IDisposable
     }
 
     [Fact]
-    public void PerformanceMonitoringService_ShouldResolveFromContainer()
+    public void MAUIPerformanceServiceImpl_ShouldResolveFromContainer()
     {
         // Act
-        var service = _container.Resolve<IPerformanceMonitoringService>();
+        var service = _container.Resolve<IMAUIPerformanceServiceImpl>();
 
         // Assert
         service.Should().NotBeNull();
@@ -417,10 +419,10 @@ public class ServiceTests : IDisposable
     }
 
     [Fact]
-    public void PerformanceMonitoringService_StartTracking_ShouldReturnTracker()
+    public void MAUIPerformanceServiceImpl_StartTracking_ShouldReturnTracker()
     {
         // Arrange
-        var service = _container.Resolve<IPerformanceMonitoringService>();
+        var service = _container.Resolve<IMAUIPerformanceServiceImpl>();
 
         // Act
         using var tracker = service.StartTracking("test-operation", "Test");
@@ -431,10 +433,10 @@ public class ServiceTests : IDisposable
     }
 
     [Fact]
-    public void PerformanceMonitoringService_RecordMetric_ShouldNotThrow()
+    public void MAUIPerformanceServiceImpl_RecordMetric_ShouldNotThrow()
     {
         // Arrange
-        var service = _container.Resolve<IPerformanceMonitoringService>();
+        var service = _container.Resolve<IMAUIPerformanceServiceImpl>();
 
         // Act & Assert
         service.Invoking(s => s.RecordMetric("test-metric", 100.5, "ms"))
@@ -442,10 +444,10 @@ public class ServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task PerformanceMonitoringService_GetStatistics_ShouldReturnValidData()
+    public async Task MAUIPerformanceServiceImpl_GetStatistics_ShouldReturnValidData()
     {
         // Arrange
-        var service = _container.Resolve<IPerformanceMonitoringService>();
+        var service = _container.Resolve<IMAUIPerformanceServiceImpl>();
 
         // Record some metrics first
         service.RecordMetric("test-metric", 100);
@@ -464,7 +466,7 @@ public class ServiceTests : IDisposable
     public void PerformanceTracker_WithUsing_ShouldDisposeCorrectly()
     {
         // Arrange
-        var service = _container.Resolve<IPerformanceMonitoringService>();
+        var service = _container.Resolve<IMAUIPerformanceServiceImpl>();
 
         // Act & Assert
         var action = () =>

@@ -64,6 +64,21 @@ public class PowerOrchestratorDbContext : IdentityDbContext<User, Role, Guid>
     public DbSet<SecurityAuditLog> SecurityAuditLogs { get; set; } = null!;
 
     /// <summary>
+    /// Gets or sets the PerformanceMetrics DbSet
+    /// </summary>
+    public DbSet<PerformanceMetric> PerformanceMetrics { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the AlertConfigurations DbSet
+    /// </summary>
+    public DbSet<AlertConfiguration> AlertConfigurations { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the AlertInstances DbSet
+    /// </summary>
+    public DbSet<AlertInstance> AlertInstances { get; set; } = null!;
+
+    /// <summary>
     /// Configures the model and entity mappings
     /// </summary>
     /// <param name="modelBuilder">The model builder</param>
@@ -84,6 +99,9 @@ public class PowerOrchestratorDbContext : IdentityDbContext<User, Role, Guid>
         modelBuilder.ApplyConfiguration(new SyncHistoryConfiguration());
         modelBuilder.ApplyConfiguration(new UserSessionConfiguration());
         modelBuilder.ApplyConfiguration(new SecurityAuditLogConfiguration());
+        modelBuilder.ApplyConfiguration(new PerformanceMetricConfiguration());
+        modelBuilder.ApplyConfiguration(new AlertConfigurationConfiguration());
+        modelBuilder.ApplyConfiguration(new AlertInstanceConfiguration());
 
         // Configure Identity entities
         ConfigureIdentityEntities(modelBuilder);
