@@ -55,6 +55,16 @@ public abstract class MCPTestBase : IDisposable
     }
 
     /// <summary>
+    /// Get all enabled MCP servers for testing
+    /// </summary>
+    protected Dictionary<string, MCPServer> GetEnabledServers()
+    {
+        return Configuration.McpServers
+            .Where(kvp => kvp.Value.TestEnabled)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+    }
+
+    /// <summary>
     /// Execute MCP server command with timeout and retry logic
     /// </summary>
     protected async Task<ProcessResult> ExecuteMCPCommandAsync(
@@ -208,6 +218,27 @@ public abstract class MCPTestBase : IDisposable
     {
         var server = GetServerConfig(serverName);
         
+        // Handle common commands first
+        if (additionalArgs?.Contains("list-tools") == true)
+        {
+            return GenerateToolsListMockOutput(server);
+        }
+        
+        if (additionalArgs?.Contains("list-resources") == true)
+        {
+            return GenerateResourcesListMockOutput(server);
+        }
+        
+        if (additionalArgs?.Contains("capabilities") == true)
+        {
+            return GenerateCapabilitiesMockOutput(server);
+        }
+        
+        if (additionalArgs?.Contains("protocol-version") == true)
+        {
+            return GenerateProtocolVersionMockOutput();
+        }
+        
         return serverName switch
         {
             "postgresql-powerorch" => GeneratePostgreSQLMockOutput(additionalArgs),
@@ -218,18 +249,86 @@ public abstract class MCPTestBase : IDisposable
             "git-repository" => GenerateGitMockOutput(additionalArgs),
             "system-monitoring" => GenerateSystemMonitoringMockOutput(additionalArgs),
             "redis-operations" => GenerateRedisMockOutput(additionalArgs),
-            _ => """
-                {
-                  "jsonrpc": "2.0",
-                  "result": {
-                    "status": "success",
-                    "message": "Mock MCP server response",
-                    "server": "serverName",
-                    "timestamp": "DateTime.UtcNow.ToString("O")"
-                  }
-                }
-                """
+            _ => GenerateGenericMockOutput(serverName)
         };
+    }
+    
+    /// <summary>
+    /// Generate mock tools list output
+    /// </summary>
+    private string GenerateToolsListMockOutput(MCPServer server)
+    {
+        return $$"""
+            {
+              "jsonrpc": "2.0",
+              "result": {
+                "tools": [{{string.Join(", ", server.Tools.Select(t => $"\"{t}\""))}}]
+              }
+            }
+            """;
+    }
+    
+    /// <summary>
+    /// Generate mock resources list output
+    /// </summary>
+    private string GenerateResourcesListMockOutput(MCPServer server)
+    {
+        return $$"""
+            {
+              "jsonrpc": "2.0",
+              "result": {
+                "resources": [{{string.Join(", ", server.Resources.Select(r => $"\"{r}\""))}}]
+              }
+            }
+            """;
+    }
+    
+    /// <summary>
+    /// Generate mock capabilities output
+    /// </summary>
+    private string GenerateCapabilitiesMockOutput(MCPServer server)
+    {
+        return $$"""
+            {
+              "jsonrpc": "2.0",
+              "result": {
+                "capabilities": [{{string.Join(", ", server.Capabilities.Select(c => $"\"{c}\""))}}]
+              }
+            }
+            """;
+    }
+    
+    /// <summary>
+    /// Generate mock protocol version output
+    /// </summary>
+    private string GenerateProtocolVersionMockOutput()
+    {
+        return $$"""
+            {
+              "jsonrpc": "2.0",
+              "result": {
+                "protocolVersion": "{{Configuration.McpProtocol.Version}}"
+              }
+            }
+            """;
+    }
+    
+    /// <summary>
+    /// Generate generic mock output
+    /// </summary>
+    private string GenerateGenericMockOutput(string serverName)
+    {
+        return $$"""
+            {
+              "jsonrpc": "2.0",
+              "result": {
+                "status": "success",
+                "message": "Mock MCP server response",
+                "server": "{{serverName}}",
+                "timestamp": "{{DateTime.UtcNow:O}}"
+              }
+            }
+            """;
     }
 
     private string GeneratePostgreSQLMockOutput(string[]? args)
