@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
+using PowerOrchestrator.Infrastructure.Data;
 using System.Text;
 using Newtonsoft.Json;
 using FluentAssertions;
@@ -27,7 +30,9 @@ public class WebhookTestApplicationFactory : WebApplicationFactory<Program>
                 ["GitHub:RateLimit:RequestsPerHour"] = "5000",
                 ["GitHub:RateLimit:SafetyThreshold"] = "0.8",
                 ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Port=5432;Database=powerorchestrator_test;Username=powerorch;Password=PowerOrch2025!",
-                ["ConnectionStrings:Redis"] = "localhost:6379"
+                ["ConnectionStrings:Redis"] = "localhost:6379",
+                ["Monitoring:Enabled"] = "false", // Disable monitoring for tests
+                ["Alerting:ProcessingIntervalSeconds"] = "60" // Slow down for tests
             };
             
             config.AddInMemoryCollection(testConfig);
@@ -42,8 +47,46 @@ public class WebhookTestApplicationFactory : WebApplicationFactory<Program>
         
         builder.ConfigureServices(services =>
         {
-            // Override services for testing if needed
-            // For now, we'll use the real services with test configuration
+            // Remove Entity Framework DbContext registration and replace with in-memory
+            var dbContextDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContext));
+            if (dbContextDescriptor != null)
+            {
+                services.Remove(dbContextDescriptor);
+            }
+            
+            var dbContextOptionsDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<PowerOrchestratorDbContext>));
+            if (dbContextOptionsDescriptor != null)
+            {
+                services.Remove(dbContextOptionsDescriptor);
+            }
+            
+            // Add in-memory database for testing
+            services.AddDbContext<PowerOrchestratorDbContext>(options =>
+                options.UseInMemoryDatabase("TestDatabase"));
+            
+            // Remove Redis registration
+            var redisDescriptors = services.Where(d => 
+                d.ServiceType.FullName?.Contains("Redis") == true ||
+                d.ServiceType.FullName?.Contains("ConnectionMultiplexer") == true).ToList();
+            
+            foreach (var descriptor in redisDescriptors)
+            {
+                services.Remove(descriptor);
+            }
+            
+            // Remove existing health check registrations
+            var healthCheckDescriptors = services.Where(d => 
+                d.ServiceType.Namespace == "Microsoft.Extensions.Diagnostics.HealthChecks" ||
+                d.ServiceType.FullName?.Contains("HealthCheck") == true).ToList();
+            
+            foreach (var descriptor in healthCheckDescriptors)
+            {
+                services.Remove(descriptor);
+            }
+            
+            // Add simple health checks that don't require external dependencies
+            services.AddHealthChecks()
+                .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy("API is running"));
         });
     }
 }
@@ -54,18 +97,17 @@ public class WebhookTestApplicationFactory : WebApplicationFactory<Program>
 public class WebhookIntegrationTests : IClassFixture<WebhookTestApplicationFactory>
 {
     private readonly WebhookTestApplicationFactory _factory;
-    private readonly HttpClient _client;
 
     public WebhookIntegrationTests(WebhookTestApplicationFactory factory)
     {
         _factory = factory;
-        _client = _factory.CreateClient();
     }
 
     [Fact]
     public async Task ProcessWebhook_WithValidPushEvent_ShouldReturnOk()
     {
         // Arrange
+        using var client = _factory.CreateClient();
         var pushPayload = new
         {
             @ref = "refs/heads/main",
@@ -91,7 +133,7 @@ public class WebhookIntegrationTests : IClassFixture<WebhookTestApplicationFacto
         content.Headers.Add("X-GitHub-Delivery", Guid.NewGuid().ToString());
 
         // Act
-        var response = await _client.PostAsync("/api/webhooks/github", content);
+        var response = await client.PostAsync("/api/webhooks/github", content);
 
         // Assert
         response.Should().NotBeNull();
@@ -103,6 +145,7 @@ public class WebhookIntegrationTests : IClassFixture<WebhookTestApplicationFacto
     public async Task ProcessWebhook_WithInvalidSignature_ShouldReturnUnauthorized()
     {
         // Arrange
+        using var client = _factory.CreateClient();
         var payload = JsonConvert.SerializeObject(new { test = "data" });
         var content = new StringContent(payload, Encoding.UTF8, "application/json");
         
@@ -110,7 +153,7 @@ public class WebhookIntegrationTests : IClassFixture<WebhookTestApplicationFacto
         content.Headers.Add("X-Hub-Signature-256", "sha256=invalid-signature");
 
         // Act
-        var response = await _client.PostAsync("/api/webhooks/github", content);
+        var response = await client.PostAsync("/api/webhooks/github", content);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.Unauthorized);
@@ -124,6 +167,7 @@ public class WebhookIntegrationTests : IClassFixture<WebhookTestApplicationFacto
     public async Task ProcessWebhook_WithSupportedEvents_ShouldProcess(string eventType)
     {
         // Arrange
+        using var client = _factory.CreateClient();
         var payload = new
         {
             repository = new
@@ -137,7 +181,7 @@ public class WebhookIntegrationTests : IClassFixture<WebhookTestApplicationFacto
         content.Headers.Add("X-GitHub-Event", eventType);
 
         // Act
-        var response = await _client.PostAsync("/api/webhooks/github", content);
+        var response = await client.PostAsync("/api/webhooks/github", content);
 
         // Assert
         response.Should().NotBeNull();
@@ -151,13 +195,14 @@ public class WebhookIntegrationTests : IClassFixture<WebhookTestApplicationFacto
     public async Task ProcessWebhook_WithUnsupportedEvents_ShouldIgnore(string eventType)
     {
         // Arrange
+        using var client = _factory.CreateClient();
         var payload = new { test = "data" };
         var payloadJson = JsonConvert.SerializeObject(payload);
         var content = new StringContent(payloadJson, Encoding.UTF8, "application/json");
         content.Headers.Add("X-GitHub-Event", eventType);
 
         // Act
-        var response = await _client.PostAsync("/api/webhooks/github", content);
+        var response = await client.PostAsync("/api/webhooks/github", content);
 
         // Assert
         response.Should().NotBeNull();
@@ -168,12 +213,13 @@ public class WebhookIntegrationTests : IClassFixture<WebhookTestApplicationFacto
     public async Task ProcessWebhook_WithMalformedPayload_ShouldReturnBadRequest()
     {
         // Arrange
+        using var client = _factory.CreateClient();
         var malformedPayload = "{ invalid json";
         var content = new StringContent(malformedPayload, Encoding.UTF8, "application/json");
         content.Headers.Add("X-GitHub-Event", "push");
 
         // Act
-        var response = await _client.PostAsync("/api/webhooks/github", content);
+        var response = await client.PostAsync("/api/webhooks/github", content);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
@@ -183,12 +229,13 @@ public class WebhookIntegrationTests : IClassFixture<WebhookTestApplicationFacto
     public async Task ProcessWebhook_WithMissingEventHeader_ShouldReturnBadRequest()
     {
         // Arrange
+        using var client = _factory.CreateClient();
         var payload = JsonConvert.SerializeObject(new { test = "data" });
         var content = new StringContent(payload, Encoding.UTF8, "application/json");
         // Missing X-GitHub-Event header
 
         // Act
-        var response = await _client.PostAsync("/api/webhooks/github", content);
+        var response = await client.PostAsync("/api/webhooks/github", content);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
@@ -210,11 +257,12 @@ public class WebhookIntegrationTests : IClassFixture<WebhookTestApplicationFacto
         // Act - Send 5 concurrent webhook requests
         for (int i = 0; i < 5; i++)
         {
+            using var client = _factory.CreateClient();
             var content = new StringContent(payloadJson, Encoding.UTF8, "application/json");
             content.Headers.Add("X-GitHub-Event", "push");
             content.Headers.Add("X-GitHub-Delivery", Guid.NewGuid().ToString());
             
-            tasks.Add(_client.PostAsync("/api/webhooks/github", content));
+            tasks.Add(client.PostAsync("/api/webhooks/github", content));
         }
 
         var responses = await Task.WhenAll(tasks);
@@ -227,8 +275,11 @@ public class WebhookIntegrationTests : IClassFixture<WebhookTestApplicationFacto
     [Fact]
     public async Task WebhookEndpoint_ShouldBeHealthy()
     {
+        // Arrange
+        using var client = _factory.CreateClient();
+
         // Act
-        var response = await _client.GetAsync("/health");
+        var response = await client.GetAsync("/health");
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
