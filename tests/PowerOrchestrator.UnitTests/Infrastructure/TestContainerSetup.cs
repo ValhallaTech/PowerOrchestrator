@@ -52,10 +52,10 @@ public class TestContainerSetup : IDisposable
             {
                 ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=PowerOrchestratorTest;Username=test;Password=test",
                 ["ConnectionStrings:Redis"] = "localhost:6379",
-                ["GitHubOptions:AccessToken"] = "test-token",
-                ["GitHubOptions:ApplicationName"] = "PowerOrchestrator-Test",
-                ["GitHubOptions:EnterpriseBaseUrl"] = "",
-                ["GitHubOptions:WebhookSecret"] = "test-webhook-secret"
+                ["GitHub:AccessToken"] = "test-token",
+                ["GitHub:ApplicationName"] = "PowerOrchestrator-Test",
+                ["GitHub:EnterpriseBaseUrl"] = "",
+                ["GitHub:WebhookSecret"] = "test-webhook-secret"
             })
             .Build();
 
@@ -72,7 +72,7 @@ public class TestContainerSetup : IDisposable
         services.AddHttpClient();
 
         // Configure options
-        services.Configure<GitHubOptions>(configuration.GetSection("GitHubOptions"));
+        services.Configure<GitHubOptions>(configuration.GetSection("GitHub"));
 
         // Configure FluentValidation
         services.AddFluentValidationAutoValidation();
@@ -89,6 +89,9 @@ public class TestContainerSetup : IDisposable
         
         // Register our custom modules (this includes all the production services)
         containerBuilder.RegisterModule<CoreModule>();
+        
+        // Register the configuration module to provide direct configuration object instances
+        containerBuilder.RegisterModule(new PowerOrchestrator.Infrastructure.Configuration.ConfigurationModule(configuration));
 
         // Allow custom test registrations (for mocks, etc.)
         customRegistrations?.Invoke(containerBuilder);
