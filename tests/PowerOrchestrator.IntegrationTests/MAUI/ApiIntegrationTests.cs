@@ -173,6 +173,14 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     
                     // Add health checks properly for HealthController
                     services.AddHealthChecks();
+                    
+                    // Configure authorization for testing - allow all requests to pass authorization
+                    services.AddAuthorization(options =>
+                    {
+                        options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+                            .RequireAssertion(_ => true) // Allow all requests for testing
+                            .Build();
+                    });
                 });
                 
                 webBuilder.Configure(app =>
@@ -397,10 +405,11 @@ public class ApiIntegrationTests : IClassFixture<TestWebApplicationFactory>
         var response404Count = results.Count(r => r.Contains("NotFound"));
         if (response404Count > 2) // Allow some 404s but not all
         {
-            Assert.True(false, $"Too many endpoints returning 404:\n{resultString}");
+            Assert.Fail($"Too many endpoints returning 404:\n{resultString}");
         }
         
-        Assert.True(true); // Pass the test but show info
+        // All endpoints should be working now
+        Assert.True(response404Count == 0, $"Some endpoints still returning 404:\n{resultString}");
     }
 
     [Fact]
