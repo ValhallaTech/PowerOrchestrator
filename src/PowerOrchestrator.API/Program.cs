@@ -183,6 +183,9 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
         typeof(Program).Assembly // API assembly contains our mapping profiles
     );
     
+    // Register configuration module
+    containerBuilder.RegisterModule(new PowerOrchestrator.Infrastructure.Configuration.ConfigurationModule(builder.Configuration));
+    
     // Register our custom modules
     containerBuilder.RegisterModule<CoreModule>();
 });

@@ -32,7 +32,6 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     private readonly WebApplicationFactory<Program> _factory;
     private readonly HttpClient _client;
     private readonly IContainer _container;
-    private readonly ILifetimeScope _scope;
 
     public ApiIntegrationTests(WebApplicationFactory<Program> factory)
     {
@@ -74,14 +73,14 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
         builder.RegisterType<PerformanceMonitoringService>().As<IPerformanceMonitoringService>().InstancePerLifetimeScope();
         
         _container = builder.Build();
-        _scope = _container.BeginLifetimeScope();
     }
 
     [Fact]
     public async Task ApiService_GetAsync_ShouldCommunicateWithApi()
     {
         // Arrange
-        var apiService = CreateApiService();
+        using var scope = _container.BeginLifetimeScope();
+        var apiService = CreateApiService(scope);
 
         // Act
         var result = await apiService.GetAsync<object>("api/health");
@@ -95,7 +94,8 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task ApiService_PostAsync_ShouldHandleRequests()
     {
         // Arrange
-        var apiService = CreateApiService();
+        using var scope = _container.BeginLifetimeScope();
+        var apiService = CreateApiService(scope);
         var testData = new { Name = "Test", Value = 123 };
 
         // Act
@@ -155,8 +155,9 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task ApiService_WithAuthentication_ShouldAddHeaders()
     {
         // Arrange
+        using var scope = _container.BeginLifetimeScope();
         var authServiceMock = new TestAuthenticationService("test-token");
-        var apiService = CreateApiService(authServiceMock);
+        var apiService = CreateApiService(scope, authServiceMock);
 
         // Act
         var result = await apiService.GetAsync<object>("api/scripts");
@@ -216,8 +217,9 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task OfflineService_IntegrationWithApi_ShouldWork()
     {
         // Arrange
-        var offlineService = CreateOfflineService();
-        var apiService = CreateApiService();
+        using var scope = _container.BeginLifetimeScope();
+        var offlineService = CreateOfflineService(scope);
+        var apiService = CreateApiService(scope);
 
         // Test offline operation queueing
         var operation = new OfflineOperation
@@ -245,8 +247,9 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task PerformanceMonitoring_WithRealOperations_ShouldTrack()
     {
         // Arrange
-        var performanceService = CreatePerformanceMonitoringService();
-        var apiService = CreateApiService();
+        using var scope = _container.BeginLifetimeScope();
+        var performanceService = CreatePerformanceMonitoringService(scope);
+        var apiService = CreateApiService(scope);
 
         // Act
         using (var tracker = performanceService.StartTracking("api-call", "Integration"))
@@ -271,9 +274,10 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task CompleteUserWorkflow_ShouldWork()
     {
         // Arrange
+        using var scope = _container.BeginLifetimeScope();
         var authService = new TestAuthenticationService();
-        var apiService = CreateApiService(authService);
-        var offlineService = CreateOfflineService();
+        var apiService = CreateApiService(scope, authService);
+        var offlineService = CreateOfflineService(scope);
 
         // Act & Assert - Complete user workflow
         
@@ -298,32 +302,31 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
         // Should complete without exceptions
     }
 
-    private ApiService CreateApiService(IAuthenticationService? authService = null)
+    private ApiService CreateApiService(ILifetimeScope scope, IAuthenticationService? authService = null)
     {
-        var logger = _scope.Resolve<ILogger<ApiService>>();
+        var logger = scope.Resolve<ILogger<ApiService>>();
         var httpClient = _factory.CreateClient();
         
         return new ApiService(httpClient, logger, authService);
     }
 
-    private OfflineService CreateOfflineService()
+    private OfflineService CreateOfflineService(ILifetimeScope scope)
     {
-        var logger = _scope.Resolve<ILogger<OfflineService>>();
+        var logger = scope.Resolve<ILogger<OfflineService>>();
         var settingsService = new TestSettingsService();
         
         return new OfflineService(logger, settingsService);
     }
 
-    private PerformanceMonitoringService CreatePerformanceMonitoringService()
+    private PerformanceMonitoringService CreatePerformanceMonitoringService(ILifetimeScope scope)
     {
-        var logger = _scope.Resolve<ILogger<PerformanceMonitoringService>>();
+        var logger = scope.Resolve<ILogger<PerformanceMonitoringService>>();
         
         return new PerformanceMonitoringService(logger);
     }
 
     public void Dispose()
     {
-        _scope?.Dispose();
         _container?.Dispose();
         GC.SuppressFinalize(this);
     }
@@ -503,7 +506,7 @@ public class PerformanceTests
     }
 
     [Fact]
-    public void OfflineService_CacheOperations_ShouldBePerformant()
+    public async Task OfflineService_CacheOperations_ShouldBePerformant()
     {
         // Arrange
         const int iterations = 1000;
@@ -525,7 +528,7 @@ public class PerformanceTests
             tasks.Add(task);
         }
 
-        Task.WaitAll(tasks.ToArray());
+        await Task.WhenAll(tasks);
         stopwatch.Stop();
 
         // Assert

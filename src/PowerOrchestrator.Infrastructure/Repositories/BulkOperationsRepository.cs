@@ -1,6 +1,6 @@
 using Dapper;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+using Serilog;
 using Npgsql;
 using PowerOrchestrator.Application.Interfaces.Repositories;
 using PowerOrchestrator.Domain.Entities;
@@ -61,19 +61,17 @@ public interface IBulkOperationsRepository
 public class BulkOperationsRepository : IBulkOperationsRepository
 {
     private readonly PowerOrchestratorDbContext _context;
-    private readonly ILogger<BulkOperationsRepository> _logger;
+    private readonly ILogger _logger = Log.ForContext<BulkOperationsRepository>();
     private readonly string _connectionString;
 
     /// <summary>
     /// Initializes a new instance of the BulkOperationsRepository
     /// </summary>
     /// <param name="context">Database context</param>
-    /// <param name="logger">Logger instance</param>
     /// <param name="configuration">Configuration to get connection string</param>
-    public BulkOperationsRepository(PowerOrchestratorDbContext context, ILogger<BulkOperationsRepository> logger, IConfiguration configuration)
+    public BulkOperationsRepository(PowerOrchestratorDbContext context, IConfiguration configuration)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _connectionString = configuration.GetConnectionString("DefaultConnection") 
             ?? throw new ArgumentException("DefaultConnection connection string not found");
     }
@@ -112,12 +110,12 @@ public class BulkOperationsRepository : IBulkOperationsRepository
             });
 
             var result = await connection.ExecuteAsync(sql, parameters);
-            _logger.LogInformation("Bulk inserted {Count} repository scripts", result);
+            _logger.Information("Bulk inserted {Count} repository scripts", result);
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to bulk insert {Count} repository scripts", scriptList.Count);
+            _logger.Error(ex, "Failed to bulk insert {Count} repository scripts", scriptList.Count);
             throw;
         }
     }
@@ -156,12 +154,12 @@ public class BulkOperationsRepository : IBulkOperationsRepository
             });
 
             var result = await connection.ExecuteAsync(sql, parameters);
-            _logger.LogInformation("Bulk updated {Count} repository scripts", result);
+            _logger.Information("Bulk updated {Count} repository scripts", result);
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to bulk update {Count} repository scripts", scriptList.Count);
+            _logger.Error(ex, "Failed to bulk update {Count} repository scripts", scriptList.Count);
             throw;
         }
     }
@@ -193,7 +191,7 @@ public class BulkOperationsRepository : IBulkOperationsRepository
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to get script SHAs for {Count} paths", pathList.Count);
+            _logger.Error(ex, "Failed to get script SHAs for {Count} paths", pathList.Count);
             throw;
         }
     }
@@ -220,12 +218,12 @@ public class BulkOperationsRepository : IBulkOperationsRepository
                 FilePaths = pathList.ToArray()
             });
 
-            _logger.LogInformation("Deleted {Count} repository scripts by paths", result);
+            _logger.Information("Deleted {Count} repository scripts by paths", result);
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to delete scripts by {Count} paths", pathList.Count);
+            _logger.Error(ex, "Failed to delete scripts by {Count} paths", pathList.Count);
             throw;
         }
     }
@@ -262,7 +260,7 @@ public class BulkOperationsRepository : IBulkOperationsRepository
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to get sync statistics for repository {RepositoryId}", repositoryId);
+            _logger.Error(ex, "Failed to get sync statistics for repository {RepositoryId}", repositoryId);
             throw;
         }
     }
