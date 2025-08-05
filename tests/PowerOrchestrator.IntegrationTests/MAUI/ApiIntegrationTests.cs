@@ -27,6 +27,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using PowerOrchestrator.API.Controllers;
+using Serilog;
 
 namespace PowerOrchestrator.IntegrationTests.MAUI;
 
@@ -96,6 +97,13 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     services.AddTransient<PowerOrchestrator.Identity.Services.IJwtTokenService>(_ => new FakeJwtTokenService());
                     services.AddTransient<PowerOrchestrator.Identity.Services.IMfaService>(_ => new FakeMfaService());
                     services.AddTransient<PowerOrchestrator.Infrastructure.Identity.IUserRepository>(_ => new FakeUserRepository());
+                    
+                    // Add Serilog logger for controllers that require it (like AuthController)
+                    var serilogLogger = new LoggerConfiguration()
+                        .MinimumLevel.Warning()
+                        .WriteTo.Console()
+                        .CreateLogger();
+                    services.AddSingleton<Serilog.ILogger>(serilogLogger);
                     
                     // Add health checks properly for HealthController
                     services.AddHealthChecks();
@@ -700,6 +708,196 @@ internal class FakeUserRepository : PowerOrchestrator.Infrastructure.Identity.IU
     public Task<int> IncrementFailedLoginAttemptsAsync(Guid userId) => Task.FromResult(1);
     public Task<bool> ResetFailedLoginAttemptsAsync(Guid userId) => Task.FromResult(true);
     public Task<bool> LockUserAsync(Guid userId, DateTime lockUntil) => Task.FromResult(true);
+}
+
+/// <summary>
+/// Simple implementation of IScriptRepository for testing
+/// </summary>
+internal class SimpleScriptRepository : PowerOrchestrator.Application.Interfaces.Repositories.IScriptRepository
+{
+    public Task<PowerOrchestrator.Domain.Entities.Script?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.Script?>(null);
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.Script>> GetAllAsync(CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.Script>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.Script>> FindAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.Script, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.Script>());
+    public Task<PowerOrchestrator.Domain.Entities.Script?> FirstOrDefaultAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.Script, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.Script?>(null);
+    public Task<PowerOrchestrator.Domain.Entities.Script> AddAsync(PowerOrchestrator.Domain.Entities.Script entity, CancellationToken cancellationToken = default) => Task.FromResult(entity);
+    public Task AddRangeAsync(IEnumerable<PowerOrchestrator.Domain.Entities.Script> entities, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public PowerOrchestrator.Domain.Entities.Script Update(PowerOrchestrator.Domain.Entities.Script entity) => entity;
+    public void UpdateRange(IEnumerable<PowerOrchestrator.Domain.Entities.Script> entities) { }
+    public void Remove(PowerOrchestrator.Domain.Entities.Script entity) { }
+    public Task<bool> RemoveByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(false);
+    public void RemoveRange(IEnumerable<PowerOrchestrator.Domain.Entities.Script> entities) { }
+    public Task<int> CountAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
+    public Task<int> CountAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.Script, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(0);
+    public Task<bool> ExistsAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.Script, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(false);
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.Script>> GetByNameAsync(string name, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.Script>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.Script>> GetActiveScriptsAsync(CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.Script>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.Script>> GetByTagsAsync(IEnumerable<string> tags, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.Script>());
+    public Task<PowerOrchestrator.Domain.Entities.Script?> GetWithExecutionsAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.Script?>(null);
+}
+
+/// <summary>
+/// Simple implementation of IExecutionRepository for testing
+/// </summary>
+internal class SimpleExecutionRepository : PowerOrchestrator.Application.Interfaces.Repositories.IExecutionRepository
+{
+    public Task<PowerOrchestrator.Domain.Entities.Execution?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.Execution?>(null);
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.Execution>> GetAllAsync(CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.Execution>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.Execution>> FindAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.Execution, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.Execution>());
+    public Task<PowerOrchestrator.Domain.Entities.Execution?> FirstOrDefaultAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.Execution, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.Execution?>(null);
+    public Task<PowerOrchestrator.Domain.Entities.Execution> AddAsync(PowerOrchestrator.Domain.Entities.Execution entity, CancellationToken cancellationToken = default) => Task.FromResult(entity);
+    public Task AddRangeAsync(IEnumerable<PowerOrchestrator.Domain.Entities.Execution> entities, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public PowerOrchestrator.Domain.Entities.Execution Update(PowerOrchestrator.Domain.Entities.Execution entity) => entity;
+    public void UpdateRange(IEnumerable<PowerOrchestrator.Domain.Entities.Execution> entities) { }
+    public void Remove(PowerOrchestrator.Domain.Entities.Execution entity) { }
+    public Task<bool> RemoveByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(false);
+    public void RemoveRange(IEnumerable<PowerOrchestrator.Domain.Entities.Execution> entities) { }
+    public Task<int> CountAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
+    public Task<int> CountAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.Execution, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(0);
+    public Task<bool> ExistsAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.Execution, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(false);
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.Execution>> GetByScriptIdAsync(Guid scriptId, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.Execution>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.Execution>> GetByStatusAsync(PowerOrchestrator.Domain.ValueObjects.ExecutionStatus status, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.Execution>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.Execution>> GetRecentAsync(int count = 50, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.Execution>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.Execution>> GetRunningExecutionsAsync(CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.Execution>());
+    public Task<PowerOrchestrator.Domain.Entities.Execution?> GetWithScriptAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.Execution?>(null);
+}
+
+/// <summary>
+/// Simple implementation of IAuditLogRepository for testing
+/// </summary>
+internal class SimpleAuditLogRepository : PowerOrchestrator.Application.Interfaces.Repositories.IAuditLogRepository
+{
+    public Task<PowerOrchestrator.Domain.Entities.AuditLog?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.AuditLog?>(null);
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.AuditLog>> GetAllAsync(CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.AuditLog>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.AuditLog>> FindAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.AuditLog, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.AuditLog>());
+    public Task<PowerOrchestrator.Domain.Entities.AuditLog?> FirstOrDefaultAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.AuditLog, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.AuditLog?>(null);
+    public Task<PowerOrchestrator.Domain.Entities.AuditLog> AddAsync(PowerOrchestrator.Domain.Entities.AuditLog entity, CancellationToken cancellationToken = default) => Task.FromResult(entity);
+    public Task AddRangeAsync(IEnumerable<PowerOrchestrator.Domain.Entities.AuditLog> entities, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public PowerOrchestrator.Domain.Entities.AuditLog Update(PowerOrchestrator.Domain.Entities.AuditLog entity) => entity;
+    public void UpdateRange(IEnumerable<PowerOrchestrator.Domain.Entities.AuditLog> entities) { }
+    public void Remove(PowerOrchestrator.Domain.Entities.AuditLog entity) { }
+    public Task<bool> RemoveByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(false);
+    public void RemoveRange(IEnumerable<PowerOrchestrator.Domain.Entities.AuditLog> entities) { }
+    public Task<int> CountAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
+    public Task<int> CountAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.AuditLog, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(0);
+    public Task<bool> ExistsAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.AuditLog, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(false);
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.AuditLog>> GetByEntityAsync(string entityType, Guid entityId, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.AuditLog>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.AuditLog>> GetByUserAsync(string userId, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.AuditLog>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.AuditLog>> GetByActionAsync(string action, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.AuditLog>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.AuditLog>> GetByDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.AuditLog>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.AuditLog>> GetRecentAsync(int count = 100, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.AuditLog>());
+}
+
+/// <summary>
+/// Simple implementation of IHealthCheckRepository for testing
+/// </summary>
+internal class SimpleHealthCheckRepository : PowerOrchestrator.Application.Interfaces.Repositories.IHealthCheckRepository
+{
+    public Task<PowerOrchestrator.Domain.Entities.HealthCheck?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.HealthCheck?>(null);
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.HealthCheck>> GetAllAsync(CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.HealthCheck>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.HealthCheck>> FindAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.HealthCheck, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.HealthCheck>());
+    public Task<PowerOrchestrator.Domain.Entities.HealthCheck?> FirstOrDefaultAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.HealthCheck, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.HealthCheck?>(null);
+    public Task<PowerOrchestrator.Domain.Entities.HealthCheck> AddAsync(PowerOrchestrator.Domain.Entities.HealthCheck entity, CancellationToken cancellationToken = default) => Task.FromResult(entity);
+    public Task AddRangeAsync(IEnumerable<PowerOrchestrator.Domain.Entities.HealthCheck> entities, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public PowerOrchestrator.Domain.Entities.HealthCheck Update(PowerOrchestrator.Domain.Entities.HealthCheck entity) => entity;
+    public void UpdateRange(IEnumerable<PowerOrchestrator.Domain.Entities.HealthCheck> entities) { }
+    public void Remove(PowerOrchestrator.Domain.Entities.HealthCheck entity) { }
+    public Task<bool> RemoveByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(false);
+    public void RemoveRange(IEnumerable<PowerOrchestrator.Domain.Entities.HealthCheck> entities) { }
+    public Task<int> CountAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
+    public Task<int> CountAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.HealthCheck, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(0);
+    public Task<bool> ExistsAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.HealthCheck, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(false);
+    public Task<PowerOrchestrator.Domain.Entities.HealthCheck?> GetByServiceNameAsync(string serviceName, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.HealthCheck?>(null);
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.HealthCheck>> GetByStatusAsync(string status, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.HealthCheck>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.HealthCheck>> GetEnabledAsync(CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.HealthCheck>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.HealthCheck>> GetDueForCheckAsync(CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.HealthCheck>());
+    public Task<PowerOrchestrator.Domain.Entities.HealthCheck?> UpdateStatusAsync(string serviceName, string status, long? responseTimeMs = null, string? details = null, string? errorMessage = null, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.HealthCheck?>(null);
+}
+
+/// <summary>
+/// Simple implementation of IGitHubRepositoryRepository for testing
+/// </summary>
+internal class SimpleGitHubRepositoryRepository : PowerOrchestrator.Application.Interfaces.Repositories.IGitHubRepositoryRepository
+{
+    public Task<PowerOrchestrator.Domain.Entities.GitHubRepository?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.GitHubRepository?>(null);
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.GitHubRepository>> GetAllAsync(CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.GitHubRepository>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.GitHubRepository>> FindAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.GitHubRepository, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.GitHubRepository>());
+    public Task<PowerOrchestrator.Domain.Entities.GitHubRepository?> FirstOrDefaultAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.GitHubRepository, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.GitHubRepository?>(null);
+    public Task<PowerOrchestrator.Domain.Entities.GitHubRepository> AddAsync(PowerOrchestrator.Domain.Entities.GitHubRepository entity, CancellationToken cancellationToken = default) => Task.FromResult(entity);
+    public Task AddRangeAsync(IEnumerable<PowerOrchestrator.Domain.Entities.GitHubRepository> entities, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public PowerOrchestrator.Domain.Entities.GitHubRepository Update(PowerOrchestrator.Domain.Entities.GitHubRepository entity) => entity;
+    public void UpdateRange(IEnumerable<PowerOrchestrator.Domain.Entities.GitHubRepository> entities) { }
+    public void Remove(PowerOrchestrator.Domain.Entities.GitHubRepository entity) { }
+    public Task<bool> RemoveByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(false);
+    public void RemoveRange(IEnumerable<PowerOrchestrator.Domain.Entities.GitHubRepository> entities) { }
+    public Task<int> CountAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
+    public Task<int> CountAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.GitHubRepository, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(0);
+    public Task<bool> ExistsAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.GitHubRepository, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(false);
+    public Task<PowerOrchestrator.Domain.Entities.GitHubRepository?> GetByOwnerAndNameAsync(string owner, string name) => Task.FromResult<PowerOrchestrator.Domain.Entities.GitHubRepository?>(null);
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.GitHubRepository>> GetByStatusAsync(PowerOrchestrator.Domain.ValueObjects.RepositoryStatus status) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.GitHubRepository>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.GitHubRepository>> GetRepositoriesNeedingSyncAsync(DateTime olderThan) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.GitHubRepository>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.GitHubRepository>> GetByOwnerAsync(string owner) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.GitHubRepository>());
+    public Task UpdateLastSyncTimeAsync(Guid repositoryId, DateTime syncTime) => Task.CompletedTask;
+    public Task UpdateStatusAsync(Guid repositoryId, PowerOrchestrator.Domain.ValueObjects.RepositoryStatus status) => Task.CompletedTask;
+    public Task<PowerOrchestrator.Domain.Entities.GitHubRepository?> GetByFullNameAsync(string fullName) => Task.FromResult<PowerOrchestrator.Domain.Entities.GitHubRepository?>(null);
+}
+
+/// <summary>
+/// Simple implementation of IRepositoryScriptRepository for testing
+/// </summary>
+internal class SimpleRepositoryScriptRepository : PowerOrchestrator.Application.Interfaces.Repositories.IRepositoryScriptRepository
+{
+    public Task<PowerOrchestrator.Domain.Entities.RepositoryScript?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.RepositoryScript?>(null);
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.RepositoryScript>> GetAllAsync(CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.RepositoryScript>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.RepositoryScript>> FindAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.RepositoryScript, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.RepositoryScript>());
+    public Task<PowerOrchestrator.Domain.Entities.RepositoryScript?> FirstOrDefaultAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.RepositoryScript, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.RepositoryScript?>(null);
+    public Task<PowerOrchestrator.Domain.Entities.RepositoryScript> AddAsync(PowerOrchestrator.Domain.Entities.RepositoryScript entity, CancellationToken cancellationToken = default) => Task.FromResult(entity);
+    public Task AddRangeAsync(IEnumerable<PowerOrchestrator.Domain.Entities.RepositoryScript> entities, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public PowerOrchestrator.Domain.Entities.RepositoryScript Update(PowerOrchestrator.Domain.Entities.RepositoryScript entity) => entity;
+    public void UpdateRange(IEnumerable<PowerOrchestrator.Domain.Entities.RepositoryScript> entities) { }
+    public void Remove(PowerOrchestrator.Domain.Entities.RepositoryScript entity) { }
+    public Task<bool> RemoveByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(false);
+    public void RemoveRange(IEnumerable<PowerOrchestrator.Domain.Entities.RepositoryScript> entities) { }
+    public Task<int> CountAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
+    public Task<int> CountAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.RepositoryScript, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(0);
+    public Task<bool> ExistsAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.RepositoryScript, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(false);
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.RepositoryScript>> GetByRepositoryIdAsync(Guid repositoryId) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.RepositoryScript>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.RepositoryScript>> GetByRepositoryAndBranchAsync(Guid repositoryId, string branch) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.RepositoryScript>());
+    public Task<PowerOrchestrator.Domain.Entities.RepositoryScript?> GetByPathAndBranchAsync(Guid repositoryId, string filePath, string branch) => Task.FromResult<PowerOrchestrator.Domain.Entities.RepositoryScript?>(null);
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.RepositoryScript>> GetByShaAsync(string sha) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.RepositoryScript>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.RepositoryScript>> GetModifiedAfterAsync(Guid repositoryId, DateTime modifiedAfter) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.RepositoryScript>());
+    public Task<int> DeleteByRepositoryIdAsync(Guid repositoryId) => Task.FromResult(0);
+    public Task<int> DeleteByRepositoryAndBranchAsync(Guid repositoryId, string branch) => Task.FromResult(0);
+    public Task UpdateShaAndModifiedAsync(Guid id, string sha, DateTime lastModified) => Task.CompletedTask;
+}
+
+/// <summary>
+/// Simple implementation of ISyncHistoryRepository for testing
+/// </summary>
+internal class SimpleSyncHistoryRepository : PowerOrchestrator.Application.Interfaces.Repositories.ISyncHistoryRepository
+{
+    public Task<PowerOrchestrator.Domain.Entities.SyncHistory?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.SyncHistory?>(null);
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.SyncHistory>> GetAllAsync(CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.SyncHistory>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.SyncHistory>> FindAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.SyncHistory, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.SyncHistory>());
+    public Task<PowerOrchestrator.Domain.Entities.SyncHistory?> FirstOrDefaultAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.SyncHistory, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult<PowerOrchestrator.Domain.Entities.SyncHistory?>(null);
+    public Task<PowerOrchestrator.Domain.Entities.SyncHistory> AddAsync(PowerOrchestrator.Domain.Entities.SyncHistory entity, CancellationToken cancellationToken = default) => Task.FromResult(entity);
+    public Task AddRangeAsync(IEnumerable<PowerOrchestrator.Domain.Entities.SyncHistory> entities, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public PowerOrchestrator.Domain.Entities.SyncHistory Update(PowerOrchestrator.Domain.Entities.SyncHistory entity) => entity;
+    public void UpdateRange(IEnumerable<PowerOrchestrator.Domain.Entities.SyncHistory> entities) { }
+    public void Remove(PowerOrchestrator.Domain.Entities.SyncHistory entity) { }
+    public Task<bool> RemoveByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(false);
+    public void RemoveRange(IEnumerable<PowerOrchestrator.Domain.Entities.SyncHistory> entities) { }
+    public Task<int> CountAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
+    public Task<int> CountAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.SyncHistory, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(0);
+    public Task<bool> ExistsAsync(System.Linq.Expressions.Expression<Func<PowerOrchestrator.Domain.Entities.SyncHistory, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(false);
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.SyncHistory>> GetByRepositoryIdAsync(Guid repositoryId, int limit = 50) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.SyncHistory>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.SyncHistory>> GetByStatusAsync(PowerOrchestrator.Domain.ValueObjects.SyncStatus status, int limit = 100) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.SyncHistory>());
+    public Task<PowerOrchestrator.Domain.Entities.SyncHistory?> GetLatestByRepositoryIdAsync(Guid repositoryId) => Task.FromResult<PowerOrchestrator.Domain.Entities.SyncHistory?>(null);
+    public Task<PowerOrchestrator.Domain.Entities.SyncHistory?> GetLatestSuccessfulSyncAsync(Guid repositoryId) => Task.FromResult<PowerOrchestrator.Domain.Entities.SyncHistory?>(null);
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.SyncHistory>> GetRunningSyncsAsync() => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.SyncHistory>());
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.SyncHistory>> GetByDateRangeAsync(Guid? repositoryId, DateTime startDate, DateTime endDate) => Task.FromResult(Enumerable.Empty<PowerOrchestrator.Domain.Entities.SyncHistory>());
+    public Task<PowerOrchestrator.Application.Interfaces.Repositories.SyncStatistics> GetSyncStatisticsAsync(Guid repositoryId, int days = 30) => Task.FromResult(new PowerOrchestrator.Application.Interfaces.Repositories.SyncStatistics());
+    public Task<int> DeleteOldRecordsAsync(DateTime olderThan) => Task.FromResult(0);
+    public Task UpdateSyncStatusAsync(Guid id, PowerOrchestrator.Domain.ValueObjects.SyncStatus status, DateTime? completedAt, string? errorMessage = null) => Task.CompletedTask;
 }
 
 /// <summary>
