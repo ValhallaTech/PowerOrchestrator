@@ -358,7 +358,7 @@ public class ServiceTests : IDisposable
 
         // Register services
         builder.RegisterType<OfflineService>().As<IOfflineService>();
-        builder.RegisterType<MAUIPerformanceServiceImpl>().As<IMAUIPerformanceServiceImpl>();
+        builder.RegisterType<MAUIPerformanceServiceImpl>().As<MAUIPerformanceService>();
 
         _container = builder.Build();
     }
@@ -378,7 +378,7 @@ public class ServiceTests : IDisposable
     public void MAUIPerformanceServiceImpl_ShouldResolveFromContainer()
     {
         // Act
-        var service = _container.Resolve<IMAUIPerformanceServiceImpl>();
+        var service = _container.Resolve<MAUIPerformanceService>();
 
         // Assert
         service.Should().NotBeNull();
@@ -422,7 +422,7 @@ public class ServiceTests : IDisposable
     public void MAUIPerformanceServiceImpl_StartTracking_ShouldReturnTracker()
     {
         // Arrange
-        var service = _container.Resolve<IMAUIPerformanceServiceImpl>();
+        var service = _container.Resolve<MAUIPerformanceService>();
 
         // Act
         using var tracker = service.StartTracking("test-operation", "Test");
@@ -436,7 +436,7 @@ public class ServiceTests : IDisposable
     public void MAUIPerformanceServiceImpl_RecordMetric_ShouldNotThrow()
     {
         // Arrange
-        var service = _container.Resolve<IMAUIPerformanceServiceImpl>();
+        var service = _container.Resolve<MAUIPerformanceService>();
 
         // Act & Assert
         service.Invoking(s => s.RecordMetric("test-metric", 100.5, "ms"))
@@ -447,7 +447,7 @@ public class ServiceTests : IDisposable
     public async Task MAUIPerformanceServiceImpl_GetStatistics_ShouldReturnValidData()
     {
         // Arrange
-        var service = _container.Resolve<IMAUIPerformanceServiceImpl>();
+        var service = _container.Resolve<MAUIPerformanceService>();
 
         // Record some metrics first
         service.RecordMetric("test-metric", 100);
@@ -466,7 +466,7 @@ public class ServiceTests : IDisposable
     public void PerformanceTracker_WithUsing_ShouldDisposeCorrectly()
     {
         // Arrange
-        var service = _container.Resolve<IMAUIPerformanceServiceImpl>();
+        var service = _container.Resolve<MAUIPerformanceService>();
 
         // Act & Assert
         var action = () =>
