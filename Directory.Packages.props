@@ -88,9 +88,13 @@
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="8.0.1" />
 
     <!-- HTTP Client -->
     <PackageVersion Include="Microsoft.Extensions.Http" Version="8.0.1" />
+
+    <!-- Docker Integration -->
+    <PackageVersion Include="Docker.DotNet" Version="3.125.15" />
 
     <!-- Database Connectivity -->
     <PackageVersion Include="Npgsql" Version="8.0.6" />

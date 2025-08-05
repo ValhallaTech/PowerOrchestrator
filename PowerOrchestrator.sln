@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerOrchestrator.Integrati
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerOrchestrator.LoadTests", "tests\PowerOrchestrator.LoadTests\PowerOrchestrator.LoadTests.csproj", "{F990099E-597F-4676-BE25-350DD03CE45F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerOrchestrator.MCPIntegrationTests", "tests\PowerOrchestrator.MCPIntegrationTests\PowerOrchestrator.MCPIntegrationTests.csproj", "{48C01818-EF87-4A8F-9196-45401CDBB742}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -70,6 +72,10 @@ Global
 		{F990099E-597F-4676-BE25-350DD03CE45F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F990099E-597F-4676-BE25-350DD03CE45F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F990099E-597F-4676-BE25-350DD03CE45F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48C01818-EF87-4A8F-9196-45401CDBB742}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48C01818-EF87-4A8F-9196-45401CDBB742}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48C01818-EF87-4A8F-9196-45401CDBB742}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48C01818-EF87-4A8F-9196-45401CDBB742}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{37B863D3-5E16-4BBA-BB08-95FFB374AB31} = {D70833FB-3C8C-4AEF-A193-3801618D7FA8}
@@ -81,5 +87,6 @@ Global
 		{D675244F-9575-4462-BBAE-464F9CC11521} = {ED82CB48-55D4-4CB3-A30C-74D54822BF96}
 		{4142B56B-63EB-436B-8B71-897D9350BC98} = {ED82CB48-55D4-4CB3-A30C-74D54822BF96}
 		{F990099E-597F-4676-BE25-350DD03CE45F} = {ED82CB48-55D4-4CB3-A30C-74D54822BF96}
+		{48C01818-EF87-4A8F-9196-45401CDBB742} = {ED82CB48-55D4-4CB3-A30C-74D54822BF96}
 	EndGlobalSection
 EndGlobal

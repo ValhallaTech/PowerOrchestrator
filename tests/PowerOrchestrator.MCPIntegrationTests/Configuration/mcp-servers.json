@@ -1,0 +1,110 @@
+{
+  "mcpServers": {
+    "postgresql-powerorch": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-postgres", "postgresql://powerorch:PowerOrch2025!@localhost:5432/powerorchestrator_dev"],
+      "tools": ["query", "schema", "list_tables", "describe_table", "execute"],
+      "description": "Direct access to PowerOrchestrator PostgreSQL 17.5 database for schema validation, performance testing, and audit log verification",
+      "priority": "critical",
+      "testEnabled": true
+    },
+    "docker-orchestration": {
+      "type": "local", 
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-docker"],
+      "tools": ["ps", "exec", "logs", "stats", "compose_up", "compose_down", "inspect"],
+      "description": "Complete container ecosystem management for PostgreSQL + Redis + Seq orchestration",
+      "priority": "critical",
+      "testEnabled": true
+    },
+    "powershell-execution": {
+      "type": "local",
+      "command": "npx", 
+      "args": ["@modelcontextprotocol/server-shell"],
+      "tools": ["execute", "run_script", "get_output"],
+      "description": "Core business logic validation with PowerShell SDK 7.4.6 integration testing and script security profiling",
+      "priority": "critical",
+      "testEnabled": true
+    },
+    "api-testing": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-fetch"],
+      "tools": ["fetch", "get", "post", "put", "delete", "patch"],
+      "description": "API architecture validation, GitHub API integration testing, and MAUI-to-API communication validation",
+      "priority": "critical",
+      "testEnabled": true
+    },
+    "filesystem-ops": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-filesystem", "/home/runner/work/PowerOrchestrator/PowerOrchestrator"],
+      "tools": ["read_file", "write_file", "list_directory", "create_directory", "delete_file"],
+      "description": "PowerOrchestrator project files and logs management",
+      "priority": "high",
+      "testEnabled": true
+    },
+    "git-repository": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-git", "/home/runner/work/PowerOrchestrator/PowerOrchestrator"],
+      "tools": ["log", "diff", "status", "branch", "commit", "push", "pull"],
+      "description": "Repository operations and development phase tracking",
+      "priority": "high",
+      "testEnabled": true
+    },
+    "system-monitoring": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-system"],
+      "tools": ["ps", "top", "df", "free", "uptime", "netstat"],
+      "description": "Performance metrics collection for enterprise scaling validation",
+      "priority": "high",
+      "testEnabled": true
+    },
+    "redis-operations": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-redis", "redis://PowerOrchRedis2025!@localhost:6379"],
+      "tools": ["get", "set", "del", "keys", "info", "flushdb"],
+      "description": "Cache operations and session management validation",
+      "priority": "high",
+      "testEnabled": true
+    }
+  },
+  "testConfiguration": {
+    "timeout": 30000,
+    "retryAttempts": 3,
+    "retryDelay": 5000,
+    "performanceBenchmarks": {
+      "enabled": true,
+      "iterations": 10,
+      "warmupIterations": 3
+    },
+    "endToEndWorkflows": {
+      "enabled": true,
+      "workflowTimeout": 120000
+    },
+    "mockMode": false
+  },
+  "environment": {
+    "database": {
+      "connectionString": "Host=localhost;Database=powerorchestrator_dev;Username=powerorch;Password=PowerOrch2025!",
+      "testDatabase": "powerorchestrator_test"
+    },
+    "redis": {
+      "connectionString": "localhost:6379",
+      "password": "PowerOrchRedis2025!"
+    },
+    "docker": {
+      "composeFile": "docker-compose.dev.yml",
+      "network": "powerorchestrator_dev"
+    },
+    "api": {
+      "baseUrl": "https://localhost:7001",
+      "healthCheckEndpoint": "/health",
+      "swaggerEndpoint": "/swagger/v1/swagger.json"
+    }
+  }
+}
