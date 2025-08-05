@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using FluentAssertions;
 using System.Net.Http.Headers;
 using System.Text;
@@ -73,9 +74,12 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                         logging.SetMinimumLevel(LogLevel.Warning);
                     });
                     
-                    // Add real API controllers with application parts
+                    // Add real API controllers - register all controllers explicitly
                     services.AddControllers()
-                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.ScriptsController).Assembly);
+                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.ScriptsController).Assembly)
+                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.UsersController).Assembly)
+                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.RolesController).Assembly)
+                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.RepositoriesController).Assembly);
                     
                     services.AddHealthChecks();
                     services.AddRouting();
