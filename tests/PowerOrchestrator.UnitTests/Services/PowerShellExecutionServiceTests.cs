@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Moq;
 using PowerOrchestrator.Application.Interfaces;
 using PowerOrchestrator.Application.Interfaces.Repositories;
@@ -19,8 +17,6 @@ public class PowerShellExecutionServiceTests
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly Mock<IPowerShellScriptParser> _mockScriptParser;
     private readonly Mock<IExecutionNotificationService> _mockNotificationService;
-    private readonly Mock<ILogger<PowerShellExecutionService>> _mockLogger;
-    private readonly Mock<IOptions<PowerShellExecutionOptions>> _mockOptions;
     private readonly Mock<IExecutionRepository> _mockExecutionRepository;
     private readonly Mock<IScriptRepository> _mockScriptRepository;
     private readonly PowerShellExecutionService _service;
@@ -30,8 +26,6 @@ public class PowerShellExecutionServiceTests
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockScriptParser = new Mock<IPowerShellScriptParser>();
         _mockNotificationService = new Mock<IExecutionNotificationService>();
-        _mockLogger = new Mock<ILogger<PowerShellExecutionService>>();
-        _mockOptions = new Mock<IOptions<PowerShellExecutionOptions>>();
         _mockExecutionRepository = new Mock<IExecutionRepository>();
         _mockScriptRepository = new Mock<IScriptRepository>();
 
@@ -43,7 +37,6 @@ public class PowerShellExecutionServiceTests
             MaxConcurrentExecutions = 50,
             MaxMemoryUsageMB = 500
         };
-        _mockOptions.Setup(x => x.Value).Returns(options);
 
         // Setup unit of work
         _mockUnitOfWork.Setup(x => x.Executions).Returns(_mockExecutionRepository.Object);
@@ -53,8 +46,7 @@ public class PowerShellExecutionServiceTests
             _mockUnitOfWork.Object,
             _mockScriptParser.Object,
             _mockNotificationService.Object,
-            _mockLogger.Object,
-            _mockOptions.Object);
+            options);
     }
 
     [Fact]

@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Microsoft.Extensions.Options;
 using Moq;
 using PowerOrchestrator.Application.Interfaces.Services;
 using PowerOrchestrator.Domain.Entities;
@@ -32,10 +31,7 @@ public class PerformanceMonitoringServiceTests : IDisposable
             RealTimeDashboard = new RealTimeDashboardOptions { MaxDataPoints = 10 }
         };
 
-        var optionsMock = new Mock<IOptions<MonitoringOptions>>();
-        optionsMock.Setup(o => o.Value).Returns(_options);
-
-        _service = new PerformanceMonitoringService(optionsMock.Object);
+        _service = new PerformanceMonitoringService(_options);
     }
 
     [Fact]

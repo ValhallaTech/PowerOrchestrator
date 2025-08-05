@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Microsoft.Extensions.Options;
 using Moq;
 using PowerOrchestrator.Application.Interfaces.Repositories;
 using PowerOrchestrator.Application.Interfaces.Services;
@@ -36,16 +35,13 @@ public class AlertingServiceTests : IDisposable
             MaxProcessingTimeSeconds = 15
         };
 
-        var optionsMock = new Mock<IOptions<AlertingOptions>>();
-        optionsMock.Setup(o => o.Value).Returns(_options);
-
         _alertConfigRepositoryMock = new Mock<IAlertConfigurationRepository>();
         _alertInstanceRepositoryMock = new Mock<IAlertInstanceRepository>();
         _performanceMonitoringMock = new Mock<IPerformanceMonitoringService>();
         _notificationServiceMock = new Mock<INotificationService>();
 
         _service = new AlertingService(
-            optionsMock.Object,
+            _options,
             _alertConfigRepositoryMock.Object,
             _alertInstanceRepositoryMock.Object,
             _performanceMonitoringMock.Object,
