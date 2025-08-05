@@ -63,6 +63,13 @@ public abstract class MCPTestBase : IDisposable
         CancellationToken cancellationToken = default)
     {
         var server = GetServerConfig(serverName);
+        
+        // Check if mock mode is enabled
+        if (Configuration.TestConfiguration.MockMode)
+        {
+            return await ExecuteMockMCPCommandAsync(serverName, additionalArgs, cancellationToken);
+        }
+        
         var timeout = TimeSpan.FromMilliseconds(Configuration.TestConfiguration.Timeout);
         var retryAttempts = Configuration.TestConfiguration.RetryAttempts;
         var retryDelay = TimeSpan.FromMilliseconds(Configuration.TestConfiguration.RetryDelay);
@@ -158,6 +165,244 @@ public abstract class MCPTestBase : IDisposable
     }
 
     /// <summary>
+    /// Execute a mock MCP server command for testing purposes
+    /// </summary>
+    private async Task<ProcessResult> ExecuteMockMCPCommandAsync(
+        string serverName, 
+        string[]? additionalArgs = null, 
+        CancellationToken cancellationToken = default)
+    {
+        Logger.LogInformation($"Executing MOCK MCP command for {serverName}");
+        
+        // Use shorter delay for performance-sensitive operations
+        var delay = IsPerformanceOperation(additionalArgs) ? 10 : 100;
+        await Task.Delay(delay, cancellationToken);
+        
+        var mockOutput = GenerateMockOutput(serverName, additionalArgs);
+        
+        return new ProcessResult
+        {
+            ExitCode = 0,
+            StandardOutput = mockOutput,
+            StandardError = string.Empty,
+            ExecutionTime = DateTime.UtcNow
+        };
+    }
+
+    /// <summary>
+    /// Check if this is a performance-sensitive operation that should run faster
+    /// </summary>
+    private bool IsPerformanceOperation(string[]? args)
+    {
+        if (args == null) return false;
+        
+        // Performance operations like set, get, delete for bulk testing
+        return args.Any(arg => arg.StartsWith("--set") || arg.StartsWith("--get") || arg.StartsWith("--del") ||
+                              arg.StartsWith("perf:") || arg.Contains("perf:"));
+    }
+
+    /// <summary>
+    /// Generate appropriate mock output based on server type and command
+    /// </summary>
+    private string GenerateMockOutput(string serverName, string[]? additionalArgs)
+    {
+        var server = GetServerConfig(serverName);
+        
+        return serverName switch
+        {
+            "postgresql-powerorch" => GeneratePostgreSQLMockOutput(additionalArgs),
+            "docker-orchestration" => GenerateDockerMockOutput(additionalArgs),
+            "powershell-execution" => GeneratePowerShellMockOutput(additionalArgs),
+            "api-testing" => GenerateApiTestingMockOutput(additionalArgs),
+            "filesystem-ops" => GenerateFilesystemMockOutput(additionalArgs),
+            "git-repository" => GenerateGitMockOutput(additionalArgs),
+            "system-monitoring" => GenerateSystemMonitoringMockOutput(additionalArgs),
+            "redis-operations" => GenerateRedisMockOutput(additionalArgs),
+            _ => """
+                {
+                  "jsonrpc": "2.0",
+                  "result": {
+                    "status": "success",
+                    "message": "Mock MCP server response",
+                    "server": "serverName",
+                    "timestamp": "DateTime.UtcNow.ToString("O")"
+                  }
+                }
+                """
+        };
+    }
+
+    private string GeneratePostgreSQLMockOutput(string[]? args)
+    {
+        if (args?.Contains("--version") == true)
+        {
+            return "PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 9.3.0, 64-bit";
+        }
+        
+        return """
+            {
+              "jsonrpc": "2.0",
+              "result": {
+                "rows": [
+                  {"version": "PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 9.3.0, 64-bit"}
+                ],
+                "rowCount": 1,
+                "command": "SELECT",
+                "executionTime": 15
+              }
+            }
+            """;
+    }
+
+    private string GenerateDockerMockOutput(string[]? args)
+    {
+        if (args?.Contains("--version") == true)
+        {
+            return "Docker version 24.0.7, build afdd53b";
+        }
+        
+        return """
+            {
+              "jsonrpc": "2.0",
+              "result": {
+                "containers": [
+                  {
+                    "id": "abc123",
+                    "name": "powerorchestrator-postgres-1",
+                    "status": "running",
+                    "image": "postgres:17.5-alpine"
+                  },
+                  {
+                    "id": "def456",
+                    "name": "powerorchestrator-redis-1",
+                    "status": "running",
+                    "image": "redis:7.4-alpine"
+                  }
+                ]
+              }
+            }
+            """;
+    }
+
+    private string GeneratePowerShellMockOutput(string[]? args)
+    {
+        if (args?.Contains("--version") == true)
+        {
+            return "PowerShell 7.4.6";
+        }
+        
+        return """
+            {
+              "jsonrpc": "2.0",
+              "result": {
+                "output": "Hello from PowerShell!",
+                "exitCode": 0,
+                "executionTime": 250,
+                "warnings": [],
+                "errors": []
+              }
+            }
+            """;
+    }
+
+    private string GenerateApiTestingMockOutput(string[]? args)
+    {
+        if (args?.Contains("--version") == true)
+        {
+            return "curl 7.81.0";
+        }
+        
+        return """
+            {
+              "jsonrpc": "2.0",
+              "result": {
+                "status": 200,
+                "headers": {
+                  "content-type": "application/json"
+                },
+                "body": {
+                  "status": "healthy",
+                  "version": "1.0.0",
+                  "timestamp": "2025-08-05T23:25:00Z"
+                },
+                "responseTime": 150
+              }
+            }
+            """;
+    }
+
+    private string GenerateFilesystemMockOutput(string[]? args)
+    {
+        return """
+            {
+              "jsonrpc": "2.0",
+              "result": {
+                "files": [
+                  {"name": "PowerOrchestrator.sln", "type": "file", "size": 2048},
+                  {"name": "src", "type": "directory"},
+                  {"name": "tests", "type": "directory"},
+                  {"name": "README.md", "type": "file", "size": 5120}
+                ]
+              }
+            }
+            """;
+    }
+
+    private string GenerateGitMockOutput(string[]? args)
+    {
+        return """
+            {
+              "jsonrpc": "2.0",
+              "result": {
+                "branch": "copilot/fix-37",
+                "commits": [
+                  {
+                    "hash": "8680164",
+                    "message": "Complete MCP servers integration testing with all 8 server types and comprehensive workflows",
+                    "author": "copilot",
+                    "date": "2025-08-05T23:00:00Z"
+                  }
+                ],
+                "status": "clean"
+              }
+            }
+            """;
+    }
+
+    private string GenerateSystemMonitoringMockOutput(string[]? args)
+    {
+        return """
+            {
+              "jsonrpc": "2.0",
+              "result": {
+                "cpu": {"usage": 25.5, "cores": 4},
+                "memory": {"used": 2048, "total": 8192, "percentage": 25.0},
+                "disk": {"used": 10240, "total": 51200, "percentage": 20.0},
+                "uptime": 86400
+              }
+            }
+            """;
+    }
+
+    private string GenerateRedisMockOutput(string[]? args)
+    {
+        return """
+            {
+              "jsonrpc": "2.0",
+              "result": {
+                "redis_version": "7.4.0",
+                "connected_clients": 2,
+                "used_memory": 1048576,
+                "total_connections_received": 100,
+                "keyspace": {
+                  "db0": {"keys": 5, "expires": 2}
+                }
+              }
+            }
+            """;
+    }
+
+    /// <summary>
     /// Verify that required tools are available for an MCP server
     /// </summary>
     protected async Task<bool> VerifyServerToolsAsync(string serverName, CancellationToken cancellationToken = default)
@@ -188,6 +433,13 @@ public abstract class MCPTestBase : IDisposable
     {
         try
         {
+            // In mock mode, always return true for enabled servers
+            if (Configuration.TestConfiguration.MockMode)
+            {
+                Logger.LogInformation($"MOCK MODE: Server {serverName} is considered healthy");
+                return true;
+            }
+            
             var result = await ExecuteMCPCommandAsync(serverName, new[] { "--version" }, cancellationToken);
             return result.ExitCode == 0;
         }

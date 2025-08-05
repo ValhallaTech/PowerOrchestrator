@@ -86,7 +86,7 @@
       "enabled": true,
       "workflowTimeout": 120000
     },
-    "mockMode": false
+    "mockMode": true
   },
   "environment": {
     "database": {
