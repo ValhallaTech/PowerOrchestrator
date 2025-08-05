@@ -26,6 +26,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using PowerOrchestrator.API.Controllers;
 
 namespace PowerOrchestrator.IntegrationTests.MAUI;
 
@@ -71,12 +72,25 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                         logging.SetMinimumLevel(LogLevel.Warning);
                     });
                     
-                    // Add basic ASP.NET Core services
-                    services.AddControllers();
+                    // Add real API controllers with application parts
+                    services.AddControllers()
+                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.ScriptsController).Assembly)
+                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.RepositoriesController).Assembly)
+                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.UsersController).Assembly)
+                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.RolesController).Assembly)
+                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.AuthController).Assembly);
+                    
                     services.AddHealthChecks();
                     services.AddRouting();
                     
-                    // Add mock services
+                    // Add AutoMapper for controllers that need it
+                    services.AddAutoMapper(typeof(PowerOrchestrator.API.Controllers.ScriptsController).Assembly);
+                    
+                    // Add Identity services for user and role controllers
+                    services.AddIdentity<User, PowerOrchestrator.Domain.Entities.Role>()
+                        .AddEntityFrameworkStores<PowerOrchestratorDbContext>();
+                    
+                    // Add minimal mock services that controllers depend on
                     services.AddSingleton<IUnitOfWork, MockUnitOfWork>();
                 });
                 
@@ -592,17 +606,18 @@ public class PerformanceTests
 }
 
 /// <summary>
-/// Mock implementation of IUnitOfWork for testing
+/// Mock implementation of IUnitOfWork for testing - throws exceptions to simulate server errors
+/// but ensures controllers can be instantiated
 /// </summary>
 public class MockUnitOfWork : IUnitOfWork
 {
-    public IScriptRepository Scripts => throw new NotImplementedException();
-    public IExecutionRepository Executions => throw new NotImplementedException();
-    public IAuditLogRepository AuditLogs => throw new NotImplementedException();
-    public IHealthCheckRepository HealthChecks => throw new NotImplementedException();
-    public IGitHubRepositoryRepository GitHubRepositories => throw new NotImplementedException();
-    public IRepositoryScriptRepository RepositoryScripts => throw new NotImplementedException();
-    public ISyncHistoryRepository SyncHistory => throw new NotImplementedException();
+    public IScriptRepository Scripts => throw new NotSupportedException("Scripts endpoint not fully implemented in test environment");
+    public IExecutionRepository Executions => throw new NotSupportedException("Executions endpoint not fully implemented in test environment");
+    public IAuditLogRepository AuditLogs => throw new NotSupportedException("AuditLogs endpoint not fully implemented in test environment");
+    public IHealthCheckRepository HealthChecks => throw new NotSupportedException("HealthChecks endpoint not fully implemented in test environment");
+    public IGitHubRepositoryRepository GitHubRepositories => throw new NotSupportedException("GitHubRepositories endpoint not fully implemented in test environment");
+    public IRepositoryScriptRepository RepositoryScripts => throw new NotSupportedException("RepositoryScripts endpoint not fully implemented in test environment");
+    public ISyncHistoryRepository SyncHistory => throw new NotSupportedException("SyncHistory endpoint not fully implemented in test environment");
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
     public Task BeginTransactionAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
