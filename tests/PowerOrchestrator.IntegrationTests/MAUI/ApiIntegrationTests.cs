@@ -74,12 +74,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                         logging.SetMinimumLevel(LogLevel.Warning);
                     });
                     
-                    // Add real API controllers - register all controllers explicitly
+                    // Add real API controllers with application parts 
                     services.AddControllers()
-                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.ScriptsController).Assembly)
-                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.UsersController).Assembly)
-                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.RolesController).Assembly)
-                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.RepositoriesController).Assembly);
+                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.ScriptsController).Assembly);
                     
                     services.AddHealthChecks();
                     services.AddRouting();
