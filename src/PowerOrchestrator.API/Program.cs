@@ -24,7 +24,13 @@ builder.Host.UseSerilog();
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 
 // Configure services that need to be registered with the framework
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddNewtonsoftJson(options =>
+    {
+        options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+        options.SerializerSettings.DateTimeZoneHandling = Newtonsoft.Json.DateTimeZoneHandling.Utc;
+        options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
+    });
 
 // Configure Entity Framework
 builder.Services.AddDbContext<PowerOrchestratorDbContext>(options =>
