@@ -25,7 +25,7 @@ public class PerformanceMonitoringServiceTests : IDisposable
 
         _options = new MonitoringOptions
         {
-            Enabled = true,
+            Enabled = false, // Disable automatic collection for testing
             MetricsCollectionIntervalSeconds = 1,
             PerformanceCounters = new PerformanceCounterOptions { Enabled = false }, // Disable for testing
             RealTimeDashboard = new RealTimeDashboardOptions { MaxDataPoints = 10 }
@@ -85,11 +85,12 @@ public class PerformanceMonitoringServiceTests : IDisposable
     {
         // Arrange
         var startTime = DateTime.UtcNow.AddMinutes(-5);
-        var endTime = DateTime.UtcNow;
 
         await _service.RecordMetricAsync("test.metric", 10.0, "Test");
         await _service.RecordMetricAsync("test.metric", 20.0, "Test");
         await _service.RecordMetricAsync("other.metric", 5.0, "Other");
+
+        var endTime = DateTime.UtcNow.AddMinutes(1); // Set end time after recording metrics
 
         // Act
         var aggregated = await _service.GetAggregatedMetricsAsync(startTime, endTime);
