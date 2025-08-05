@@ -197,9 +197,9 @@ public abstract class MCPTestBase : IDisposable
         }
     }
 
-    public virtual void Dispose()
+    protected virtual void Dispose(bool disposing)
     {
-        if (!_disposed)
+        if (!_disposed && disposing)
         {
             _cancellationTokenSource.Cancel();
             _cancellationTokenSource.Dispose();
@@ -209,6 +209,12 @@ public abstract class MCPTestBase : IDisposable
             }
             _disposed = true;
         }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }
 
