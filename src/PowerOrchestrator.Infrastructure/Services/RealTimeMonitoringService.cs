@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using PowerOrchestrator.Application.Interfaces.Services;
 using PowerOrchestrator.Infrastructure.Configuration;
 using PowerOrchestrator.Infrastructure.Hubs;
@@ -30,12 +29,12 @@ public class RealTimeMonitoringService : BackgroundService
         IHubContext<MonitoringHub> hubContext,
         IPerformanceMonitoringService performanceMonitoring,
         IAlertingService alertingService,
-        IOptions<MonitoringOptions> options)
+        MonitoringOptions options)
     {
         _hubContext = hubContext;
         _performanceMonitoring = performanceMonitoring;
         _alertingService = alertingService;
-        _options = options.Value;
+        _options = options;
     }
 
     /// <summary>

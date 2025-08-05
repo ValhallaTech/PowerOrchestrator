@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Options;
 using PowerOrchestrator.Application.Interfaces.Repositories;
 using PowerOrchestrator.Application.Interfaces.Services;
 using PowerOrchestrator.Domain.Entities;
@@ -24,13 +23,13 @@ public class AlertingService : IAlertingService
     /// Initializes a new instance of the AlertingService class
     /// </summary>
     public AlertingService(
-        IOptions<AlertingOptions> options,
+        AlertingOptions options,
         IAlertConfigurationRepository alertConfigRepository,
         IAlertInstanceRepository alertInstanceRepository,
         IPerformanceMonitoringService performanceMonitoring,
         INotificationService notificationService)
     {
-        _options = options.Value;
+        _options = options;
         _alertConfigRepository = alertConfigRepository;
         _alertInstanceRepository = alertInstanceRepository;
         _performanceMonitoring = performanceMonitoring;

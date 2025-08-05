@@ -5,6 +5,7 @@ using PowerOrchestrator.Application.Interfaces;
 using PowerOrchestrator.Application.Interfaces.Repositories;
 using PowerOrchestrator.Application.Interfaces.Services;
 using PowerOrchestrator.Infrastructure;
+using PowerOrchestrator.Infrastructure.Configuration;
 using PowerOrchestrator.Infrastructure.Repositories;
 using PowerOrchestrator.Infrastructure.Services;
 
@@ -32,6 +33,10 @@ public class CoreModule : Module
         builder.RegisterType<BulkOperationsRepository>().As<IBulkOperationsRepository>().InstancePerLifetimeScope();
         builder.RegisterType<UnitOfWork>().As<IUnitOfWork>().InstancePerLifetimeScope();
 
+        // Register monitoring repositories
+        builder.RegisterType<AlertConfigurationRepository>().As<IAlertConfigurationRepository>().InstancePerLifetimeScope();
+        builder.RegisterType<AlertInstanceRepository>().As<IAlertInstanceRepository>().InstancePerLifetimeScope();
+
         // Register Identity repositories
         builder.RegisterType<PowerOrchestrator.Infrastructure.Identity.UserRepository>()
             .As<PowerOrchestrator.Infrastructure.Identity.IUserRepository>()
@@ -56,6 +61,13 @@ public class CoreModule : Module
         builder.RegisterType<RepositorySyncService>().As<IRepositorySyncService>().InstancePerLifetimeScope();
         builder.RegisterType<WebhookService>().As<IWebhookService>().InstancePerLifetimeScope();
         builder.RegisterType<PowerShellScriptParser>().As<IPowerShellScriptParser>().InstancePerLifetimeScope();
+        builder.RegisterType<PowerShellExecutionService>().As<IPowerShellExecutionService>().InstancePerLifetimeScope();
+
+        // Register monitoring services
+        builder.RegisterType<PerformanceMonitoringService>().As<IPerformanceMonitoringService>().SingleInstance();
+        builder.RegisterType<AlertingService>().As<IAlertingService>().SingleInstance();
+        builder.RegisterType<NotificationService>().As<INotificationService>().InstancePerLifetimeScope();
+        builder.RegisterType<RealTimeMonitoringService>().As<Microsoft.Extensions.Hosting.IHostedService>().SingleInstance();
 
         // Register FluentValidation validators
         builder.RegisterAssemblyTypes(typeof(Program).Assembly)

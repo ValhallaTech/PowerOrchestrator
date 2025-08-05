@@ -1,5 +1,4 @@
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Serilog;
 using PowerOrchestrator.Application.Interfaces;
 using PowerOrchestrator.Application.Interfaces.Services;
 using PowerOrchestrator.Domain.Entities;
@@ -21,7 +20,7 @@ public class PowerShellExecutionService : IPowerShellExecutionService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPowerShellScriptParser _scriptParser;
     private readonly IExecutionNotificationService _notificationService;
-    private readonly ILogger<PowerShellExecutionService> _logger;
+    private readonly ILogger _logger = Log.ForContext<PowerShellExecutionService>();
     private readonly PowerShellExecutionOptions _options;
     private readonly ConcurrentDictionary<Guid, PowerShellExecutionContext> _runningExecutions;
 
@@ -31,27 +30,24 @@ public class PowerShellExecutionService : IPowerShellExecutionService
     /// <param name="unitOfWork">Unit of work for database operations</param>
     /// <param name="scriptParser">PowerShell script parser service</param>
     /// <param name="notificationService">Service for sending real-time notifications</param>
-    /// <param name="logger">Logger instance</param>
     /// <param name="options">PowerShell execution configuration options</param>
     public PowerShellExecutionService(
         IUnitOfWork unitOfWork,
         IPowerShellScriptParser scriptParser,
         IExecutionNotificationService notificationService,
-        ILogger<PowerShellExecutionService> logger,
-        IOptions<PowerShellExecutionOptions> options)
+        PowerShellExecutionOptions options)
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _scriptParser = scriptParser ?? throw new ArgumentNullException(nameof(scriptParser));
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+        _options = options ?? throw new ArgumentNullException(nameof(options));
         _runningExecutions = new ConcurrentDictionary<Guid, PowerShellExecutionContext>();
     }
 
     /// <inheritdoc />
     public async Task<Guid> ExecuteScriptAsync(Guid scriptId, Dictionary<string, object>? parameters = null, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Starting execution of script {ScriptId}", scriptId);
+        _logger.Information("Starting execution of script {ScriptId}", scriptId);
 
         // Get script from repository
         var script = await _unitOfWork.Scripts.GetByIdAsync(scriptId, cancellationToken);
@@ -71,7 +67,7 @@ public class PowerShellExecutionService : IPowerShellExecutionService
             throw new ArgumentException("Script content cannot be null or empty", nameof(scriptContent));
         }
 
-        _logger.LogInformation("Starting execution of script content");
+        _logger.Information("Starting execution of script content");
 
         // Create execution record
         var execution = new Execution
@@ -103,7 +99,7 @@ public class PowerShellExecutionService : IPowerShellExecutionService
     /// <inheritdoc />
     public async Task<bool> CancelExecutionAsync(Guid executionId, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Cancelling execution {ExecutionId}", executionId);
+        _logger.Information("Cancelling execution {ExecutionId}", executionId);
 
         if (_runningExecutions.TryGetValue(executionId, out var context))
         {
@@ -134,7 +130,7 @@ public class PowerShellExecutionService : IPowerShellExecutionService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error cancelling execution {ExecutionId}", executionId);
+                _logger.Error(ex, "Error cancelling execution {ExecutionId}", executionId);
                 return false;
             }
         }
@@ -151,7 +147,7 @@ public class PowerShellExecutionService : IPowerShellExecutionService
     /// <inheritdoc />
     public async Task<ExecutionValidationResult> ValidateExecutionAsync(Guid scriptId, Dictionary<string, object>? parameters = null, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Validating execution for script {ScriptId}", scriptId);
+        _logger.Information("Validating execution for script {ScriptId}", scriptId);
 
         var result = new ExecutionValidationResult();
 
@@ -184,7 +180,7 @@ public class PowerShellExecutionService : IPowerShellExecutionService
             {
                 // For now, we'll assume all dependencies are available
                 // In a real implementation, we'd check if modules are installed
-                _logger.LogDebug("Dependency found: {Dependency}", dependency);
+                _logger.Debug("Dependency found: {Dependency}", dependency);
             }
 
             // Validate parameters if script requires them
@@ -198,7 +194,7 @@ public class PowerShellExecutionService : IPowerShellExecutionService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error validating execution for script {ScriptId}", scriptId);
+            _logger.Error(ex, "Error validating execution for script {ScriptId}", scriptId);
             result.Errors.Add($"Validation failed: {ex.Message}");
             return result;
         }
@@ -259,7 +255,7 @@ public class PowerShellExecutionService : IPowerShellExecutionService
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to parse execution metadata for metrics");
+                _logger.Warning(ex, "Failed to parse execution metadata for metrics");
             }
         }
 
@@ -279,13 +275,13 @@ public class PowerShellExecutionService : IPowerShellExecutionService
 
         try
         {
-            _logger.LogInformation("Executing script for execution {ExecutionId}", executionId);
+            _logger.Information("Executing script for execution {ExecutionId}", executionId);
 
             // Update execution status to running
             var execution = await _unitOfWork.Executions.GetByIdAsync(executionId, cancellationToken);
             if (execution == null)
             {
-                _logger.LogError("Execution {ExecutionId} not found", executionId);
+                _logger.Error("Execution {ExecutionId} not found", executionId);
                 return;
             }
 
@@ -380,17 +376,17 @@ public class PowerShellExecutionService : IPowerShellExecutionService
             // Notify completion
             await _notificationService.NotifyExecutionCompleted(executionId, execution.Status, execution.DurationMs ?? 0, cancellationToken);
 
-            _logger.LogInformation("Script execution {ExecutionId} completed with status {Status} in {Duration}ms", 
+            _logger.Information("Script execution {ExecutionId} completed with status {Status} in {Duration}ms", 
                 executionId, execution.Status, execution.DurationMs);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogInformation("Script execution {ExecutionId} was cancelled", executionId);
+            _logger.Information("Script execution {ExecutionId} was cancelled", executionId);
             await UpdateExecutionStatus(executionId, ExecutionStatus.Cancelled, stopwatch, cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing script for execution {ExecutionId}", executionId);
+            _logger.Error(ex, "Error executing script for execution {ExecutionId}", executionId);
             await UpdateExecutionStatus(executionId, ExecutionStatus.Failed, stopwatch, cancellationToken, ex.Message);
         }
         finally
@@ -423,7 +419,7 @@ public class PowerShellExecutionService : IPowerShellExecutionService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to update execution status for {ExecutionId}", executionId);
+            _logger.Error(ex, "Failed to update execution status for {ExecutionId}", executionId);
         }
     }
 

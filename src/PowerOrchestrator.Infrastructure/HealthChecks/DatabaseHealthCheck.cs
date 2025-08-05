@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Logging;
+using Serilog;
 using PowerOrchestrator.Infrastructure.Data;
 
 namespace PowerOrchestrator.Infrastructure.HealthChecks;
@@ -11,17 +11,15 @@ namespace PowerOrchestrator.Infrastructure.HealthChecks;
 public class DatabaseHealthCheck : IHealthCheck
 {
     private readonly PowerOrchestratorDbContext _context;
-    private readonly ILogger<DatabaseHealthCheck> _logger;
+    private readonly ILogger _logger = Log.ForContext<DatabaseHealthCheck>();
 
     /// <summary>
     /// Initializes a new instance of the DatabaseHealthCheck class
     /// </summary>
     /// <param name="context">The database context</param>
-    /// <param name="logger">The logger</param>
-    public DatabaseHealthCheck(PowerOrchestratorDbContext context, ILogger<DatabaseHealthCheck> logger)
+    public DatabaseHealthCheck(PowerOrchestratorDbContext context)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
@@ -52,13 +50,13 @@ public class DatabaseHealthCheck : IHealthCheck
                 ["connection_state"] = "open"
             };
 
-            _logger.LogDebug("Database health check passed in {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
+            _logger.Debug("Database health check passed in {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
             
             return HealthCheckResult.Healthy("PostgreSQL database is accessible and responsive", data);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Database health check failed");
+            _logger.Error(ex, "Database health check failed");
             
             var data = new Dictionary<string, object>
             {

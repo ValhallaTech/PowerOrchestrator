@@ -1,10 +1,8 @@
-using Microsoft.Extensions.Options;
 using PowerOrchestrator.Application.Interfaces.Services;
 using PowerOrchestrator.Domain.Entities;
 using PowerOrchestrator.Infrastructure.Configuration;
 using Serilog;
-using System.Net.Http.Json;
-using System.Text.Json;
+using Newtonsoft.Json;
 
 namespace PowerOrchestrator.Infrastructure.Services;
 
@@ -22,9 +20,9 @@ public class NotificationService : INotificationService
     /// </summary>
     /// <param name="options">Alerting configuration options</param>
     /// <param name="httpClient">HTTP client for webhook notifications</param>
-    public NotificationService(IOptions<AlertingOptions> options, HttpClient httpClient)
+    public NotificationService(AlertingOptions options, HttpClient httpClient)
     {
-        _options = options.Value;
+        _options = options;
         _httpClient = httpClient;
     }
 
@@ -126,10 +124,9 @@ public class NotificationService : INotificationService
             state = alertInstance.State
         };
 
-        var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions
+        var json = JsonConvert.SerializeObject(payload, Formatting.Indented, new JsonSerializerSettings
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
+            ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
         });
 
         bool anySuccess = false;
@@ -138,7 +135,8 @@ public class NotificationService : INotificationService
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync(endpoint, payload);
+                var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync(endpoint, content);
                 
                 if (response.IsSuccessStatusCode)
                 {

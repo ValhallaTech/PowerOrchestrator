@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Options;
 using PowerOrchestrator.Application.Interfaces.Services;
 using PowerOrchestrator.Domain.Entities;
 using PowerOrchestrator.Infrastructure.Configuration;
@@ -24,9 +23,9 @@ public class PerformanceMonitoringService : IPerformanceMonitoringService
     /// Initializes a new instance of the PerformanceMonitoringService class
     /// </summary>
     /// <param name="options">Monitoring configuration options</param>
-    public PerformanceMonitoringService(IOptions<MonitoringOptions> options)
+    public PerformanceMonitoringService(MonitoringOptions options)
     {
-        _options = options.Value;
+        _options = options;
 
         if (_options.Enabled)
         {

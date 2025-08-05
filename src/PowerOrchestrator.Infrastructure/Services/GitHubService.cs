@@ -1,5 +1,4 @@
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Serilog;
 using Octokit;
 using PowerOrchestrator.Application.Interfaces.Services;
 using PowerOrchestrator.Application.Validators;
@@ -14,7 +13,7 @@ namespace PowerOrchestrator.Infrastructure.Services;
 /// </summary>
 public class GitHubService : IGitHubService
 {
-    private readonly ILogger<GitHubService> _logger;
+    private readonly ILogger _logger = Log.ForContext<GitHubService>();
     private readonly GitHubClient _client;
     private readonly GitHubOptions _options;
     private readonly IGitHubRateLimitService _rateLimitService;
@@ -22,13 +21,11 @@ public class GitHubService : IGitHubService
     /// <summary>
     /// Initializes a new instance of the GitHubService class
     /// </summary>
-    /// <param name="logger">Logger instance</param>
     /// <param name="options">GitHub configuration options</param>
     /// <param name="rateLimitService">Rate limiting service</param>
-    public GitHubService(ILogger<GitHubService> logger, IOptions<GitHubOptions> options, IGitHubRateLimitService rateLimitService)
+    public GitHubService(GitHubOptions options, IGitHubRateLimitService rateLimitService)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+        _options = options ?? throw new ArgumentNullException(nameof(options));
         _rateLimitService = rateLimitService ?? throw new ArgumentNullException(nameof(rateLimitService));
 
         // Configure GitHub client
@@ -57,7 +54,7 @@ public class GitHubService : IGitHubService
     {
         try
         {
-            _logger.LogInformation("Fetching GitHub repositories");
+            _logger.Information("Fetching GitHub repositories");
 
             var repositories = await ExecuteWithRateLimitingAsync(
                 () => _client.Repository.GetAllForCurrent(), 
@@ -76,7 +73,7 @@ public class GitHubService : IGitHubService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to fetch GitHub repositories");
+            _logger.Error(ex, "Failed to fetch GitHub repositories");
             throw;
         }
     }
@@ -89,7 +86,7 @@ public class GitHubService : IGitHubService
 
         try
         {
-            _logger.LogInformation("Fetching GitHub repository {Owner}/{Name}", owner, name);
+            _logger.Information("Fetching GitHub repository {Owner}/{Name}", owner, name);
 
             var repo = await ExecuteWithRateLimitingAsync(
                 () => _client.Repository.Get(owner, name), 
@@ -108,12 +105,12 @@ public class GitHubService : IGitHubService
         }
         catch (NotFoundException)
         {
-            _logger.LogWarning("GitHub repository {Owner}/{Name} not found", owner, name);
+            _logger.Warning("GitHub repository {Owner}/{Name} not found", owner, name);
             return null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to fetch GitHub repository {Owner}/{Name}", owner, name);
+            _logger.Error(ex, "Failed to fetch GitHub repository {Owner}/{Name}", owner, name);
             throw;
         }
     }
@@ -127,7 +124,7 @@ public class GitHubService : IGitHubService
 
         try
         {
-            _logger.LogInformation("Fetching PowerShell files from {Owner}/{Name}", owner, name);
+            _logger.Information("Fetching PowerShell files from {Owner}/{Name}", owner, name);
 
             var files = new List<GitHubFile>();
             await GetFilesRecursiveAsync(owner, name, "", branch ?? "main", files);
@@ -137,7 +134,7 @@ public class GitHubService : IGitHubService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to fetch script files from {Owner}/{Name}", owner, name);
+            _logger.Error(ex, "Failed to fetch script files from {Owner}/{Name}", owner, name);
             throw;
         }
     }
@@ -152,7 +149,7 @@ public class GitHubService : IGitHubService
 
         try
         {
-            _logger.LogInformation("Fetching file content for {Owner}/{Name}/{Path}", owner, name, path);
+            _logger.Information("Fetching file content for {Owner}/{Name}/{Path}", owner, name, path);
 
             var fileContent = await _client.Repository.Content.GetAllContents(owner, name, path);
             var file = fileContent.FirstOrDefault();
@@ -174,12 +171,12 @@ public class GitHubService : IGitHubService
         }
         catch (NotFoundException)
         {
-            _logger.LogWarning("File {Path} not found in {Owner}/{Name}", path, owner, name);
+            _logger.Warning("File {Path} not found in {Owner}/{Name}", path, owner, name);
             return null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to fetch file content for {Owner}/{Name}/{Path}", owner, name, path);
+            _logger.Error(ex, "Failed to fetch file content for {Owner}/{Name}/{Path}", owner, name, path);
             throw;
         }
     }
@@ -189,14 +186,14 @@ public class GitHubService : IGitHubService
     {
         try
         {
-            _logger.LogInformation("Fetching branches for {Owner}/{Name}", owner, name);
+            _logger.Information("Fetching branches for {Owner}/{Name}", owner, name);
 
             var branches = await _client.Repository.Branch.GetAll(owner, name);
             return branches.Select(b => b.Name);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to fetch branches for {Owner}/{Name}", owner, name);
+            _logger.Error(ex, "Failed to fetch branches for {Owner}/{Name}", owner, name);
             throw;
         }
     }
@@ -229,7 +226,7 @@ public class GitHubService : IGitHubService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to fetch contents from {Path} in {Owner}/{Name}", path, owner, name);
+            _logger.Warning(ex, "Failed to fetch contents from {Path} in {Owner}/{Name}", path, owner, name);
         }
     }
 }
