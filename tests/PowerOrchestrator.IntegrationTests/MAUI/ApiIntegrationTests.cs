@@ -90,8 +90,17 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     services.AddIdentity<User, PowerOrchestrator.Domain.Entities.Role>()
                         .AddEntityFrameworkStores<PowerOrchestratorDbContext>();
                     
-                    // Add minimal mock services that controllers depend on
-                    services.AddSingleton<IUnitOfWork, MockUnitOfWork>();
+                    // Add minimal mock services that controllers depend on 
+                    // Don't try to implement complex interfaces - just add what's needed for DI
+                    services.AddSingleton<IUnitOfWork>(provider => new NullUnitOfWork());
+                    
+                    // Add required services for auth controller - these can be minimal/empty implementations
+                    services.AddSingleton<PowerOrchestrator.Identity.Services.IJwtTokenService>(provider => new NullJwtTokenService());
+                    services.AddSingleton<PowerOrchestrator.Identity.Services.IMfaService>(provider => new NullMfaService());
+                    services.AddSingleton<PowerOrchestrator.Infrastructure.Identity.IUserRepository>(provider => new NullUserRepository());
+                    
+                    // Add health check service for HealthController
+                    services.AddSingleton<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckService>();
                 });
                 
                 webBuilder.Configure(app =>
@@ -103,11 +112,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     {
                         endpoints.MapControllers();
                         endpoints.MapHealthChecks("/health");
-                        endpoints.MapGet("/api/health", async context =>
-                        {
-                            context.Response.ContentType = "application/json";
-                            await context.Response.WriteAsync("{\"Status\":\"Healthy\"}");
-                        });
+                        // Remove duplicate /api/health endpoint - HealthController already provides this
                     });
                 });
             });
@@ -608,22 +613,80 @@ public class PerformanceTests
 }
 
 /// <summary>
-/// Mock implementation of IUnitOfWork for testing - throws exceptions to simulate server errors
-/// but ensures controllers can be instantiated
+/// Null pattern implementation for IUnitOfWork that throws descriptive exceptions
+/// but allows controllers to be instantiated for routing tests
 /// </summary>
-public class MockUnitOfWork : IUnitOfWork
+public class NullUnitOfWork : IUnitOfWork
 {
-    public IScriptRepository Scripts => throw new NotSupportedException("Scripts endpoint not fully implemented in test environment");
-    public IExecutionRepository Executions => throw new NotSupportedException("Executions endpoint not fully implemented in test environment");
-    public IAuditLogRepository AuditLogs => throw new NotSupportedException("AuditLogs endpoint not fully implemented in test environment");
-    public IHealthCheckRepository HealthChecks => throw new NotSupportedException("HealthChecks endpoint not fully implemented in test environment");
-    public IGitHubRepositoryRepository GitHubRepositories => throw new NotSupportedException("GitHubRepositories endpoint not fully implemented in test environment");
-    public IRepositoryScriptRepository RepositoryScripts => throw new NotSupportedException("RepositoryScripts endpoint not fully implemented in test environment");
-    public ISyncHistoryRepository SyncHistory => throw new NotSupportedException("SyncHistory endpoint not fully implemented in test environment");
+    public IScriptRepository Scripts => throw new NotSupportedException("Script operations not supported in test environment - endpoint routing test only");
+    public IExecutionRepository Executions => throw new NotSupportedException("Execution operations not supported in test environment - endpoint routing test only");
+    public IAuditLogRepository AuditLogs => throw new NotSupportedException("AuditLog operations not supported in test environment - endpoint routing test only");
+    public IHealthCheckRepository HealthChecks => throw new NotSupportedException("HealthCheck operations not supported in test environment - endpoint routing test only");
+    public IGitHubRepositoryRepository GitHubRepositories => throw new NotSupportedException("GitHubRepository operations not supported in test environment - endpoint routing test only");
+    public IRepositoryScriptRepository RepositoryScripts => throw new NotSupportedException("RepositoryScript operations not supported in test environment - endpoint routing test only");
+    public ISyncHistoryRepository SyncHistory => throw new NotSupportedException("SyncHistory operations not supported in test environment - endpoint routing test only");
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
     public Task BeginTransactionAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     public Task CommitTransactionAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     public Task RollbackTransactionAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     public void Dispose() { }
+}
+
+/// <summary>
+/// Null JWT token service for testing - throws descriptive exceptions
+/// </summary>
+public class NullJwtTokenService : PowerOrchestrator.Identity.Services.IJwtTokenService
+{
+    public Task<PowerOrchestrator.Domain.ValueObjects.JwtToken> GenerateTokenAsync(Guid userId, string email, IEnumerable<string> roles, IEnumerable<PowerOrchestrator.Domain.ValueObjects.Permission> permissions, bool includeRefreshToken = false)
+        => throw new NotSupportedException("JWT token generation not supported in test environment - endpoint routing test only");
+    
+    public Task<PowerOrchestrator.Domain.ValueObjects.JwtToken> RefreshTokenAsync(string refreshToken)
+        => throw new NotSupportedException("JWT token refresh not supported in test environment - endpoint routing test only");
+        
+    public Task<bool> ValidateTokenAsync(string token)
+        => throw new NotSupportedException("JWT token validation not supported in test environment - endpoint routing test only");
+        
+    public Task RevokeTokenAsync(string token)
+        => throw new NotSupportedException("JWT token revocation not supported in test environment - endpoint routing test only");
+}
+
+/// <summary>
+/// Null MFA service for testing - throws descriptive exceptions
+/// </summary>
+public class NullMfaService : PowerOrchestrator.Identity.Services.IMfaService
+{
+    public string GenerateSecret() => throw new NotSupportedException("MFA secret generation not supported in test environment - endpoint routing test only");
+    public string GenerateQrCodeUrl(string accountTitle, string accountIdentifier, string secret) => throw new NotSupportedException("MFA QR code generation not supported in test environment - endpoint routing test only");
+    public bool ValidateCode(string secret, string code, int window = 1) => throw new NotSupportedException("MFA code validation not supported in test environment - endpoint routing test only");
+    public List<string> GenerateBackupCodes(int count = 10) => throw new NotSupportedException("MFA backup code generation not supported in test environment - endpoint routing test only");
+    public bool ValidateBackupCode(List<string> backupCodes, string code) => throw new NotSupportedException("MFA backup code validation not supported in test environment - endpoint routing test only");
+    
+    public Task<bool> GenerateSecretAsync(Guid userId) => throw new NotSupportedException("MFA secret generation not supported in test environment - endpoint routing test only");
+    public Task<bool> ValidateCodeAsync(Guid userId, string code) => throw new NotSupportedException("MFA code validation not supported in test environment - endpoint routing test only");
+    public Task<bool> IsEnabledAsync(Guid userId) => throw new NotSupportedException("MFA status check not supported in test environment - endpoint routing test only");
+    public Task<bool> EnableAsync(Guid userId, string verificationCode) => throw new NotSupportedException("MFA enable not supported in test environment - endpoint routing test only");
+    public Task<bool> DisableAsync(Guid userId) => throw new NotSupportedException("MFA disable not supported in test environment - endpoint routing test only");
+    public Task<string> GetQrCodeUriAsync(Guid userId) => throw new NotSupportedException("MFA QR code generation not supported in test environment - endpoint routing test only");
+}
+
+/// <summary>
+/// Null user repository for testing - throws descriptive exceptions
+/// </summary>
+public class NullUserRepository : PowerOrchestrator.Infrastructure.Identity.IUserRepository
+{
+    public Task<PowerOrchestrator.Domain.Entities.User?> GetByIdAsync(Guid id) => throw new NotSupportedException("User operations not supported in test environment - endpoint routing test only");
+    public Task<PowerOrchestrator.Domain.Entities.User?> GetByEmailAsync(string email) => throw new NotSupportedException("User operations not supported in test environment - endpoint routing test only");
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.User>> GetAllAsync(int pageNumber = 1, int pageSize = 10) => throw new NotSupportedException("User operations not supported in test environment - endpoint routing test only");
+    public Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotSupportedException("User operations not supported in test environment - endpoint routing test only");
+    public Task CreateAsync(PowerOrchestrator.Domain.Entities.User user) => throw new NotSupportedException("User operations not supported in test environment - endpoint routing test only");
+    public Task UpdateAsync(PowerOrchestrator.Domain.Entities.User user) => throw new NotSupportedException("User operations not supported in test environment - endpoint routing test only");
+    public Task DeleteAsync(Guid id) => throw new NotSupportedException("User operations not supported in test environment - endpoint routing test only");
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.User>> GetByRoleAsync(string roleName) => throw new NotSupportedException("User operations not supported in test environment - endpoint routing test only");
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.User>> SearchAsync(string searchTerm, int pageNumber = 1, int pageSize = 10) => throw new NotSupportedException("User operations not supported in test environment - endpoint routing test only");
+    public Task<bool> IsEmailUniqueAsync(string email, Guid? excludeUserId = null) => throw new NotSupportedException("User operations not supported in test environment - endpoint routing test only");
+    public Task<int> GetTotalCountAsync() => throw new NotSupportedException("User operations not supported in test environment - endpoint routing test only");
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.User>> GetActiveUsersAsync() => throw new NotSupportedException("User operations not supported in test environment - endpoint routing test only");
+    public Task<IEnumerable<PowerOrchestrator.Domain.Entities.User>> GetInactiveUsersAsync() => throw new NotSupportedException("User operations not supported in test environment - endpoint routing test only");
+    public Task<PowerOrchestrator.Domain.Entities.User?> GetWithRolesAsync(Guid userId) => throw new NotSupportedException("User operations not supported in test environment - endpoint routing test only");
 }
