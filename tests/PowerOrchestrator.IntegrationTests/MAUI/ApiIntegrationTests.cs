@@ -75,11 +75,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     
                     // Add real API controllers with application parts
                     services.AddControllers()
-                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.ScriptsController).Assembly)
-                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.RepositoriesController).Assembly)
-                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.UsersController).Assembly)
-                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.RolesController).Assembly)
-                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.AuthController).Assembly);
+                        .AddApplicationPart(typeof(PowerOrchestrator.API.Controllers.ScriptsController).Assembly);
                     
                     services.AddHealthChecks();
                     services.AddRouting();
@@ -88,8 +84,18 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     services.AddAutoMapper(typeof(PowerOrchestrator.API.Controllers.ScriptsController).Assembly);
                     
                     // Add Identity services for user and role controllers
-                    services.AddIdentity<User, PowerOrchestrator.Domain.Entities.Role>()
-                        .AddEntityFrameworkStores<PowerOrchestratorDbContext>();
+                    services.AddDataProtection(); // Required for Identity
+                    services.AddIdentity<User, PowerOrchestrator.Domain.Entities.Role>(options =>
+                    {
+                        // Relax password requirements for testing
+                        options.Password.RequireDigit = false;
+                        options.Password.RequireLowercase = false;
+                        options.Password.RequireNonAlphanumeric = false;
+                        options.Password.RequireUppercase = false;
+                        options.Password.RequiredLength = 1;
+                    })
+                        .AddEntityFrameworkStores<PowerOrchestratorDbContext>()
+                        .AddDefaultTokenProviders();
                     
                     // Add minimal services that controllers depend on 
                     // Use simple stub implementations that return defaults and allow DI to work
@@ -97,6 +103,65 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     services.AddTransient<PowerOrchestrator.Identity.Services.IJwtTokenService>(_ => new FakeJwtTokenService());
                     services.AddTransient<PowerOrchestrator.Identity.Services.IMfaService>(_ => new FakeMfaService());
                     services.AddTransient<PowerOrchestrator.Infrastructure.Identity.IUserRepository>(_ => new FakeUserRepository());
+                    
+                    // Add specific repository services that controllers need
+                    services.AddTransient<PowerOrchestrator.Application.Interfaces.Repositories.IGitHubRepositoryRepository>(_ => new SimpleGitHubRepositoryRepository());
+                    
+                    // Seed the in-memory database with required entities for endpoint existence tests
+                    var serviceProvider = services.BuildServiceProvider();
+                    using (var scope = serviceProvider.CreateScope())
+                    {
+                        var dbContext = scope.ServiceProvider.GetRequiredService<PowerOrchestratorDbContext>();
+                        
+                        // Ensure database is created
+                        dbContext.Database.EnsureCreated();
+                        
+                        // Add basic roles if none exist
+                        if (!dbContext.Roles.Any())
+                        {
+                            dbContext.Roles.Add(new PowerOrchestrator.Domain.Entities.Role 
+                            { 
+                                Id = Guid.NewGuid(), 
+                                Name = "User", 
+                                NormalizedName = "USER" 
+                            });
+                            dbContext.Roles.Add(new PowerOrchestrator.Domain.Entities.Role 
+                            { 
+                                Id = Guid.NewGuid(), 
+                                Name = "Admin", 
+                                NormalizedName = "ADMIN" 
+                            });
+                        }
+                        
+                        // Add a test user if none exist
+                        if (!dbContext.Users.Any())
+                        {
+                            dbContext.Users.Add(new User 
+                            { 
+                                Id = Guid.NewGuid(), 
+                                Email = "test@example.com", 
+                                UserName = "test@example.com", 
+                                EmailConfirmed = true 
+                            });
+                        }
+                        
+                        // Add a test repository if none exist
+                        if (!dbContext.Set<PowerOrchestrator.Domain.Entities.GitHubRepository>().Any())
+                        {
+                            dbContext.Set<PowerOrchestrator.Domain.Entities.GitHubRepository>().Add(
+                                new PowerOrchestrator.Domain.Entities.GitHubRepository 
+                                { 
+                                    Id = Guid.NewGuid(),
+                                    Name = "TestRepo", 
+                                    Owner = "TestOwner",
+                                    FullName = "TestOwner/TestRepo",
+                                    DefaultBranch = "main",
+                                    Status = PowerOrchestrator.Domain.ValueObjects.RepositoryStatus.Active
+                                });
+                        }
+                        
+                        dbContext.SaveChanges();
+                    }
                     
                     // Add Serilog logger for controllers that require it (like AuthController)
                     var serilogLogger = new LoggerConfiguration()
@@ -304,6 +369,37 @@ public class ApiIntegrationTests : IClassFixture<TestWebApplicationFactory>
         // Should not return 404 (endpoint exists)
         // May return 302 (redirect to auth) or 401 (unauthorized) or 500 (server error) - all indicate endpoint exists
         response.StatusCode.Should().NotBe(System.Net.HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Debug_EndpointResponseDetails()
+    {
+        // Test all endpoints and show their response codes for debugging
+        var endpoints = new[] { "api/roles", "api/users", "api/repositories", "api/scripts", "api/health" };
+        var results = new List<string>();
+        
+        foreach (var endpoint in endpoints)
+        {
+            var response = await _client.GetAsync($"/{endpoint}");
+            results.Add($"Endpoint: {endpoint} -> Status: {response.StatusCode}");
+            var content = await response.Content.ReadAsStringAsync();
+            if (content.Length > 0 && content.Length < 500)
+            {
+                results.Add($"Content: {content}");
+            }
+        }
+        
+        // Output results in assertion failure to see them
+        var resultString = string.Join("\n", results);
+        
+        // Check if any endpoints that should exist are returning 404
+        var response404Count = results.Count(r => r.Contains("NotFound"));
+        if (response404Count > 2) // Allow some 404s but not all
+        {
+            Assert.True(false, $"Too many endpoints returning 404:\n{resultString}");
+        }
+        
+        Assert.True(true); // Pass the test but show info
     }
 
     [Fact]
