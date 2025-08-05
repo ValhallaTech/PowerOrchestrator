@@ -97,6 +97,8 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 webBuilder.Configure(app =>
                 {
                     app.UseRouting();
+                    app.UseAuthentication(); // Add authentication middleware
+                    app.UseAuthorization();  // Add authorization middleware
                     app.UseEndpoints(endpoints =>
                     {
                         endpoints.MapControllers();
