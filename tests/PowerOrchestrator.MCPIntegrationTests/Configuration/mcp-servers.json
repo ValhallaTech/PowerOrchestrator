@@ -1,0 +1,326 @@
+{
+  "mcpProtocol": {
+    "version": "2024-11-05",
+    "specification": "https://spec.modelcontextprotocol.io/",
+    "jsonRpcVersion": "2.0",
+    "compliance": {
+      "validateCapabilities": true,
+      "validateResources": true,
+      "validateTools": true,
+      "validateErrors": true
+    }
+  },
+  "mcpServers": {
+    "postgresql-powerorch": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-postgres", "postgresql://powerorch:PowerOrch2025!@localhost:5432/powerorchestrator_dev"],
+      "tools": ["query", "schema", "list_tables", "describe_table", "execute"],
+      "resources": ["tables", "schemas", "indexes", "views"],
+      "capabilities": ["tools", "resources", "prompts"],
+      "description": "Direct access to PowerOrchestrator PostgreSQL 17.5 database for schema validation, performance testing, and audit log verification",
+      "documentation": "https://github.com/modelcontextprotocol/servers/tree/main/src/postgres",
+      "npmPackage": "https://www.npmjs.com/package/@modelcontextprotocol/server-postgres",
+      "priority": "critical",
+      "testEnabled": true,
+      "healthCheck": {
+        "enabled": true,
+        "interval": 30000,
+        "timeout": 5000,
+        "retries": 3
+      },
+      "connectionPool": {
+        "minConnections": 1,
+        "maxConnections": 10,
+        "idleTimeout": 300000
+      }
+    },
+    "docker-orchestration": {
+      "type": "local", 
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-docker"],
+      "tools": ["ps", "exec", "logs", "stats", "compose_up", "compose_down", "inspect"],
+      "resources": ["containers", "images", "networks", "volumes"],
+      "capabilities": ["tools", "resources"],
+      "description": "Complete container ecosystem management for PostgreSQL + Redis + Seq orchestration",
+      "documentation": "https://github.com/modelcontextprotocol/servers/tree/main/src/docker",
+      "npmPackage": "https://www.npmjs.com/package/@modelcontextprotocol/server-docker",
+      "priority": "critical",
+      "testEnabled": true,
+      "healthCheck": {
+        "enabled": true,
+        "interval": 30000,
+        "timeout": 10000,
+        "retries": 3
+      },
+      "security": {
+        "requireTLS": false,
+        "allowContainerAccess": true,
+        "restrictedCommands": ["rm", "kill", "stop"]
+      }
+    },
+    "powershell-execution": {
+      "type": "local",
+      "command": "npx", 
+      "args": ["@modelcontextprotocol/server-shell"],
+      "tools": ["execute", "run_script", "get_output"],
+      "resources": ["scripts", "modules", "help"],
+      "capabilities": ["tools", "resources"],
+      "description": "Core business logic validation with PowerShell SDK 7.4.6 integration testing and script security profiling",
+      "documentation": "https://github.com/modelcontextprotocol/servers/tree/main/src/shell",
+      "npmPackage": "https://www.npmjs.com/package/@modelcontextprotocol/server-shell",
+      "priority": "critical",
+      "testEnabled": true,
+      "healthCheck": {
+        "enabled": true,
+        "interval": 30000,
+        "timeout": 10000,
+        "retries": 3
+      },
+      "security": {
+        "restrictedCommands": ["rm", "del", "format", "shutdown"],
+        "executionTimeout": 300000,
+        "maxMemoryUsage": "512MB",
+        "allowSystemCommands": false
+      }
+    },
+    "api-testing": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-fetch"],
+      "tools": ["fetch", "get", "post", "put", "delete", "patch"],
+      "resources": ["endpoints", "schemas", "documentation"],
+      "capabilities": ["tools", "resources"],
+      "description": "API architecture validation, GitHub API integration testing, and MAUI-to-API communication validation",
+      "documentation": "https://github.com/modelcontextprotocol/servers/tree/main/src/fetch",
+      "npmPackage": "https://www.npmjs.com/package/@modelcontextprotocol/server-fetch",
+      "priority": "critical",
+      "testEnabled": true,
+      "healthCheck": {
+        "enabled": true,
+        "interval": 30000,
+        "timeout": 5000,
+        "retries": 3
+      },
+      "rateLimiting": {
+        "enabled": true,
+        "requestsPerMinute": 100,
+        "burstLimit": 20
+      },
+      "security": {
+        "validateSSL": true,
+        "allowedDomains": ["localhost", "api.github.com", "httpbin.org"],
+        "timeoutMs": 30000
+      }
+    },
+    "filesystem-ops": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-filesystem", "/home/runner/work/PowerOrchestrator/PowerOrchestrator"],
+      "tools": ["read_file", "write_file", "list_directory", "create_directory", "delete_file"],
+      "resources": ["files", "directories", "permissions"],
+      "capabilities": ["tools", "resources"],
+      "description": "PowerOrchestrator project files and logs management",
+      "documentation": "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem",
+      "npmPackage": "https://www.npmjs.com/package/@modelcontextprotocol/server-filesystem",
+      "priority": "high",
+      "testEnabled": true,
+      "healthCheck": {
+        "enabled": true,
+        "interval": 30000,
+        "timeout": 5000,
+        "retries": 3
+      },
+      "security": {
+        "restrictedPaths": ["/etc", "/usr", "/bin", "/var/log"],
+        "allowedExtensions": [".cs", ".json", ".md", ".txt", ".log", ".yml", ".yaml"],
+        "maxFileSize": "10MB",
+        "readOnly": false
+      }
+    },
+    "git-repository": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-git", "/home/runner/work/PowerOrchestrator/PowerOrchestrator"],
+      "tools": ["log", "diff", "status", "branch", "commit", "push", "pull"],
+      "resources": ["commits", "branches", "tags", "remotes"],
+      "capabilities": ["tools", "resources"],
+      "description": "Repository operations and development phase tracking",
+      "documentation": "https://github.com/modelcontextprotocol/servers/tree/main/src/git",
+      "npmPackage": "https://www.npmjs.com/package/@modelcontextprotocol/server-git",
+      "priority": "high",
+      "testEnabled": true,
+      "healthCheck": {
+        "enabled": true,
+        "interval": 30000,
+        "timeout": 10000,
+        "retries": 3
+      },
+      "security": {
+        "allowRemoteOperations": false,
+        "restrictedBranches": ["main", "master", "production"],
+        "requireSignedCommits": false
+      }
+    },
+    "system-monitoring": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-system"],
+      "tools": ["ps", "top", "df", "free", "uptime", "netstat"],
+      "resources": ["processes", "memory", "disk", "network"],
+      "capabilities": ["tools", "resources"],
+      "description": "Performance metrics collection for enterprise scaling validation",
+      "documentation": "https://github.com/modelcontextprotocol/servers/tree/main/src/system",
+      "npmPackage": "https://www.npmjs.com/package/@modelcontextprotocol/server-system",
+      "priority": "high",
+      "testEnabled": true,
+      "healthCheck": {
+        "enabled": true,
+        "interval": 30000,
+        "timeout": 5000,
+        "retries": 3
+      },
+      "monitoring": {
+        "cpuThreshold": 80,
+        "memoryThreshold": 85,
+        "diskThreshold": 90,
+        "alertingEnabled": true
+      }
+    },
+    "redis-operations": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-redis", "redis://PowerOrchRedis2025!@localhost:6379"],
+      "tools": ["get", "set", "del", "keys", "info", "flushdb"],
+      "resources": ["keys", "databases", "memory", "config"],
+      "capabilities": ["tools", "resources"],
+      "description": "Cache operations and session management validation",
+      "documentation": "https://github.com/modelcontextprotocol/servers/tree/main/src/redis",
+      "npmPackage": "https://www.npmjs.com/package/@modelcontextprotocol/server-redis",
+      "priority": "high",
+      "testEnabled": true,
+      "healthCheck": {
+        "enabled": true,
+        "interval": 30000,
+        "timeout": 5000,
+        "retries": 3
+      },
+      "connectionPool": {
+        "minConnections": 1,
+        "maxConnections": 10,
+        "idleTimeout": 300000
+      },
+      "caching": {
+        "defaultTTL": 3600,
+        "maxKeySize": "1MB",
+        "evictionPolicy": "allkeys-lru"
+      }
+    }
+  },
+  "testConfiguration": {
+    "timeout": 30000,
+    "retryAttempts": 3,
+    "retryDelay": 5000,
+    "performanceBenchmarks": {
+      "enabled": true,
+      "iterations": 10,
+      "warmupIterations": 3
+    },
+    "endToEndWorkflows": {
+      "enabled": true,
+      "workflowTimeout": 120000
+    },
+    "mockMode": true,
+    "protocolCompliance": {
+      "validateJsonRpc": true,
+      "validateCapabilities": true,
+      "validateResources": true,
+      "validateTools": true,
+      "validateErrorHandling": true,
+      "mcpVersion": "2024-11-05"
+    },
+    "loadTesting": {
+      "enabled": true,
+      "concurrentConnections": 10,
+      "requestsPerSecond": 50,
+      "testDuration": 60
+    },
+    "security": {
+      "validateAuthentication": true,
+      "testRateLimiting": true,
+      "validateInputSanitization": true,
+      "testPrivilegeEscalation": false
+    },
+    "observability": {
+      "enableMetrics": true,
+      "enableTracing": true,
+      "logLevel": "Information",
+      "metricsInterval": 30
+    }
+  },
+  "environment": {
+    "database": {
+      "connectionString": "Host=localhost;Database=powerorchestrator_dev;Username=powerorch;Password=PowerOrch2025!",
+      "testDatabase": "powerorchestrator_test",
+      "backupDatabase": "powerorchestrator_backup",
+      "pooling": {
+        "minPoolSize": 1,
+        "maxPoolSize": 20,
+        "connectionLifetime": 600
+      }
+    },
+    "redis": {
+      "connectionString": "localhost:6379",
+      "password": "PowerOrchRedis2025!",
+      "database": 0,
+      "testDatabase": 1,
+      "cluster": {
+        "enabled": false,
+        "nodes": []
+      }
+    },
+    "docker": {
+      "composeFile": "docker-compose.dev.yml",
+      "network": "powerorchestrator_dev",
+      "registry": {
+        "url": "docker.io",
+        "namespace": "powerorchestrator"
+      },
+      "security": {
+        "enableScan": true,
+        "allowPrivileged": false
+      }
+    },
+    "api": {
+      "baseUrl": "https://localhost:7001",
+      "healthCheckEndpoint": "/health",
+      "swaggerEndpoint": "/swagger/v1/swagger.json",
+      "authentication": {
+        "type": "Bearer",
+        "tokenEndpoint": "/auth/token"
+      },
+      "cors": {
+        "allowedOrigins": ["https://localhost:7001"],
+        "allowedMethods": ["GET", "POST", "PUT", "DELETE"]
+      }
+    },
+    "monitoring": {
+      "metricsEndpoint": "/metrics",
+      "healthEndpoint": "/health",
+      "alerting": {
+        "enabled": true,
+        "webhookUrl": ""
+      }
+    },
+    "security": {
+      "encryption": {
+        "algorithm": "AES-256-GCM",
+        "keyRotation": 86400
+      },
+      "audit": {
+        "enabled": true,
+        "retentionDays": 90
+      }
+    }
+  }
+}

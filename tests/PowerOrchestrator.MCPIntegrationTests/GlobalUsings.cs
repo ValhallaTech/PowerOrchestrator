@@ -1,0 +1,9 @@
+global using Xunit;
+global using FluentAssertions;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+global using Newtonsoft.Json;
+global using System.Diagnostics;
+global using System.Text.Json;
+global using PowerOrchestrator.MCPIntegrationTests.Infrastructure;
