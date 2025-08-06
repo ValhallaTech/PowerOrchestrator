@@ -118,3 +118,15 @@ public abstract class MCPTestBase : IDisposable
         GC.SuppressFinalize(this);
     }
 }
+
+/// <summary>
+/// Result of executing an MCP server process (for legacy compatibility)
+/// </summary>
+public class ProcessResult
+{
+    public int ExitCode { get; set; }
+    public string StandardOutput { get; set; } = string.Empty;
+    public string StandardError { get; set; } = string.Empty;
+    public DateTime ExecutionTime { get; set; }
+    public bool IsSuccess => ExitCode == 0;
+}

@@ -45,7 +45,7 @@ public class DockerEnvironmentManager : IDisposable
                 if (requiredServices.Contains(serviceName))
                 {
                     runningServices.Add(serviceName);
-                    Logger.LogInformation($"Service '{serviceName}' is running: {container.Id[..12]}");
+                    Logger.LogInformation($"Service '{serviceName}' is running: {container.ID[..12]}");
                 }
             }
 
