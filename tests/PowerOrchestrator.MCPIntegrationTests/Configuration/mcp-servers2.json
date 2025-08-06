@@ -1,0 +1,52 @@
+{
+  "mcpServers": {
+    "postgresql-powerorch": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-postgres", "postgresql://powerorch:PowerOrch2025!@localhost:5432/powerorchestrator_dev"],
+      "tools": ["query", "schema", "list_tables", "describe_table", "execute"]
+    },
+    "docker-orchestration": {
+      "type": "local", 
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-docker"],
+      "tools": ["ps", "exec", "logs", "stats", "compose_up", "compose_down", "inspect"]
+    },
+    "powershell-execution": {
+      "type": "local",
+      "command": "npx", 
+      "args": ["@modelcontextprotocol/server-shell"],
+      "tools": ["execute", "run_script", "get_output"]
+    },
+    "api-testing": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-fetch"],
+      "tools": ["fetch", "get", "post", "put", "delete", "patch"]
+    },
+    "filesystem-ops": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-filesystem", "/workspace"],
+      "tools": ["read_file", "write_file", "list_directory", "create_directory", "delete_file"]
+    },
+    "git-repository": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-git", "/workspace"],
+      "tools": ["log", "diff", "status", "branch", "commit", "push", "pull"]
+    },
+    "system-monitoring": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-system"],
+      "tools": ["ps", "top", "df", "free", "uptime", "netstat"]
+    },
+    "redis-operations": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-redis", "redis://PowerOrchRedis2025!@localhost:6379"],
+      "tools": ["get", "set", "del", "keys", "info", "flushdb"]
+    }
+  }
+}
