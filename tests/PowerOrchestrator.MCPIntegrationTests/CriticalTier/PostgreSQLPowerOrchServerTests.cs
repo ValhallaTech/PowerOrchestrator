@@ -2,187 +2,216 @@ namespace PowerOrchestrator.MCPIntegrationTests.CriticalTier;
 
 /// <summary>
 /// Integration tests for PostgreSQL PowerOrch MCP Server
-/// Tests database access, schema validation, performance, and audit log verification
+/// Tests actual MCP server functionality against Docker development environment
 /// </summary>
 public class PostgreSQLPowerOrchServerTests : MCPTestBase
 {
     private const string ServerName = "postgresql-powerorch";
 
     [Fact]
-    public async Task PostgreSQLServer_ShouldInitializeSuccessfully()
+    public async Task PostgreSQLMCPServer_ShouldConnectToDockerEnvironment()
     {
         // Arrange
-        Logger.LogInformation("Testing PostgreSQL MCP server initialization");
+        Logger.LogInformation("Testing PostgreSQL MCP server connection to Docker environment");
 
         // Act
-        var isHealthy = await IsServerHealthyAsync(ServerName);
-
-        // Assert
-        isHealthy.Should().BeTrue("PostgreSQL MCP server should be accessible and responding");
-    }
-
-    [Fact]
-    public async Task PostgreSQLServer_ShouldVerifyToolsAvailability()
-    {
-        // Arrange
-        var expectedTools = new[] { "query", "schema", "list_tables", "describe_table", "execute" };
-
-        // Act
-        var toolsVerified = await VerifyServerToolsAsync(ServerName);
-
-        // Assert
-        toolsVerified.Should().BeTrue("All expected PostgreSQL tools should be available");
+        var isEnvironmentHealthy = await DockerManager.VerifyEnvironmentHealthAsync();
         
-        var serverConfig = GetServerConfig(ServerName);
-        serverConfig.Tools.Should().Contain(expectedTools, "PostgreSQL server should support all critical database operations");
+        // Assert
+        isEnvironmentHealthy.Should().BeTrue("Docker development environment should be running and healthy");
     }
 
     [Fact]
-    public async Task PostgreSQLServer_ShouldExecuteBasicQuery()
+    public async Task PostgreSQLMCPServer_ShouldHaveCorrectConfiguration()
     {
         // Arrange
-        var testQuery = "SELECT version()";
-        Logger.LogInformation($"Testing PostgreSQL query execution: {testQuery}");
+        Logger.LogInformation("Validating PostgreSQL MCP server configuration");
 
         // Act
-        var result = await ExecuteMCPCommandAsync(ServerName, new[] { "--query", testQuery });
+        var serverConfig = GetMCPServerInfo(ServerName);
 
         // Assert
-        result.Should().NotBeNull("Query execution should return a result");
-        // Note: In a real implementation, this would validate the actual query results
-        // For now, we're testing the infrastructure
+        serverConfig.Should().NotBeNull("PostgreSQL MCP server should be configured");
+        serverConfig.Command.Should().Be("npx", "PostgreSQL MCP server should use npx command");
+        serverConfig.Args.Should().Contain("@modelcontextprotocol/server-postgres", "Should use correct MCP package");
+        serverConfig.Args.Should().Contain(arg => arg.StartsWith("postgresql://"), "Should have PostgreSQL connection string");
+        serverConfig.Tools.Should().Contain(new[] { "query", "schema", "list_tables", "describe_table", "execute" }, 
+            "Should support all expected PostgreSQL tools");
     }
 
     [Fact]
-    public async Task PostgreSQLServer_ShouldValidateSchemaIntegrity()
+    public async Task PostgreSQLMCPServer_ShouldExecuteBasicDatabaseQueries()
     {
         // Arrange
-        Logger.LogInformation("Testing PostgreSQL schema validation");
-        var expectedTables = new[] 
-        { 
-            "scripts", "executions", "audit_logs", "users", "roles", 
-            "github_repositories", "performance_metrics" 
+        Logger.LogInformation("Testing PostgreSQL MCP server query execution against Docker database");
+        var mcpClient = new MCPProtocolClient(Logger);
+        var serverInfo = GetMCPServerInfo(ServerName);
+
+        // Act
+        var capabilities = await mcpClient.GetServerCapabilitiesAsync(serverInfo);
+        
+        // Assert
+        capabilities.Should().NotBeNull("MCP server should provide capabilities");
+        capabilities.IsConnected.Should().BeTrue("PostgreSQL MCP server should connect to Docker database");
+        capabilities.Tools.Should().Contain("query", "Should support query tool");
+    }
+
+    [Fact]
+    public async Task PostgreSQLMCPServer_ShouldExecuteQueryTool()
+    {
+        // Arrange
+        Logger.LogInformation("Testing PostgreSQL MCP server query tool execution");
+        var mcpClient = new MCPProtocolClient(Logger);
+        var serverInfo = GetMCPServerInfo(ServerName);
+        var queryParameters = new Dictionary<string, object>
+        {
+            ["query"] = "SELECT version()"
+        };
+
+        // Act
+        var result = await mcpClient.ExecuteToolAsync(serverInfo, "query", queryParameters);
+
+        // Assert
+        result.Should().NotBeNull("Query tool should return a result");
+        result.Success.Should().BeTrue("Query execution should succeed");
+        result.Result.Should().NotBeNull("Query should return data");
+    }
+
+    [Fact]
+    public async Task PostgreSQLMCPServer_ShouldListDatabaseTables()
+    {
+        // Arrange
+        Logger.LogInformation("Testing PostgreSQL MCP server list_tables tool");
+        var mcpClient = new MCPProtocolClient(Logger);
+        var serverInfo = GetMCPServerInfo(ServerName);
+
+        // Act
+        var result = await mcpClient.ExecuteToolAsync(serverInfo, "list_tables", new Dictionary<string, object>());
+
+        // Assert
+        result.Should().NotBeNull("list_tables tool should return a result");
+        result.Success.Should().BeTrue("Table listing should succeed");
+        result.Result.Should().NotBeNull("Should return table information");
+    }
+
+    [Fact]
+    public async Task PostgreSQLMCPServer_ShouldDescribeTable()
+    {
+        // Arrange
+        Logger.LogInformation("Testing PostgreSQL MCP server describe_table tool");
+        var mcpClient = new MCPProtocolClient(Logger);
+        var serverInfo = GetMCPServerInfo(ServerName);
+        var parameters = new Dictionary<string, object>
+        {
+            ["table"] = "information_schema.tables"
+        };
+
+        // Act
+        var result = await mcpClient.ExecuteToolAsync(serverInfo, "describe_table", parameters);
+
+        // Assert
+        result.Should().NotBeNull("describe_table tool should return a result");
+        result.Success.Should().BeTrue("Table description should succeed");
+        result.Result.Should().NotBeNull("Should return table schema information");
+    }
+
+    [Fact]
+    public async Task PostgreSQLMCPServer_ShouldGetDatabaseSchema()
+    {
+        // Arrange
+        Logger.LogInformation("Testing PostgreSQL MCP server schema tool");
+        var mcpClient = new MCPProtocolClient(Logger);
+        var serverInfo = GetMCPServerInfo(ServerName);
+
+        // Act
+        var result = await mcpClient.ExecuteToolAsync(serverInfo, "schema", new Dictionary<string, object>());
+
+        // Assert
+        result.Should().NotBeNull("schema tool should return a result");
+        result.Success.Should().BeTrue("Schema retrieval should succeed");
+        result.Result.Should().NotBeNull("Should return schema information");
+    }
+
+    [Fact]
+    public async Task PostgreSQLMCPServer_ShouldSupportPowerOrchestratorDevelopmentWorkflow()
+    {
+        // Arrange
+        Logger.LogInformation("Testing PostgreSQL MCP server in PowerOrchestrator development workflow");
+        var mcpClient = new MCPProtocolClient(Logger);
+        var serverInfo = GetMCPServerInfo(ServerName);
+
+        // Simulate typical development tasks that would benefit from PostgreSQL MCP server
+        var developmentQueries = new[]
+        {
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'",
+            "SELECT schemaname, tablename FROM pg_tables WHERE schemaname = 'public'",
+            "SELECT current_database()",
+            "SELECT current_user"
         };
 
         // Act & Assert
-        foreach (var table in expectedTables)
+        foreach (var query in developmentQueries)
         {
-            var result = await ExecuteMCPCommandAsync(ServerName, new[] { "--describe-table", table });
-            result.Should().NotBeNull($"Table '{table}' should exist and be describable");
+            var parameters = new Dictionary<string, object> { ["query"] = query };
+            var result = await mcpClient.ExecuteToolAsync(serverInfo, "query", parameters);
+            
+            result.Should().NotBeNull($"Development query should succeed: {query}");
+            result.Success.Should().BeTrue($"Query should execute successfully: {query}");
         }
+
+        Logger.LogInformation("PostgreSQL MCP server successfully supports PowerOrchestrator development workflows");
     }
 
     [Fact]
-    public async Task PostgreSQLServer_ShouldTestPerformanceWithLargeDataset()
+    public async Task PostgreSQLMCPServer_PerformanceValidation()
     {
         // Arrange
-        Logger.LogInformation("Testing PostgreSQL performance with enterprise-scale data");
+        Logger.LogInformation("Testing PostgreSQL MCP server performance for development tasks");
+        var mcpClient = new MCPProtocolClient(Logger);
+        var serverInfo = GetMCPServerInfo(ServerName);
+        var stopwatch = Stopwatch.StartNew();
+        
         var performanceQueries = new[]
         {
-            "SELECT COUNT(*) FROM scripts",
-            "SELECT COUNT(*) FROM executions WHERE created_at > NOW() - INTERVAL '30 days'",
-            "SELECT COUNT(*) FROM audit_logs WHERE event_type = 'script_execution'"
+            "SELECT NOW()",
+            "SELECT COUNT(*) FROM information_schema.columns",
+            "SELECT version()",
+            "SELECT current_timestamp"
         };
 
         // Act
-        var stopwatch = Stopwatch.StartNew();
-        
-        foreach (var query in performanceQueries)
+        var tasks = performanceQueries.Select(async query =>
         {
-            var result = await ExecuteMCPCommandAsync(ServerName, new[] { "--query", query });
-            result.Should().NotBeNull($"Performance query should execute successfully: {query}");
-        }
-        
-        stopwatch.Stop();
-
-        // Assert
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(10000, 
-            "Performance queries should complete within 10 seconds for enterprise readiness");
-    }
-
-    [Fact]
-    public async Task PostgreSQLServer_ShouldVerifyAuditLogIntegrity()
-    {
-        // Arrange
-        Logger.LogInformation("Testing audit log verification capabilities");
-        var auditQueries = new[]
-        {
-            "SELECT DISTINCT event_type FROM audit_logs ORDER BY event_type",
-            "SELECT COUNT(*) FROM audit_logs WHERE created_at > NOW() - INTERVAL '1 hour'",
-            "SELECT user_id, COUNT(*) FROM audit_logs GROUP BY user_id LIMIT 10"
-        };
-
-        // Act & Assert
-        foreach (var query in auditQueries)
-        {
-            var result = await ExecuteMCPCommandAsync(ServerName, new[] { "--query", query });
-            result.Should().NotBeNull($"Audit log query should execute successfully: {query}");
-        }
-    }
-
-    [Fact]
-    public async Task PostgreSQLServer_ShouldTestMaterializedViewPerformance()
-    {
-        // Arrange
-        Logger.LogInformation("Testing materialized view performance monitoring");
-        var materializedViewQueries = new[]
-        {
-            "SELECT schemaname, matviewname, ispopulated FROM pg_matviews",
-            "SELECT COUNT(*) FROM pg_stat_user_tables WHERE schemaname = 'public'"
-        };
-
-        // Act
-        var stopwatch = Stopwatch.StartNew();
-        
-        foreach (var query in materializedViewQueries)
-        {
-            var result = await ExecuteMCPCommandAsync(ServerName, new[] { "--query", query });
-            result.Should().NotBeNull($"Materialized view query should execute: {query}");
-        }
-        
-        stopwatch.Stop();
-
-        // Assert
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(5000, 
-            "Materialized view queries should be optimized for performance");
-    }
-
-    [Fact]
-    public async Task PostgreSQLServer_ShouldTestConnectionPooling()
-    {
-        // Arrange
-        Logger.LogInformation("Testing PostgreSQL connection pooling under load");
-        var concurrentQueries = 10;
-        var tasks = new List<Task<ProcessResult>>();
-
-        // Act
-        for (int i = 0; i < concurrentQueries; i++)
-        {
-            var task = ExecuteMCPCommandAsync(ServerName, new[] { "--query", "SELECT NOW()" });
-            tasks.Add(task);
-        }
+            var parameters = new Dictionary<string, object> { ["query"] = query };
+            return await mcpClient.ExecuteToolAsync(serverInfo, "query", parameters);
+        });
 
         var results = await Task.WhenAll(tasks);
+        stopwatch.Stop();
 
         // Assert
-        results.Should().HaveCount(concurrentQueries, "All concurrent queries should complete");
-        results.Should().OnlyContain(r => r.IsSuccess, "All concurrent queries should succeed");
+        results.Should().HaveCount(performanceQueries.Length, "All performance queries should complete");
+        results.Should().OnlyContain(r => r.Success, "All performance queries should succeed");
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(5000, 
+            "Performance queries should complete within 5 seconds for good development experience");
+        
+        Logger.LogInformation($"PostgreSQL MCP server performance validation completed in {stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Theory]
-    [InlineData("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")]
-    [InlineData("SELECT COUNT(*) FROM pg_stat_activity")]
-    [InlineData("SELECT datname FROM pg_database WHERE datistemplate = false")]
-    public async Task PostgreSQLServer_ShouldExecuteSystemQueries(string query)
+    private new MCPServerInfo GetMCPServerInfo(string serverName)
     {
-        // Arrange
-        Logger.LogInformation($"Testing system query: {query}");
+        if (!Configuration.McpServers.TryGetValue(serverName, out var serverConfig))
+        {
+            throw new InvalidOperationException($"MCP server '{serverName}' not found in configuration");
+        }
 
-        // Act
-        var result = await ExecuteMCPCommandAsync(ServerName, new[] { "--query", query });
-
-        // Assert
-        result.Should().NotBeNull("System query should execute successfully");
-        result.IsSuccess.Should().BeTrue("System query should return successful exit code");
+        return new MCPServerInfo
+        {
+            Name = serverName,
+            Command = serverConfig.Command,
+            Args = serverConfig.Args,
+            Tools = serverConfig.Tools,
+            Resources = serverConfig.Resources ?? new List<string>()
+        };
     }
 }

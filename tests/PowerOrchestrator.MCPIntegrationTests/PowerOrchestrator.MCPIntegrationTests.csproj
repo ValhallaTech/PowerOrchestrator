@@ -44,7 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Configuration\mcp-servers.json">
+    <None Update="Configuration\mcp-servers2.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="TestData\**\*">
